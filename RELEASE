@@ -1,0 +1,18 @@
+Release 0.6
+
+- New Features:
+    - PSCM redirects to PSC GUI
+    - PSC GUI accessible to user on the dataplane
+    - PSC GUI dashboard collects PSA status codes and logs
+- Example implementation of minimum viable PSA API to help WP5 PSA devs
+- Fixed critical bugs that caused the TVDM not to start
+
+Release 0.5
+- New Features:
+	- Access to PSC dataplane at 10.2.2.253 (no HTTP service yet)
+- Setup improvements:
+	- Automatic downloading of required images from Polito server
+- General bug fixes
+- New tests
+- Telemetry logging now at millisecond level
+- TrustedGRUB 2 support

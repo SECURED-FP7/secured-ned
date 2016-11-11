@@ -1,0 +1,52 @@
+{
+	"name": "user_profile_type",
+	"user_id": "00000001",
+	"user_token": "ABCDEF123456",
+	"profile_type": "AD",			// this information is actually not necessary for the PSC as it will 
+									// always receive the same kind of file in both AD and PD case. Remove?,
+
+	"PSASet": [
+		
+		// simple PSA: one security control
+		{
+			"name": "firePro",
+			"security_controls": [
+				
+				{
+					"imgName": "firepro_v1.img",
+					"conf":	"firepro_v1_00000001"
+				}
+				
+			] //end of firePro PSA security_controls
+			
+			// simple PSA: ingress and egress flow not needed
+		},
+
+		// complex PSA: multiple security controls
+		{
+			"name": "parentalSuite",
+			"security_controls": [
+				
+				{
+					"imgName": "contentFilter_v2",
+					"conf": "contentFilter_v2_00000001"
+				},
+
+				{
+					"imgName": "netMon_v1",
+					"conf": "netMon_v1_00000001"
+				}
+			],
+			
+			// ingress and egress flow describe the order in which the traffic needs to traverse 
+			// the security controls enforced by the PSAs according to if it is going from the user 
+			// towards the internet or viceversa; in this example the traversal order needs to be
+			// always the same
+			"ingress_flow": [0,1],
+			"egress_flow": [0,1]
+				
+		}
+
+	] //end of PSASet
+
+} //end profileType_ex.json

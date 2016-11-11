@@ -1,0 +1,9 @@
+# iptables
+# drop www.upc.edu
+*filter
+:INPUT ACCEPT [0:0]
+:FORWARD ACCEPT [0:0]
+:OUTPUT ACCEPT [0:0]
+-A FORWARD -d 147.83.2.135 -m physdev --physdev-in eth0 --physdev-out eth1 -j DROP
+COMMIT
+

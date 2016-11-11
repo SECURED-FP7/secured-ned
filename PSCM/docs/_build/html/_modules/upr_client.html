@@ -1,0 +1,415 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>upr_client &mdash; PSCM  documentation</title>
+    
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="PSCM  documentation" href="../index.html" />
+    <link rel="up" title="Module code" href="index.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for upr_client</h1><div class="highlight"><pre>
+<span></span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">SECURED/UPR:</span>
+
+<span class="sd">commit 6cd5e64432f525b65671372821f274798d02a205</span>
+<span class="sd">Author: Antonio Pastor Perales &lt;antonio.pastorperales@telefonica.com&gt;</span>
+<span class="sd">Date:   Tue Oct 20 10:56:59 2015 +0200</span>
+
+<span class="sd">    Complete merge request</span>
+
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="kn">from</span> <span class="nn">requests</span> <span class="kn">import</span> <span class="n">get</span><span class="p">,</span> <span class="n">put</span><span class="p">,</span> <span class="n">post</span><span class="p">,</span> <span class="n">delete</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<div class="viewcode-block" id="UPRClient"><a class="viewcode-back" href="../upr_client.html#upr_client.UPRClient">[docs]</a><span class="k">class</span> <span class="nc">UPRClient</span><span class="p">:</span>
+	<span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">base_URL</span><span class="p">):</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">base_URL</span><span class="o">=</span><span class="n">base_URL</span><span class="o">+</span><span class="s1">&#39;/v1/upr/&#39;</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">headers</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;Accept&quot;</span><span class="p">:</span><span class="s1">&#39;application/json&#39;</span><span class="p">,</span><span class="s1">&#39;Content-type&#39;</span><span class="p">:</span><span class="s1">&#39;application/json&#39;</span><span class="p">}</span>		
+
+<div class="viewcode-block" id="UPRClient.create_user"><a class="viewcode-back" href="../upr_client.html#upr_client.UPRClient.create_user">[docs]</a>	<span class="k">def</span> <span class="nf">create_user</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user_id</span><span class="p">,</span> <span class="n">password</span><span class="p">,</span> <span class="n">integrityLevel</span><span class="p">,</span> <span class="nb">type</span><span class="p">,</span> 
+			<span class="n">is_cooperative</span><span class="p">,</span> <span class="n">is_infrastructure</span><span class="p">,</span> <span class="n">is_admin</span><span class="p">,</span> <span class="n">creator</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+			<span class="n">optimization_profile</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+		<span class="n">url</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">base_URL</span><span class="o">+</span><span class="s1">&#39;users/&#39;</span>
+		<span class="n">data</span><span class="o">=</span><span class="p">{}</span>
+		<span class="n">data</span><span class="p">[</span><span class="s1">&#39;user_id&#39;</span><span class="p">]</span><span class="o">=</span><span class="n">user_id</span>
+		<span class="n">data</span><span class="p">[</span><span class="s1">&#39;password&#39;</span><span class="p">]</span><span class="o">=</span><span class="n">password</span>
+		<span class="n">data</span><span class="p">[</span><span class="s1">&#39;integrityLevel&#39;</span><span class="p">]</span><span class="o">=</span><span class="n">integrityLevel</span>
+		<span class="n">data</span><span class="p">[</span><span class="s1">&#39;is_cooperative&#39;</span><span class="p">]</span><span class="o">=</span><span class="n">is_cooperative</span>
+		<span class="n">data</span><span class="p">[</span><span class="s1">&#39;is_infrastructure&#39;</span><span class="p">]</span><span class="o">=</span><span class="n">is_infrastructure</span>
+		<span class="n">data</span><span class="p">[</span><span class="s1">&#39;is_admin&#39;</span><span class="p">]</span><span class="o">=</span><span class="n">is_admin</span>
+		<span class="k">if</span> <span class="n">creator</span><span class="p">:</span>
+			<span class="n">data</span><span class="p">[</span><span class="s1">&#39;creator&#39;</span><span class="p">]</span><span class="o">=</span><span class="n">creator</span>
+		<span class="n">data</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span><span class="o">=</span><span class="nb">type</span>
+		<span class="k">if</span> <span class="n">optimization_profile</span><span class="p">:</span>
+			<span class="n">data</span><span class="p">[</span><span class="s1">&#39;optimization_profile&#39;</span><span class="p">]</span><span class="o">=</span><span class="n">optimization_profile</span>
+		<span class="n">r</span><span class="o">=</span><span class="n">post</span><span class="p">(</span><span class="n">url</span><span class="p">,</span><span class="n">data</span><span class="o">=</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">data</span><span class="p">),</span><span class="n">headers</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">headers</span><span class="p">)</span>
+		<span class="k">return</span> <span class="n">r</span></div>
+
+<div class="viewcode-block" id="UPRClient.get_user_list"><a class="viewcode-back" href="../upr_client.html#upr_client.UPRClient.get_user_list">[docs]</a>	<span class="k">def</span> <span class="nf">get_user_list</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">user_id</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+		<span class="n">url</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">base_URL</span><span class="o">+</span><span class="s1">&#39;users/&#39;</span>
+		<span class="n">params</span><span class="o">=</span><span class="p">{}</span>
+		<span class="k">if</span> <span class="n">user_id</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+			<span class="n">params</span><span class="p">[</span><span class="s1">&#39;user_id&#39;</span><span class="p">]</span><span class="o">=</span><span class="n">user_id</span>
+
+		<span class="n">r</span><span class="o">=</span><span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">params</span><span class="o">=</span><span class="n">params</span><span class="p">)</span>
+		<span class="k">return</span> <span class="n">r</span></div>
+
+<div class="viewcode-block" id="UPRClient.get_user_type"><a class="viewcode-back" href="../upr_client.html#upr_client.UPRClient.get_user_type">[docs]</a>	<span class="k">def</span> <span class="nf">get_user_type</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user_id</span><span class="p">):</span>
+		<span class="n">url</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">base_URL</span><span class="o">+</span><span class="s1">&#39;users/&#39;</span><span class="o">+</span><span class="n">user_id</span><span class="o">+</span><span class="s1">&#39;/UserType/&#39;</span>
+		<span class="n">r</span><span class="o">=</span><span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
+		<span class="k">return</span> <span class="n">r</span>	</div>
+<div class="viewcode-block" id="UPRClient.get_user_creator"><a class="viewcode-back" href="../upr_client.html#upr_client.UPRClient.get_user_creator">[docs]</a>	<span class="k">def</span> <span class="nf">get_user_creator</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user_id</span><span class="p">):</span>
+		<span class="n">url</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">base_URL</span><span class="o">+</span><span class="s1">&#39;users/&#39;</span><span class="o">+</span><span class="n">user_id</span><span class="o">+</span><span class="s1">&#39;/Creator/&#39;</span>
+		<span class="n">r</span><span class="o">=</span><span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
+		<span class="k">return</span> <span class="n">r</span>	</div>
+<div class="viewcode-block" id="UPRClient.get_user_opt_profile"><a class="viewcode-back" href="../upr_client.html#upr_client.UPRClient.get_user_opt_profile">[docs]</a>	<span class="k">def</span> <span class="nf">get_user_opt_profile</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user_id</span><span class="p">):</span>
+		<span class="n">url</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">base_URL</span><span class="o">+</span><span class="s1">&#39;users/&#39;</span><span class="o">+</span><span class="n">user_id</span><span class="o">+</span><span class="s1">&#39;/OptProfile/&#39;</span>
+		<span class="n">r</span><span class="o">=</span><span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
+		<span class="k">return</span> <span class="n">r</span>	</div>
+<div class="viewcode-block" id="UPRClient.get_user_groups"><a class="viewcode-back" href="../upr_client.html#upr_client.UPRClient.get_user_groups">[docs]</a>	<span class="k">def</span> <span class="nf">get_user_groups</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user_id</span><span class="p">):</span>
+		<span class="n">url</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">base_URL</span><span class="o">+</span><span class="s1">&#39;users/&#39;</span><span class="o">+</span><span class="n">user_id</span><span class="o">+</span><span class="s1">&#39;/Groups/&#39;</span>
+		<span class="k">return</span> <span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">)</span></div>
+<div class="viewcode-block" id="UPRClient.get_created_users"><a class="viewcode-back" href="../upr_client.html#upr_client.UPRClient.get_created_users">[docs]</a>	<span class="k">def</span> <span class="nf">get_created_users</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">user_id</span><span class="p">):</span>		
+		<span class="n">url</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">base_URL</span><span class="o">+</span><span class="s1">&#39;users/&#39;</span><span class="o">+</span><span class="n">user_id</span><span class="o">+</span><span class="s1">&#39;/CreatedUsers/&#39;</span>
+		<span class="k">return</span> <span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">)</span></div>
+	
+<div class="viewcode-block" id="UPRClient.auth_user"><a class="viewcode-back" href="../upr_client.html#upr_client.UPRClient.auth_user">[docs]</a>	<span class="k">def</span> <span class="nf">auth_user</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user</span> <span class="p">,</span> <span class="n">password</span><span class="p">):</span>
+		<span class="n">url</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">base_URL</span><span class="o">+</span><span class="s1">&#39;users/auth/&#39;</span>
+		<span class="n">data</span><span class="o">=</span><span class="p">{}</span>
+		<span class="n">data</span><span class="p">[</span><span class="s1">&#39;username&#39;</span><span class="p">]</span><span class="o">=</span><span class="n">user</span>
+		<span class="n">data</span><span class="p">[</span><span class="s1">&#39;password&#39;</span><span class="p">]</span><span class="o">=</span><span class="n">password</span>
+
+		<span class="n">r</span><span class="o">=</span><span class="n">post</span><span class="p">(</span><span class="n">url</span><span class="p">,</span><span class="n">data</span><span class="o">=</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">data</span><span class="p">),</span><span class="n">headers</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">headers</span><span class="p">)</span>
+		<span class="k">return</span> <span class="n">r</span></div>
+<div class="viewcode-block" id="UPRClient.update_user"><a class="viewcode-back" href="../upr_client.html#upr_client.UPRClient.update_user">[docs]</a>	<span class="k">def</span> <span class="nf">update_user</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user_id</span><span class="p">,</span>  <span class="n">name</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">password</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">integrityLevel</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="nb">type</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> 
+                        <span class="n">is_cooperative</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">is_infrastructure</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">is_admin</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">creator</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+		<span class="n">url</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">base_URL</span><span class="o">+</span><span class="s1">&#39;users/&#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">user_id</span><span class="p">)</span><span class="o">+</span><span class="s1">&#39;/&#39;</span>
+		
+		<span class="n">data</span><span class="o">=</span><span class="p">{}</span>
+		<span class="k">if</span> <span class="n">name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+			<span class="n">data</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span><span class="o">=</span><span class="n">name</span>
+		<span class="k">if</span> <span class="n">password</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+			<span class="n">data</span><span class="p">[</span><span class="s1">&#39;password&#39;</span><span class="p">]</span><span class="o">=</span><span class="n">password</span>
+		<span class="k">if</span> <span class="n">integrityLevel</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+			<span class="n">data</span><span class="p">[</span><span class="s1">&#39;integrityLevel&#39;</span><span class="p">]</span><span class="o">=</span><span class="n">integrityLevel</span>
+		<span class="k">if</span> <span class="n">is_cooperative</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+			<span class="n">data</span><span class="p">[</span><span class="s1">&#39;is_cooperative&#39;</span><span class="p">]</span><span class="o">=</span><span class="n">is_cooperative</span>
+		<span class="k">if</span> <span class="n">is_infrastructure</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+			<span class="n">data</span><span class="p">[</span><span class="s1">&#39;is_infrastructure&#39;</span><span class="p">]</span><span class="o">=</span><span class="n">is_infrastructure</span>
+		<span class="k">if</span> <span class="n">is_admin</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+			<span class="n">data</span><span class="p">[</span><span class="s1">&#39;is_admin&#39;</span><span class="p">]</span><span class="o">=</span><span class="n">is_admin</span>
+		<span class="k">if</span> <span class="n">creator</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+			<span class="n">data</span><span class="p">[</span><span class="s1">&#39;creator&#39;</span><span class="p">]</span><span class="o">=</span><span class="n">creator</span>
+		
+		<span class="n">r</span><span class="o">=</span><span class="n">put</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">data</span><span class="p">),</span><span class="n">headers</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">headers</span><span class="p">)</span>
+		<span class="k">return</span> <span class="n">r</span></div>
+
+<div class="viewcode-block" id="UPRClient.delete_user"><a class="viewcode-back" href="../upr_client.html#upr_client.UPRClient.delete_user">[docs]</a>	<span class="k">def</span> <span class="nf">delete_user</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">user_id</span><span class="p">):</span>
+		<span class="n">url</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">base_URL</span><span class="o">+</span><span class="s1">&#39;users/&#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">user_id</span><span class="p">)</span><span class="o">+</span><span class="s1">&#39;/&#39;</span>
+		<span class="n">r</span><span class="o">=</span><span class="n">delete</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
+		<span class="k">return</span> <span class="n">r</span></div>
+
+<div class="viewcode-block" id="UPRClient.get_user_psa"><a class="viewcode-back" href="../upr_client.html#upr_client.UPRClient.get_user_psa">[docs]</a>	<span class="k">def</span> <span class="nf">get_user_psa</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">user_id</span><span class="p">,</span><span class="n">is_active</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+		<span class="n">url</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">base_URL</span><span class="o">+</span><span class="s1">&#39;users/&#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">user_id</span><span class="p">)</span><span class="o">+</span><span class="s1">&#39;/PSA/&#39;</span>
+		<span class="n">params</span><span class="o">=</span><span class="p">{}</span>
+		<span class="k">if</span> <span class="n">is_active</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+			<span class="n">params</span><span class="p">[</span><span class="s1">&#39;is_active&#39;</span><span class="p">]</span><span class="o">=</span><span class="n">is_active</span>
+		<span class="k">return</span> <span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">,</span><span class="n">params</span><span class="o">=</span><span class="n">params</span><span class="p">)</span></div>
+<div class="viewcode-block" id="UPRClient.put_user_psa"><a class="viewcode-back" href="../upr_client.html#upr_client.UPRClient.put_user_psa">[docs]</a>	<span class="k">def</span> <span class="nf">put_user_psa</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">user_id</span><span class="p">,</span><span class="n">data</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span><span class="n">psa_id</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span><span class="n">active</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span><span class="n">running_order</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+		<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">		Data must be in the form accepted by the UPR</span>
+<span class="sd">		{&#39;PSAList&#39;:[</span>
+<span class="sd">                                {</span>
+<span class="sd">                                        &#39;psa_id&#39;:&#39;12345&#39;,</span>
+<span class="sd">                                        &#39;active&#39;:true,</span>
+<span class="sd">                                        &#39;running_order&#39;:2</span>
+<span class="sd">                                },</span>
+<span class="sd">                                {</span>
+<span class="sd">                                        &#39;psa_id&#39;:&#39;54321&#39;,</span>
+<span class="sd">                                        &#39;active&#39;:false,</span>
+<span class="sd">                                        &#39;running_order&#39;:1</span>
+<span class="sd">                                }</span>
+<span class="sd">                           ]</span>
+<span class="sd">                        }</span>
+<span class="sd">		&quot;&quot;&quot;</span>
+		<span class="n">url</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">base_URL</span><span class="o">+</span><span class="s1">&#39;users/&#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">user_id</span><span class="p">)</span><span class="o">+</span><span class="s1">&#39;/PSA/&#39;</span>
+		<span class="k">if</span> <span class="n">data</span><span class="p">:</span>
+			<span class="k">return</span> <span class="n">put</span><span class="p">(</span><span class="n">url</span><span class="p">,</span><span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">)</span>
+		<span class="k">else</span><span class="p">:</span>
+			<span class="n">psa_list</span><span class="o">=</span><span class="p">{}</span>
+			<span class="n">psas</span><span class="o">=</span><span class="p">[]</span>
+			<span class="n">psa</span><span class="o">=</span><span class="p">{}</span>
+			<span class="n">psa</span><span class="p">[</span><span class="s1">&#39;psa_id&#39;</span><span class="p">]</span><span class="o">=</span><span class="n">psa_id</span>
+			<span class="n">psa</span><span class="p">[</span><span class="s1">&#39;active&#39;</span><span class="p">]</span><span class="o">=</span><span class="n">active</span>
+			<span class="n">psa</span><span class="p">[</span><span class="s1">&#39;running_order&#39;</span><span class="p">]</span><span class="o">=</span><span class="n">running_order</span>
+			<span class="n">psas</span><span class="o">=</span><span class="n">psas</span><span class="o">+</span><span class="p">[</span><span class="n">psa</span><span class="p">]</span>
+			<span class="n">psa_list</span><span class="p">[</span><span class="s1">&#39;PSAList&#39;</span><span class="p">]</span><span class="o">=</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">psas</span><span class="p">)</span>
+			<span class="k">return</span> <span class="n">put</span><span class="p">(</span><span class="n">url</span><span class="p">,</span><span class="n">data</span><span class="o">=</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">psa_list</span><span class="p">),</span><span class="n">headers</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">headers</span><span class="p">)</span></div>
+		
+<div class="viewcode-block" id="UPRClient.delete_user_psa"><a class="viewcode-back" href="../upr_client.html#upr_client.UPRClient.delete_user_psa">[docs]</a>	<span class="k">def</span> <span class="nf">delete_user_psa</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">user_id</span><span class="p">,</span><span class="n">psa_id</span><span class="p">):</span>
+		<span class="n">url</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">base_URL</span><span class="o">+</span><span class="s1">&#39;users/&#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">user_id</span><span class="p">)</span><span class="o">+</span><span class="s1">&#39;/PSA/&#39;</span>
+		<span class="n">params</span><span class="o">=</span><span class="p">{}</span>
+		<span class="n">params</span><span class="p">[</span><span class="s1">&#39;psa_id&#39;</span><span class="p">]</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">psa_id</span><span class="p">)</span>
+		<span class="k">return</span> <span class="n">delete</span><span class="p">(</span><span class="n">url</span><span class="p">,</span><span class="n">params</span><span class="o">=</span><span class="n">params</span><span class="p">)</span></div>
+	
+<div class="viewcode-block" id="UPRClient.get_hspl"><a class="viewcode-back" href="../upr_client.html#upr_client.UPRClient.get_hspl">[docs]</a>	<span class="k">def</span> <span class="nf">get_hspl</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">target</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span><span class="n">editor</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+		<span class="n">url</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">base_URL</span><span class="o">+</span><span class="s1">&#39;HSPL/&#39;</span>
+		<span class="n">params</span><span class="o">=</span><span class="p">{}</span>
+		<span class="k">if</span> <span class="n">target</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+			<span class="n">params</span><span class="p">[</span><span class="s1">&#39;target_id&#39;</span><span class="p">]</span><span class="o">=</span><span class="n">target</span>
+		<span class="k">if</span> <span class="n">editor</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+			<span class="n">params</span><span class="p">[</span><span class="s1">&#39;editor_id&#39;</span><span class="p">]</span><span class="o">=</span><span class="n">editor</span>
+
+		<span class="k">return</span> <span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">,</span><span class="n">params</span><span class="o">=</span><span class="n">params</span><span class="p">)</span></div>
+<div class="viewcode-block" id="UPRClient.delete_hspl"><a class="viewcode-back" href="../upr_client.html#upr_client.UPRClient.delete_hspl">[docs]</a>	<span class="k">def</span> <span class="nf">delete_hspl</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">user_id</span><span class="p">,</span><span class="n">hspl_id</span><span class="p">):</span>
+		<span class="n">url</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">base_URL</span><span class="o">+</span><span class="s1">&#39;HSPL/&#39;</span>
+		<span class="n">params</span><span class="o">=</span><span class="p">{}</span>
+		<span class="n">params</span><span class="p">[</span><span class="s1">&#39;hspl_id&#39;</span><span class="p">]</span><span class="o">=</span><span class="n">hspl_id</span>
+		<span class="k">return</span> <span class="n">delete</span><span class="p">(</span><span class="n">url</span><span class="p">,</span><span class="n">params</span><span class="o">=</span><span class="n">params</span><span class="p">)</span>		</div>
+
+<div class="viewcode-block" id="UPRClient.put_user_hspl"><a class="viewcode-back" href="../upr_client.html#upr_client.UPRClient.put_user_hspl">[docs]</a>	<span class="k">def</span> <span class="nf">put_user_hspl</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user_id</span><span class="p">,</span> <span class="n">hspl</span><span class="p">,</span> <span class="n">target</span><span class="p">):</span>
+		<span class="n">url</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">base_URL</span><span class="o">+</span><span class="s1">&#39;users/&#39;</span><span class="o">+</span><span class="n">user_id</span><span class="o">+</span><span class="s1">&#39;/HSPL/&#39;</span>		
+		<span class="n">data</span><span class="o">=</span><span class="p">{}</span>
+		<span class="n">data</span><span class="p">[</span><span class="s1">&#39;hspl&#39;</span><span class="p">]</span><span class="o">=</span><span class="n">hspl</span>
+		<span class="n">data</span><span class="p">[</span><span class="s1">&#39;target&#39;</span><span class="p">]</span><span class="o">=</span><span class="n">target</span>
+		<span class="k">return</span> <span class="n">put</span><span class="p">(</span><span class="n">url</span><span class="p">,</span><span class="n">data</span><span class="o">=</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">data</span><span class="p">),</span><span class="n">headers</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">headers</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="UPRClient.create_group"><a class="viewcode-back" href="../upr_client.html#upr_client.UPRClient.create_group">[docs]</a>	<span class="k">def</span> <span class="nf">create_group</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">description</span><span class="p">):</span>
+		<span class="n">url</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">base_URL</span><span class="o">+</span><span class="s1">&#39;groups/&#39;</span>
+		<span class="n">data</span><span class="o">=</span><span class="p">{}</span>
+		<span class="n">data</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span><span class="o">=</span><span class="n">name</span>
+		<span class="n">data</span><span class="p">[</span><span class="s1">&#39;description&#39;</span><span class="p">]</span><span class="o">=</span><span class="n">description</span>
+		<span class="k">return</span> <span class="n">post</span><span class="p">(</span><span class="n">url</span><span class="p">,</span><span class="n">data</span><span class="o">=</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">data</span><span class="p">),</span><span class="n">headers</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">headers</span><span class="p">)</span></div>
+	
+<div class="viewcode-block" id="UPRClient.list_group"><a class="viewcode-back" href="../upr_client.html#upr_client.UPRClient.list_group">[docs]</a>	<span class="k">def</span> <span class="nf">list_group</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="n">url</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">base_URL</span><span class="o">+</span><span class="s1">&#39;groups/&#39;</span>
+		<span class="k">return</span> <span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">)</span></div>
+		
+<div class="viewcode-block" id="UPRClient.delete_group"><a class="viewcode-back" href="../upr_client.html#upr_client.UPRClient.delete_group">[docs]</a>	<span class="k">def</span> <span class="nf">delete_group</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">group_id</span><span class="p">):</span>
+		<span class="n">url</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">base_URL</span><span class="o">+</span><span class="s1">&#39;groups/&#39;</span><span class="o">+</span><span class="n">group_id</span><span class="o">+</span><span class="s1">&#39;/&#39;</span>
+		<span class="k">return</span> <span class="n">delete</span><span class="p">(</span><span class="n">url</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="UPRClient.update_group"><a class="viewcode-back" href="../upr_client.html#upr_client.UPRClient.update_group">[docs]</a>	<span class="k">def</span> <span class="nf">update_group</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">group</span><span class="p">,</span> <span class="n">description</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+		<span class="n">url</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">base_URL</span><span class="o">+</span><span class="s1">&#39;groups/&#39;</span><span class="o">+</span><span class="n">group</span><span class="o">+</span><span class="s1">&#39;/&#39;</span>
+		<span class="n">data</span><span class="o">=</span><span class="p">{}</span>
+		<span class="k">if</span> <span class="n">description</span><span class="p">:</span>
+			<span class="n">data</span><span class="p">[</span><span class="s1">&#39;description&#39;</span><span class="p">]</span><span class="o">=</span><span class="n">description</span>
+		<span class="k">return</span> <span class="n">put</span><span class="p">(</span><span class="n">url</span><span class="p">,</span><span class="n">data</span><span class="o">=</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">data</span><span class="p">),</span><span class="n">headers</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">headers</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="UPRClient.list_user_group"><a class="viewcode-back" href="../upr_client.html#upr_client.UPRClient.list_user_group">[docs]</a>	<span class="k">def</span> <span class="nf">list_user_group</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">group</span><span class="p">):</span>
+		<span class="n">url</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">base_URL</span><span class="o">+</span><span class="s1">&#39;groups/&#39;</span><span class="o">+</span><span class="n">group</span><span class="o">+</span><span class="s1">&#39;/users/&#39;</span>
+		<span class="k">return</span> <span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="UPRClient.associate_user_group"><a class="viewcode-back" href="../upr_client.html#upr_client.UPRClient.associate_user_group">[docs]</a>	<span class="k">def</span> <span class="nf">associate_user_group</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">group</span><span class="p">,</span> <span class="n">user_id</span><span class="p">):</span>
+		<span class="n">url</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">base_URL</span><span class="o">+</span><span class="s1">&#39;groups/&#39;</span><span class="o">+</span><span class="n">group</span><span class="o">+</span><span class="s1">&#39;/users/&#39;</span>
+		<span class="n">data</span><span class="o">=</span><span class="p">{}</span>
+		<span class="n">data</span><span class="p">[</span><span class="s1">&#39;user_id&#39;</span><span class="p">]</span><span class="o">=</span><span class="n">user_id</span>
+		<span class="k">return</span> <span class="n">put</span><span class="p">(</span><span class="n">url</span><span class="p">,</span><span class="n">data</span><span class="o">=</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">data</span><span class="p">),</span><span class="n">headers</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">headers</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="UPRClient.delete_user_group"><a class="viewcode-back" href="../upr_client.html#upr_client.UPRClient.delete_user_group">[docs]</a>	<span class="k">def</span> <span class="nf">delete_user_group</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user</span><span class="p">,</span> <span class="n">group</span><span class="p">):</span>
+		<span class="n">url</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">base_URL</span><span class="o">+</span><span class="s1">&#39;groups/&#39;</span><span class="o">+</span><span class="n">group</span><span class="o">+</span><span class="s1">&#39;/users/&#39;</span>
+		<span class="n">params</span><span class="o">=</span><span class="p">{}</span>
+		<span class="n">params</span><span class="p">[</span><span class="s1">&#39;user_id&#39;</span><span class="p">]</span><span class="o">=</span><span class="n">user</span>
+		<span class="k">return</span> <span class="n">delete</span><span class="p">(</span><span class="n">url</span><span class="p">,</span><span class="n">params</span><span class="o">=</span><span class="n">params</span><span class="p">)</span></div>
+	
+<div class="viewcode-block" id="UPRClient.get_group_psa"><a class="viewcode-back" href="../upr_client.html#upr_client.UPRClient.get_group_psa">[docs]</a>	<span class="k">def</span> <span class="nf">get_group_psa</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">group</span><span class="p">):</span>
+		<span class="n">url</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">base_URL</span><span class="o">+</span><span class="s1">&#39;groups/&#39;</span><span class="o">+</span><span class="n">group</span><span class="o">+</span><span class="s1">&#39;/PSA/&#39;</span>
+		<span class="k">return</span> <span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="UPRClient.put_group_psa"><a class="viewcode-back" href="../upr_client.html#upr_client.UPRClient.put_group_psa">[docs]</a>	<span class="k">def</span> <span class="nf">put_group_psa</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">group</span><span class="p">,</span> <span class="n">psa_id</span><span class="p">):</span>
+		<span class="n">url</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">base_URL</span><span class="o">+</span><span class="s1">&#39;groups/&#39;</span><span class="o">+</span><span class="n">group</span><span class="o">+</span><span class="s1">&#39;/PSA/&#39;</span>
+		<span class="n">data</span><span class="o">=</span><span class="p">{}</span>
+		<span class="n">data</span><span class="p">[</span><span class="s1">&#39;psa_id&#39;</span><span class="p">]</span><span class="o">=</span><span class="n">psa_id</span>
+		<span class="k">return</span> <span class="n">put</span><span class="p">(</span><span class="n">url</span><span class="p">,</span><span class="n">data</span><span class="o">=</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">data</span><span class="p">),</span><span class="n">headers</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">headers</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="UPRClient.delete_group_psa"><a class="viewcode-back" href="../upr_client.html#upr_client.UPRClient.delete_group_psa">[docs]</a>	<span class="k">def</span> <span class="nf">delete_group_psa</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">group</span><span class="p">,</span><span class="n">psa_id</span><span class="p">):</span>		
+		<span class="n">url</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">base_URL</span><span class="o">+</span><span class="s1">&#39;groups/&#39;</span><span class="o">+</span><span class="n">group</span><span class="o">+</span><span class="s1">&#39;/PSA/&#39;</span>
+		<span class="n">params</span><span class="o">=</span><span class="p">{}</span>
+		<span class="n">params</span><span class="p">[</span><span class="s1">&#39;psa_id&#39;</span><span class="p">]</span><span class="o">=</span><span class="n">psa_id</span>
+		<span class="k">return</span> <span class="n">delete</span><span class="p">(</span><span class="n">url</span><span class="p">,</span><span class="n">params</span><span class="o">=</span><span class="n">params</span><span class="p">)</span></div>
+
+	<span class="c1">#MSPL</span>
+
+<div class="viewcode-block" id="UPRClient.get_mspl"><a class="viewcode-back" href="../upr_client.html#upr_client.UPRClient.get_mspl">[docs]</a>	<span class="k">def</span> <span class="nf">get_mspl</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">internalID</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span><span class="n">target</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span><span class="n">editor</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span><span class="n">is_reconciled</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+		<span class="n">url</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">base_URL</span><span class="o">+</span><span class="s1">&#39;MSPL/&#39;</span>
+		<span class="n">params</span><span class="o">=</span><span class="p">{}</span>
+		<span class="k">if</span> <span class="n">internalID</span><span class="p">:</span>
+			<span class="n">params</span><span class="p">[</span><span class="s1">&#39;internalID&#39;</span><span class="p">]</span><span class="o">=</span><span class="n">internalID</span>
+		<span class="k">if</span> <span class="n">target</span><span class="p">:</span>
+			<span class="n">params</span><span class="p">[</span><span class="s1">&#39;target&#39;</span><span class="p">]</span><span class="o">=</span><span class="n">target</span>
+		<span class="k">if</span> <span class="n">editor</span><span class="p">:</span>
+			<span class="n">params</span><span class="p">[</span><span class="s1">&#39;editor&#39;</span><span class="p">]</span><span class="o">=</span><span class="n">editor</span>
+		<span class="k">if</span> <span class="n">is_reconciled</span><span class="p">:</span>
+			<span class="n">params</span><span class="p">[</span><span class="s1">&#39;is_reconciled&#39;</span><span class="p">]</span><span class="o">=</span><span class="n">is_reconciled</span>
+		<span class="k">return</span> <span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">,</span><span class="n">params</span><span class="o">=</span><span class="n">params</span><span class="p">)</span></div>
+	
+<div class="viewcode-block" id="UPRClient.create_mspl"><a class="viewcode-back" href="../upr_client.html#upr_client.UPRClient.create_mspl">[docs]</a>	<span class="k">def</span> <span class="nf">create_mspl</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">target</span><span class="p">,</span><span class="n">editor</span><span class="p">,</span><span class="n">capability</span><span class="p">,</span><span class="n">is_reconciled</span><span class="p">,</span><span class="n">mspl</span><span class="p">,</span><span class="n">internalID</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+		<span class="n">url</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">base_URL</span><span class="o">+</span><span class="s1">&#39;MSPL/&#39;</span>
+		<span class="n">data</span><span class="o">=</span><span class="p">{}</span>
+		<span class="n">data</span><span class="p">[</span><span class="s1">&#39;target&#39;</span><span class="p">]</span><span class="o">=</span><span class="n">target</span>
+		<span class="n">data</span><span class="p">[</span><span class="s1">&#39;editor&#39;</span><span class="p">]</span><span class="o">=</span><span class="n">editor</span>
+		<span class="n">data</span><span class="p">[</span><span class="s1">&#39;capability&#39;</span><span class="p">]</span><span class="o">=</span><span class="n">capability</span>
+		<span class="n">data</span><span class="p">[</span><span class="s1">&#39;is_reconciled&#39;</span><span class="p">]</span><span class="o">=</span><span class="n">is_reconciled</span>
+		<span class="n">data</span><span class="p">[</span><span class="s1">&#39;mspl&#39;</span><span class="p">]</span><span class="o">=</span><span class="n">mspl</span>
+		<span class="k">if</span> <span class="n">internalID</span><span class="p">:</span>
+			<span class="n">data</span><span class="p">[</span><span class="s1">&#39;internalID&#39;</span><span class="p">]</span><span class="o">=</span><span class="n">internalID</span>
+		<span class="k">return</span> <span class="n">post</span><span class="p">(</span><span class="n">url</span><span class="p">,</span><span class="n">data</span><span class="o">=</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">data</span><span class="p">),</span><span class="n">headers</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">headers</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="UPRClient.delete_mspl"><a class="viewcode-back" href="../upr_client.html#upr_client.UPRClient.delete_mspl">[docs]</a>	<span class="k">def</span> <span class="nf">delete_mspl</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">mspl_id</span><span class="p">):</span>
+		<span class="n">url</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">base_URL</span><span class="o">+</span><span class="s1">&#39;MSPL/&#39;</span>
+		<span class="n">params</span><span class="o">=</span><span class="p">{}</span>
+		<span class="n">params</span><span class="p">[</span><span class="s1">&#39;mspl_id&#39;</span><span class="p">]</span><span class="o">=</span><span class="n">mspl_id</span>
+		<span class="k">return</span> <span class="n">delete</span><span class="p">(</span><span class="n">url</span><span class="p">,</span><span class="n">params</span><span class="o">=</span><span class="n">params</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="UPRClient.put_user_mspl_psa"><a class="viewcode-back" href="../upr_client.html#upr_client.UPRClient.put_user_mspl_psa">[docs]</a>	<span class="k">def</span> <span class="nf">put_user_mspl_psa</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">user_id</span><span class="p">,</span><span class="n">psa_id</span><span class="p">,</span><span class="n">mspl_id</span><span class="p">):</span>
+		<span class="n">url</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">base_URL</span><span class="o">+</span><span class="s1">&#39;users/&#39;</span><span class="o">+</span><span class="n">user_id</span><span class="o">+</span><span class="s1">&#39;/MSPL/&#39;</span>
+		
+		<span class="c1">#json_data=json.loads(&#39;{&quot;MSPL&quot;:[{&quot;psa_id&quot;:&#39;+str(psa_id)+&#39;,&quot;mspl_id&quot;:&#39;+str(mspl_id)+&#39;}]}&#39;)</span>
+		
+		<span class="n">data</span><span class="o">=</span><span class="p">{}</span>
+		<span class="n">mspls</span><span class="o">=</span><span class="p">[]</span>
+		<span class="n">mspl</span><span class="o">=</span><span class="p">{}</span>
+		<span class="n">mspl</span><span class="p">[</span><span class="s2">&quot;psa_id&quot;</span><span class="p">]</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">psa_id</span><span class="p">)</span>
+		<span class="n">mspl</span><span class="p">[</span><span class="s2">&quot;mspl_id&quot;</span><span class="p">]</span><span class="o">=</span><span class="n">mspl_id</span>
+		<span class="n">mspls</span><span class="o">=</span><span class="n">mspls</span><span class="o">+</span><span class="p">[</span><span class="n">mspl</span><span class="p">]</span>
+		<span class="n">data</span><span class="p">[</span><span class="s2">&quot;MSPL&quot;</span><span class="p">]</span><span class="o">=</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">mspls</span><span class="p">)</span>
+		<span class="k">print</span> <span class="n">data</span>
+		<span class="c1">#headers = {&#39;Content-type&#39;: &#39;application/json&#39;, &#39;Accept&#39;: &#39;application/json&#39;}</span>
+		<span class="k">return</span> <span class="n">put</span><span class="p">(</span><span class="n">url</span><span class="p">,</span><span class="n">data</span><span class="o">=</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">data</span><span class="p">),</span><span class="n">headers</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">headers</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="UPRClient.get_user_mspl_psa"><a class="viewcode-back" href="../upr_client.html#upr_client.UPRClient.get_user_mspl_psa">[docs]</a>	<span class="k">def</span> <span class="nf">get_user_mspl_psa</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">user_id</span><span class="p">):</span>
+		<span class="n">url</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">base_URL</span><span class="o">+</span><span class="s1">&#39;users/&#39;</span><span class="o">+</span><span class="n">user_id</span><span class="o">+</span><span class="s1">&#39;/MSPL/&#39;</span>
+		<span class="k">return</span> <span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">)</span></div>
+
+	<span class="c1">#AG</span>
+<div class="viewcode-block" id="UPRClient.get_user_ag"><a class="viewcode-back" href="../upr_client.html#upr_client.UPRClient.get_user_ag">[docs]</a>	<span class="k">def</span> <span class="nf">get_user_ag</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">user_id</span><span class="p">):</span>
+		<span class="n">url</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">base_URL</span><span class="o">+</span><span class="s1">&#39;users/&#39;</span><span class="o">+</span><span class="n">user_id</span><span class="o">+</span><span class="s1">&#39;/AG&#39;</span>
+		<span class="k">return</span> <span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">)</span></div>
+<div class="viewcode-block" id="UPRClient.post_ag"><a class="viewcode-back" href="../upr_client.html#upr_client.UPRClient.post_ag">[docs]</a>	<span class="k">def</span> <span class="nf">post_ag</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">target_id</span><span class="p">,</span><span class="n">editor_id</span><span class="p">,</span><span class="n">ag</span><span class="p">):</span>
+		<span class="n">url</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">base_URL</span><span class="o">+</span><span class="s1">&#39;users/AG/&#39;</span>
+		<span class="n">data</span><span class="o">=</span><span class="p">{}</span>
+		<span class="n">data</span><span class="p">[</span><span class="s1">&#39;target_id&#39;</span><span class="p">]</span><span class="o">=</span><span class="n">target_id</span>
+		<span class="n">data</span><span class="p">[</span><span class="s1">&#39;editor_id&#39;</span><span class="p">]</span><span class="o">=</span><span class="n">editor_id</span>
+		<span class="n">data</span><span class="p">[</span><span class="s1">&#39;application_graph&#39;</span><span class="p">]</span><span class="o">=</span><span class="n">ag</span>
+		<span class="k">return</span> <span class="n">post</span><span class="p">(</span><span class="n">url</span><span class="p">,</span><span class="n">data</span><span class="o">=</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">data</span><span class="p">),</span><span class="n">headers</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">headers</span><span class="p">)</span></div>
+	<span class="c1">#RAG</span>
+<div class="viewcode-block" id="UPRClient.get_user_rag"><a class="viewcode-back" href="../upr_client.html#upr_client.UPRClient.get_user_rag">[docs]</a>	<span class="k">def</span> <span class="nf">get_user_rag</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">user_id</span><span class="p">):</span>
+		<span class="n">url</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">base_URL</span><span class="o">+</span><span class="s1">&#39;users/&#39;</span><span class="o">+</span><span class="n">user_id</span><span class="o">+</span><span class="s1">&#39;/RAG&#39;</span>
+		<span class="k">return</span> <span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">)</span></div>
+<div class="viewcode-block" id="UPRClient.post_rag"><a class="viewcode-back" href="../upr_client.html#upr_client.UPRClient.post_rag">[docs]</a>	<span class="k">def</span> <span class="nf">post_rag</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">target_id</span><span class="p">,</span><span class="n">ned_info</span><span class="p">,</span><span class="n">rag</span><span class="p">):</span>
+		<span class="n">url</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">base_URL</span><span class="o">+</span><span class="s1">&#39;users/RAG/&#39;</span>
+		<span class="n">data</span><span class="o">=</span><span class="p">{}</span>
+		<span class="n">data</span><span class="p">[</span><span class="s1">&#39;target_id&#39;</span><span class="p">]</span><span class="o">=</span><span class="n">target_id</span>
+		<span class="n">data</span><span class="p">[</span><span class="s1">&#39;ned_info&#39;</span><span class="p">]</span><span class="o">=</span><span class="n">ned_info</span>
+		<span class="n">data</span><span class="p">[</span><span class="s1">&#39;reconcile_application_graph&#39;</span><span class="p">]</span><span class="o">=</span><span class="n">rag</span>
+		<span class="k">return</span> <span class="n">post</span><span class="p">(</span><span class="n">url</span><span class="p">,</span><span class="n">data</span><span class="o">=</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">data</span><span class="p">),</span><span class="n">headers</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">headers</span><span class="p">)</span></div>
+
+	<span class="c1">#Low Level</span>
+<div class="viewcode-block" id="UPRClient.get_user_psaconf"><a class="viewcode-back" href="../upr_client.html#upr_client.UPRClient.get_user_psaconf">[docs]</a>	<span class="k">def</span> <span class="nf">get_user_psaconf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">user_id</span><span class="p">,</span><span class="n">psa_id</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+		<span class="n">url</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">base_URL</span><span class="o">+</span><span class="s1">&#39;users/&#39;</span><span class="o">+</span><span class="n">user_id</span><span class="o">+</span><span class="s1">&#39;/PSAConf/&#39;</span>
+		<span class="n">params</span><span class="o">=</span><span class="p">{}</span>
+		<span class="k">if</span> <span class="n">psa_id</span><span class="p">:</span>
+			<span class="n">params</span><span class="p">[</span><span class="s1">&#39;psa_id&#39;</span><span class="p">]</span><span class="o">=</span><span class="n">psa_id</span>
+		<span class="k">return</span> <span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">,</span><span class="n">params</span><span class="o">=</span><span class="n">params</span><span class="p">)</span></div>
+<div class="viewcode-block" id="UPRClient.post_psaconf"><a class="viewcode-back" href="../upr_client.html#upr_client.UPRClient.post_psaconf">[docs]</a>	<span class="k">def</span> <span class="nf">post_psaconf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">user_id</span><span class="p">,</span><span class="n">psa_id</span><span class="p">,</span><span class="n">configuration</span><span class="p">):</span>
+		<span class="n">url</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">base_URL</span><span class="o">+</span><span class="s1">&#39;users/&#39;</span><span class="o">+</span><span class="n">user_id</span><span class="o">+</span><span class="s1">&#39;/PSAConf/&#39;</span>
+		<span class="n">data</span><span class="o">=</span><span class="p">{}</span>
+		<span class="n">data</span><span class="p">[</span><span class="s1">&#39;psa_id&#39;</span><span class="p">]</span><span class="o">=</span><span class="n">psa_id</span>
+		<span class="n">data</span><span class="p">[</span><span class="s1">&#39;configuration&#39;</span><span class="p">]</span><span class="o">=</span><span class="n">configuration</span>
+		<span class="k">return</span> <span class="n">post</span><span class="p">(</span><span class="n">url</span><span class="p">,</span><span class="n">data</span><span class="o">=</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">data</span><span class="p">),</span><span class="n">headers</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">headers</span><span class="p">)</span></div>
+
+	<span class="c1">#Executed PSA</span>
+<div class="viewcode-block" id="UPRClient.delete_executed_psa"><a class="viewcode-back" href="../upr_client.html#upr_client.UPRClient.delete_executed_psa">[docs]</a>	<span class="k">def</span> <span class="nf">delete_executed_psa</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">user_id</span><span class="p">,</span><span class="n">psa_id</span><span class="p">):</span>
+		<span class="n">url</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">base_URL</span><span class="o">+</span><span class="s1">&#39;users/&#39;</span><span class="o">+</span><span class="n">user_id</span><span class="o">+</span><span class="s1">&#39;/ExecutePSA/&#39;</span>
+		<span class="n">params</span><span class="o">=</span><span class="p">{}</span>
+		<span class="n">params</span><span class="p">[</span><span class="s1">&#39;psa_id&#39;</span><span class="p">]</span><span class="o">=</span><span class="n">psa_id</span>
+		<span class="k">return</span> <span class="n">delete</span><span class="p">(</span><span class="n">url</span><span class="p">,</span><span class="n">params</span><span class="o">=</span><span class="n">params</span><span class="p">)</span></div>
+		
+<div class="viewcode-block" id="UPRClient.get_executed_psa"><a class="viewcode-back" href="../upr_client.html#upr_client.UPRClient.get_executed_psa">[docs]</a>	<span class="k">def</span> <span class="nf">get_executed_psa</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">user_id</span><span class="p">):</span>
+		<span class="n">url</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">base_URL</span><span class="o">+</span><span class="s1">&#39;users/&#39;</span><span class="o">+</span><span class="n">user_id</span><span class="o">+</span><span class="s1">&#39;/ExecutePSA/&#39;</span>
+		<span class="k">return</span> <span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">)</span></div>
+<div class="viewcode-block" id="UPRClient.put_executed_psa"><a class="viewcode-back" href="../upr_client.html#upr_client.UPRClient.put_executed_psa">[docs]</a>	<span class="k">def</span> <span class="nf">put_executed_psa</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">user_id</span><span class="p">,</span><span class="n">psa_id</span><span class="p">):</span>
+		<span class="n">url</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">base_URL</span><span class="o">+</span><span class="s1">&#39;users/&#39;</span><span class="o">+</span><span class="n">user_id</span><span class="o">+</span><span class="s1">&#39;/ExecutePSA/&#39;</span>
+		<span class="n">data</span><span class="o">=</span><span class="p">{}</span>
+		<span class="n">data</span><span class="p">[</span><span class="s1">&#39;psa_id&#39;</span><span class="p">]</span><span class="o">=</span><span class="n">psa_id</span>
+		<span class="k">print</span> <span class="n">data</span>
+		<span class="k">return</span> <span class="n">put</span><span class="p">(</span><span class="n">url</span><span class="p">,</span><span class="n">data</span><span class="o">=</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">data</span><span class="p">),</span><span class="n">headers</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">headers</span><span class="p">)</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../index.html">
+              <img class="logo" src="../_static/secured.png" alt="Logo"/>
+            </a></p><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, SECURity at the network EDge.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

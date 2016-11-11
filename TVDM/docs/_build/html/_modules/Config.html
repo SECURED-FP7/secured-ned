@@ -1,0 +1,244 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Config &mdash; TVDM  documentation</title>
+    
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="TVDM  documentation" href="../index.html" />
+    <link rel="up" title="Module code" href="index.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for Config</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">ConfigParser</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">copy</span>
+
+
+<div class="viewcode-block" id="Configuration"><a class="viewcode-back" href="../Config.html#Config.Configuration">[docs]</a><span class="k">class</span> <span class="nc">Configuration</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    
+    <span class="n">_instance</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="c1">#(fmignini) Not too meaningful use this var, I should change his name with something else like inizialized = False </span>
+    <span class="n">_AUTH_SERVER</span> <span class="o">=</span> <span class="bp">None</span>
+    
+    <span class="k">def</span> <span class="nf">__new__</span><span class="p">(</span><span class="n">cls</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">cls</span><span class="o">.</span><span class="n">_instance</span><span class="p">:</span>
+            <span class="n">cls</span><span class="o">.</span><span class="n">_instance</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">Configuration</span><span class="p">,</span> <span class="n">cls</span><span class="p">)</span><span class="o">.</span><span class="n">__new__</span><span class="p">(</span>
+                                <span class="n">cls</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">cls</span><span class="o">.</span><span class="n">_instance</span> 
+    
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1">#print &#39;Configuration - PATH : &#39;+os.getcwd()</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getcwd</span><span class="p">())</span>
+        <span class="n">path_dirs</span> <span class="o">=</span> <span class="n">path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">path_dir</span> <span class="ow">in</span> <span class="n">path_dirs</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">path_dir</span> <span class="o">==</span> <span class="s1">&#39;tests&#39;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">test</span> <span class="o">=</span> <span class="bp">True</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">test</span> <span class="o">=</span> <span class="bp">False</span>
+        <span class="c1">#print self.test</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_AUTH_SERVER</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">inizialize</span><span class="p">()</span>
+    
+<div class="viewcode-block" id="Configuration.inizialize"><a class="viewcode-back" href="../Config.html#Config.Configuration.inizialize">[docs]</a>    <span class="k">def</span> <span class="nf">inizialize</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span> 
+        <span class="n">config</span> <span class="o">=</span> <span class="n">ConfigParser</span><span class="o">.</span><span class="n">RawConfigParser</span><span class="p">()</span>
+        <span class="n">config</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="s1">&#39;tvdm.conf&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_LOG_FILE</span> <span class="o">=</span> <span class="s1">&#39;Orchestrator.log&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_VERBOSE</span> <span class="o">=</span> <span class="s1">&#39;true&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_DEBUG</span> <span class="o">=</span> <span class="s1">&#39;true&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_USER_GRAPH_LOCATION</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;configuration&#39;</span><span class="p">,</span> <span class="s1">&#39;user_graph_location&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_ACCESS_INTERFACE</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;configuration&#39;</span><span class="p">,</span> <span class="s1">&#39;access_interface&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_EXIT_INTERFACE</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;configuration&#39;</span><span class="p">,</span> <span class="s1">&#39;exit_interface&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_VM_IMAGES_LOCATION</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;configuration&#39;</span><span class="p">,</span> <span class="s1">&#39;vm_images_location&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_INSTANTIATED_VM_LOCATION</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;configuration&#39;</span><span class="p">,</span> <span class="s1">&#39;instantiated_vm_location&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_SCRIPT_LOCATION</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;configuration&#39;</span><span class="p">,</span> <span class="s1">&#39;script_location&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_PSA_CONF_LOCATION</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;configuration&#39;</span><span class="p">,</span> <span class="s1">&#39;psa_conf_location&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_PSA_MANI_LOCATION</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;configuration&#39;</span><span class="p">,</span> <span class="s1">&#39;psa_manifest_location&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_PSC_DP_IF_IP</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;configuration&#39;</span><span class="p">,</span> <span class="s1">&#39;psc_dataplane_interface_ip&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_TVDM_VERSION</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;configuration&#39;</span><span class="p">,</span> <span class="s1">&#39;tvdm_version&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_GATEWAY_IP</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;configuration&#39;</span><span class="p">,</span> <span class="s1">&#39;gateway_ip&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_DNS_IP</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;configuration&#39;</span><span class="p">,</span> <span class="s1">&#39;dns_ip&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_NETMASK</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;configuration&#39;</span><span class="p">,</span> <span class="s1">&#39;netmask&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_UPR_LOCATION</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;configuration&#39;</span><span class="p">,</span> <span class="s1">&#39;upr_location&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_SPM_LOCATION</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;configuration&#39;</span><span class="p">,</span> <span class="s1">&#39;spm_location&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_NED_ID</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;configuration&#39;</span><span class="p">,</span> <span class="s1">&#39;ned_id&#39;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_USE_LOCAL_FILE</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">getboolean</span><span class="p">(</span><span class="s1">&#39;configuration&#39;</span><span class="p">,</span> <span class="s1">&#39;use_local_file&#39;</span><span class="p">)</span>
+	<span class="bp">self</span><span class="o">.</span><span class="n">_MANAGING_NETWORK_ADDRESS</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;configuration&#39;</span><span class="p">,</span> <span class="s1">&#39;managing_network_address&#39;</span><span class="p">)</span>
+	<span class="bp">self</span><span class="o">.</span><span class="n">_PSA_NETWORK_ADDRESS</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;configuration&#39;</span><span class="p">,</span> <span class="s1">&#39;psa_network_address&#39;</span><span class="p">)</span>
+	<span class="bp">self</span><span class="o">.</span><span class="n">_USER_NETWORK_ADDRESS</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;configuration&#39;</span><span class="p">,</span> <span class="s1">&#39;user_network_address&#39;</span><span class="p">)</span>
+	<span class="bp">self</span><span class="o">.</span><span class="n">_USER_INTERFACE_NETWORK_ADDRESS</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;configuration&#39;</span><span class="p">,</span> <span class="s1">&#39;user_interface_network_address&#39;</span><span class="p">)</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">MANAGING_NETWORK_ADDRESS</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+	<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_MANAGING_NETWORK_ADDRESS</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">PSA_NETWORK_ADDRESS</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+	<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_PSA_NETWORK_ADDRESS</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">USER_NETWORK_ADDRESS</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+	<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_USER_NETWORK_ADDRESS</span>
+    
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">USER_INTERFACE_NETWORK_ADDRESS</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_USER_INTERFACE_NETWORK_ADDRESS</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">PSC_DP_IF_IP</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_PSC_DP_IF_IP</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">NETMASK</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_NETMASK</span>
+    
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">USER_GRAPH_LOCATION</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_USER_GRAPH_LOCATION</span>
+    
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">SCRIPT_LOCATION</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_SCRIPT_LOCATION</span>
+    
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">PSA_CONF_LOCATION</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_PSA_CONF_LOCATION</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">PSA_MANI_LOCATION</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_PSA_MANI_LOCATION</span>
+        
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">ACCESS_INTERFACE</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ACCESS_INTERFACE</span>
+    
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">EXIT_INTERFACE</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_EXIT_INTERFACE</span>
+    
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">VM_IMAGES_LOCATION</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_VM_IMAGES_LOCATION</span>
+    
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">INSTANTIATED_VM_LOCATION</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_INSTANTIATED_VM_LOCATION</span>
+    
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">LOG_FILE</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_LOG_FILE</span>
+    
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">TVDM_VERSION</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_TVDM_VERSION</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">GATEWAY_IP</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_GATEWAY_IP</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">DNS_IP</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_DNS_IP</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">VERBOSE</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_VERBOSE</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">DEBUG</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_DEBUG</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">UPR_LOCATION</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_UPR_LOCATION</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">USE_LOCAL_FILE</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_USE_LOCAL_FILE</span>
+	
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">SPM_LOCATION</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_SPM_LOCATION</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">NED_ID</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+	<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_NED_ID</span></div>
+    
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../index.html">
+              <img class="logo" src="../_static/secured.png" alt="Logo"/>
+            </a></p><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, SECURity at the network EDge.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

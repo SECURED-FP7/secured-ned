@@ -1,0 +1,15 @@
+{
+	
+	"name":"PSA_conf_file",
+	"user_token": "token1",
+	"configurations": [
+
+		{
+			"PSA_id": "12345",
+			"conf_id": "ipTraf_token1",
+			"conf_script": "ls -l"
+		}
+
+	]
+
+}

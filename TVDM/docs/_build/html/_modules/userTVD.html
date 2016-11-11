@@ -1,0 +1,345 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>userTVD &mdash; TVDM  documentation</title>
+    
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="TVDM  documentation" href="../index.html" />
+    <link rel="up" title="Module code" href="index.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for userTVD</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">commands</span>
+<span class="kn">from</span> <span class="nn">manifestManager</span> <span class="kn">import</span> <span class="n">ManifestManager</span>
+
+<div class="viewcode-block" id="UserTVD"><a class="viewcode-back" href="../userTVD.html#userTVD.UserTVD">[docs]</a><span class="k">class</span> <span class="nc">UserTVD</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+	<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">	User TVD class in case of IPSEC NED configuration</span>
+<span class="sd">	&#39;&#39;&#39;</span>
+
+	<span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">userName</span><span class="p">,</span> <span class="n">vlanID</span><span class="p">,</span> <span class="n">networkManager</span><span class="p">,</span> <span class="n">computeManager</span><span class="p">,</span> <span class="n">config</span><span class="p">,</span> <span class="n">logger</span><span class="p">):</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">logger</span> <span class="o">=</span> <span class="n">logger</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">networkManager</span> <span class="o">=</span> <span class="n">networkManager</span>
+		<span class="n">userInterface</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">networkManager</span><span class="o">.</span><span class="n">generatePort</span><span class="p">(</span><span class="s1">&#39;brData&#39;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">interfaceIP</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">networkManager</span><span class="o">.</span><span class="n">generateRoutingTable</span><span class="p">(</span><span class="n">userInterface</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">userName</span> <span class="o">=</span> <span class="n">userName</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">userIP</span> <span class="o">=</span> <span class="p">[]</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">userInterface</span> <span class="o">=</span> <span class="n">userInterface</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">vlanID</span> <span class="o">=</span> <span class="n">vlanID</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">pscAddr</span> <span class="o">=</span> <span class="bp">None</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">psc</span> <span class="o">=</span> <span class="bp">None</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">generatedFlows</span> <span class="o">=</span> <span class="p">[]</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">computeManager</span> <span class="o">=</span> <span class="n">computeManager</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">config</span> <span class="o">=</span> <span class="n">config</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">psaList</span> <span class="o">=</span> <span class="p">[]</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">psaIPaddresses</span> <span class="o">=</span> <span class="p">{}</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">manifestManager</span> <span class="o">=</span> <span class="n">ManifestManager</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+
+<div class="viewcode-block" id="UserTVD.addNewIP"><a class="viewcode-back" href="../userTVD.html#userTVD.UserTVD.addNewIP">[docs]</a>	<span class="k">def</span> <span class="nf">addNewIP</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">newIP</span><span class="p">):</span>
+	        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">            	Add a new machine on the TVD with the given IP</span>
+<span class="sd">	        &#39;&#39;&#39;</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">userIP</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">newIP</span><span class="p">)</span>
+		<span class="n">commands</span><span class="o">.</span><span class="n">addIPrule</span><span class="p">(</span><span class="n">table</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">userInterface</span><span class="p">,</span> <span class="n">addressFrom</span><span class="o">=</span><span class="n">newIP</span><span class="o">+</span><span class="s2">&quot;/32&quot;</span><span class="p">,</span> <span class="n">pref</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">netns</span><span class="o">=</span><span class="s2">&quot;default&quot;</span><span class="p">)</span>
+		<span class="n">commands</span><span class="o">.</span><span class="n">addIPrule</span><span class="p">(</span><span class="n">table</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">userInterface</span><span class="p">,</span> <span class="n">addressTo</span><span class="o">=</span><span class="n">newIP</span><span class="o">+</span><span class="s2">&quot;/32&quot;</span><span class="p">,</span> <span class="n">pref</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">netns</span><span class="o">=</span><span class="s2">&quot;default&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="UserTVD.delUserIP"><a class="viewcode-back" href="../userTVD.html#userTVD.UserTVD.delUserIP">[docs]</a>	<span class="k">def</span> <span class="nf">delUserIP</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">newIP</span><span class="p">):</span>
+	        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        	Remove the flow for the given IP</span>
+<span class="sd">        	&#39;&#39;&#39;</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">userIP</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">newIP</span><span class="p">)</span>
+		<span class="n">commands</span><span class="o">.</span><span class="n">delIPrule</span><span class="p">(</span><span class="n">table</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">userInterface</span><span class="p">,</span> <span class="n">addressFrom</span><span class="o">=</span><span class="n">newIP</span><span class="o">+</span><span class="s2">&quot;/32&quot;</span><span class="p">,</span> <span class="n">pref</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">netns</span><span class="o">=</span><span class="s2">&quot;default&quot;</span><span class="p">)</span>
+		<span class="n">commands</span><span class="o">.</span><span class="n">delIPrule</span><span class="p">(</span><span class="n">table</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">userInterface</span><span class="p">,</span> <span class="n">addressTo</span><span class="o">=</span><span class="n">newIP</span><span class="o">+</span><span class="s2">&quot;/32&quot;</span><span class="p">,</span> <span class="n">pref</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">netns</span><span class="o">=</span><span class="s2">&quot;default&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="UserTVD.setPSC"><a class="viewcode-back" href="../userTVD.html#userTVD.UserTVD.setPSC">[docs]</a>	<span class="k">def</span> <span class="nf">setPSC</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">newPSC</span><span class="p">,</span> <span class="n">pscAddr</span><span class="p">):</span>
+                <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">	        Configure the PSC of the TVD</span>
+<span class="sd">	        &#39;&#39;&#39;</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">psc</span> <span class="o">=</span> <span class="n">newPSC</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">pscAddr</span> <span class="o">=</span> <span class="n">pscAddr</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;User &quot;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">userName</span> <span class="o">+</span> <span class="s2">&quot; PSC addr: &quot;</span><span class="o">+</span> <span class="n">pscAddr</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="UserTVD.generatePSCflows"><a class="viewcode-back" href="../userTVD.html#userTVD.UserTVD.generatePSCflows">[docs]</a>	<span class="k">def</span> <span class="nf">generatePSCflows</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        	<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">	        Generete the flow for the PSC</span>
+<span class="sd">        	&#39;&#39;&#39;</span>
+		<span class="n">flow</span> <span class="o">=</span> <span class="p">{}</span>
+		<span class="n">flow</span><span class="p">[</span><span class="s1">&#39;priority&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;10&quot;</span>
+		<span class="n">match</span> <span class="o">=</span> <span class="p">{}</span>
+		<span class="n">match</span><span class="p">[</span><span class="s1">&#39;in_port&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">userInterface</span>
+		<span class="n">match</span><span class="p">[</span><span class="s1">&#39;dl_type&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;0x0806&quot;</span>
+		<span class="n">match</span><span class="p">[</span><span class="s1">&#39;nw_dst&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">PSC_DP_IF_IP</span>
+		<span class="n">flow</span><span class="p">[</span><span class="s1">&#39;match&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">match</span>
+		<span class="n">action</span> <span class="o">=</span> <span class="p">{}</span>
+		<span class="n">action</span><span class="p">[</span><span class="s1">&#39;output&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">psc</span><span class="p">[</span><span class="s1">&#39;interfaces&#39;</span><span class="p">][</span><span class="mi">2</span><span class="p">][</span><span class="s1">&#39;name&#39;</span><span class="p">]</span>
+		<span class="n">flow</span><span class="p">[</span><span class="s1">&#39;action&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">action</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">networkManager</span><span class="o">.</span><span class="n">generateFlow</span><span class="p">(</span><span class="s1">&#39;brData&#39;</span><span class="p">,</span> <span class="n">flow</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">generatedFlows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">flow</span><span class="p">)</span>
+
+		<span class="n">flow</span> <span class="o">=</span> <span class="p">{}</span>
+		<span class="n">flow</span><span class="p">[</span><span class="s1">&#39;priority&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;10&quot;</span>
+		<span class="n">match</span> <span class="o">=</span> <span class="p">{}</span>
+		<span class="n">match</span><span class="p">[</span><span class="s1">&#39;in_port&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">userInterface</span>
+		<span class="n">match</span><span class="p">[</span><span class="s1">&#39;dl_type&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;0x0800&quot;</span>
+		<span class="n">match</span><span class="p">[</span><span class="s1">&#39;nw_dst&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">PSC_DP_IF_IP</span>
+		<span class="n">flow</span><span class="p">[</span><span class="s1">&#39;match&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">match</span>
+		<span class="n">action</span> <span class="o">=</span> <span class="p">{}</span>
+		<span class="n">action</span><span class="p">[</span><span class="s1">&#39;output&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">psc</span><span class="p">[</span><span class="s1">&#39;interfaces&#39;</span><span class="p">][</span><span class="mi">2</span><span class="p">][</span><span class="s1">&#39;name&#39;</span><span class="p">]</span>
+		<span class="n">flow</span><span class="p">[</span><span class="s1">&#39;action&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">action</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">networkManager</span><span class="o">.</span><span class="n">generateFlow</span><span class="p">(</span><span class="s1">&#39;brData&#39;</span><span class="p">,</span> <span class="n">flow</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">generatedFlows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">flow</span><span class="p">)</span>
+
+		<span class="n">flow</span> <span class="o">=</span> <span class="p">{}</span>
+		<span class="n">match</span> <span class="o">=</span> <span class="p">{}</span>
+		<span class="n">match</span><span class="p">[</span><span class="s1">&#39;in_port&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">psc</span><span class="p">[</span><span class="s1">&#39;interfaces&#39;</span><span class="p">][</span><span class="mi">2</span><span class="p">][</span><span class="s1">&#39;name&#39;</span><span class="p">]</span>
+		<span class="n">flow</span><span class="p">[</span><span class="s1">&#39;match&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">match</span>
+		<span class="n">action</span> <span class="o">=</span> <span class="p">{}</span>
+		<span class="n">action</span><span class="p">[</span><span class="s1">&#39;output&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">userInterface</span> 
+		<span class="n">flow</span><span class="p">[</span><span class="s1">&#39;action&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">action</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">networkManager</span><span class="o">.</span><span class="n">generateFlow</span><span class="p">(</span><span class="s1">&#39;brData&#39;</span><span class="p">,</span> <span class="n">flow</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">generatedFlows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">flow</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="UserTVD.deleteAllTVD"><a class="viewcode-back" href="../userTVD.html#userTVD.UserTVD.deleteAllTVD">[docs]</a>	<span class="k">def</span> <span class="nf">deleteAllTVD</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+	        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        	Delete the TVD</span>
+<span class="sd">	        &#39;&#39;&#39;</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Deleting &quot;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">userName</span> <span class="o">+</span> <span class="s2">&quot; TVD&quot;</span><span class="p">)</span>
+		<span class="k">for</span> <span class="n">ip</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">userIP</span><span class="p">:</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">deleteTVD</span><span class="p">(</span><span class="n">ip</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="UserTVD.deleteTVD"><a class="viewcode-back" href="../userTVD.html#userTVD.UserTVD.deleteTVD">[docs]</a>	<span class="k">def</span> <span class="nf">deleteTVD</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">IPaddr</span><span class="p">):</span>
+        	<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">	        Remove an IP from the TVD in case of the last IP the TVD will be deleted</span>
+<span class="sd">        	&#39;&#39;&#39;</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Removing IP &quot;</span><span class="o">+</span> <span class="n">IPaddr</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">delUserIP</span><span class="p">(</span><span class="n">IPaddr</span><span class="p">)</span>
+		<span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">userIP</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+			<span class="k">return</span> <span class="bp">False</span>
+		
+		<span class="k">for</span> <span class="n">flow</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">generatedFlows</span><span class="p">:</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">networkManager</span><span class="o">.</span><span class="n">deleteFlow</span><span class="p">(</span><span class="s1">&#39;brData&#39;</span><span class="p">,</span> <span class="n">flow</span><span class="p">)</span>
+
+		<span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Deleting the user Interface&quot;</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">networkManager</span><span class="o">.</span><span class="n">deletePort</span><span class="p">(</span><span class="s1">&#39;brData&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">userInterface</span><span class="p">)</span>
+
+		<span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Deleting PSC&quot;</span><span class="p">)</span>
+		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">psc</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">computeManager</span><span class="o">.</span><span class="n">deleteNF</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">psc</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">])</span>
+		
+		<span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Deleting PSA&quot;</span><span class="p">)</span>
+		<span class="k">for</span> <span class="n">psa</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">psaList</span><span class="p">:</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">computeManager</span><span class="o">.</span><span class="n">deleteNF</span><span class="p">(</span><span class="n">psa</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">])</span>
+		
+		<span class="n">logLine</span> <span class="o">=</span> <span class="s2">&quot;PSA:&quot;</span>
+		<span class="k">for</span> <span class="n">ipAddr</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">psaIPaddresses</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+			<span class="n">logLine</span> <span class="o">=</span> <span class="n">logLine</span> <span class="o">+</span> <span class="s2">&quot; &quot;</span> <span class="o">+</span> <span class="n">ipAddr</span>
+		<span class="n">logLine</span> <span class="o">=</span> <span class="n">logLine</span> <span class="o">+</span> <span class="s2">&quot;, PSC: &quot;</span><span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">pscAddr</span> <span class="o">+</span> <span class="s2">&quot; removed&quot;</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">logLine</span><span class="p">)</span>
+		<span class="k">return</span> <span class="bp">True</span></div>
+
+<div class="viewcode-block" id="UserTVD.associateIPPSA"><a class="viewcode-back" href="../userTVD.html#userTVD.UserTVD.associateIPPSA">[docs]</a>	<span class="k">def</span> <span class="nf">associateIPPSA</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">psaID</span><span class="p">):</span>
+	        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        	Associate an IP on a PSA</span>
+<span class="sd">            	&#39;&#39;&#39;</span>
+		<span class="n">ipAddr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">networkManager</span><span class="o">.</span><span class="n">getPSAnewAddress</span><span class="p">()</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">psaIPaddresses</span><span class="p">[</span><span class="n">psaID</span><span class="p">]</span> <span class="o">=</span> <span class="n">ipAddr</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;User &quot;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">userName</span> <span class="o">+</span> <span class="s2">&quot; PSA &quot;</span><span class="o">+</span><span class="n">psaID</span><span class="o">+</span><span class="s2">&quot; addr: &quot;</span><span class="o">+</span> <span class="n">pscAddr</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="UserTVD.definePSA"><a class="viewcode-back" href="../userTVD.html#userTVD.UserTVD.definePSA">[docs]</a>	<span class="k">def</span> <span class="nf">definePSA</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">psaID</span><span class="p">):</span>
+        	<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">	        Define a new PSA for the TVD</span>
+<span class="sd">        	&#39;&#39;&#39;</span>
+		<span class="n">manifest</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">manifestManager</span><span class="o">.</span><span class="n">getManifest</span><span class="p">(</span><span class="n">psaID</span><span class="p">)</span>
+        	<span class="n">properties</span> <span class="o">=</span> <span class="p">{}</span>
+	        <span class="n">properties</span><span class="p">[</span><span class="s1">&#39;memory&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">manifest</span><span class="p">[</span><span class="s1">&#39;memory&#39;</span><span class="p">]</span>
+	        <span class="n">properties</span><span class="p">[</span><span class="s1">&#39;vcpu&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">manifest</span><span class="p">[</span><span class="s1">&#39;vcpu&#39;</span><span class="p">]</span>
+	        <span class="n">properties</span><span class="p">[</span><span class="s1">&#39;interfaces&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+
+	        <span class="n">interface</span> <span class="o">=</span> <span class="p">{}</span>
+	        <span class="n">interface</span><span class="p">[</span><span class="s1">&#39;bridge&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;brData&quot;</span>
+	        <span class="n">interface</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">networkManager</span><span class="o">.</span><span class="n">generateVMPort</span><span class="p">()</span>
+	        <span class="n">properties</span><span class="p">[</span><span class="s1">&#39;interfaces&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">interface</span><span class="p">)</span>
+
+		<span class="n">interface</span> <span class="o">=</span> <span class="p">{}</span>
+	        <span class="n">interface</span><span class="p">[</span><span class="s1">&#39;bridge&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;brData&quot;</span>
+	        <span class="n">interface</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">networkManager</span><span class="o">.</span><span class="n">generateVMPort</span><span class="p">()</span>
+	        <span class="n">properties</span><span class="p">[</span><span class="s1">&#39;interfaces&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">interface</span><span class="p">)</span>
+
+	        <span class="n">interface</span> <span class="o">=</span> <span class="p">{}</span>
+	        <span class="n">interface</span><span class="p">[</span><span class="s1">&#39;vlan&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">vlanID</span>
+	        <span class="n">interface</span><span class="p">[</span><span class="s1">&#39;bridge&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;brCtl&quot;</span>
+	        <span class="n">interface</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">networkManager</span><span class="o">.</span><span class="n">generateVMPort</span><span class="p">()</span>
+	        <span class="n">properties</span><span class="p">[</span><span class="s1">&#39;interfaces&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">interface</span><span class="p">)</span>
+
+		<span class="k">return</span> <span class="n">properties</span></div>
+
+<div class="viewcode-block" id="UserTVD.instantiatePSA"><a class="viewcode-back" href="../userTVD.html#userTVD.UserTVD.instantiatePSA">[docs]</a>	<span class="k">def</span> <span class="nf">instantiatePSA</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">PSAList</span><span class="p">):</span>
+        	<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">	        Instantiate the PSAs for the TVD</span>
+<span class="sd">        	&#39;&#39;&#39;</span>
+		<span class="k">for</span> <span class="n">psa</span> <span class="ow">in</span> <span class="n">PSAList</span><span class="p">:</span>
+			<span class="n">psaProperties</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">definePSA</span><span class="p">(</span><span class="n">psa</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">])</span>
+			<span class="n">psaName</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">computeManager</span><span class="o">.</span><span class="n">instantiateNF</span><span class="p">(</span><span class="n">psa</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">],</span> <span class="n">psaProperties</span><span class="p">)</span>
+			<span class="n">psaProperties</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">psaName</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">psaList</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">psaProperties</span><span class="p">)</span>
+		<span class="n">lastInterface</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">userInterface</span>
+		<span class="k">for</span> <span class="n">psa</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">psaList</span><span class="p">:</span>
+			<span class="n">flow</span> <span class="o">=</span> <span class="p">{}</span>
+                	<span class="n">match</span> <span class="o">=</span> <span class="p">{}</span>
+                	<span class="n">match</span><span class="p">[</span><span class="s1">&#39;in_port&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">lastInterface</span>
+                	<span class="n">flow</span><span class="p">[</span><span class="s1">&#39;match&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">match</span>
+                	<span class="n">action</span> <span class="o">=</span> <span class="p">{}</span>
+                	<span class="n">action</span><span class="p">[</span><span class="s1">&#39;output&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">psa</span><span class="p">[</span><span class="s1">&#39;interfaces&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;name&#39;</span><span class="p">]</span>
+                	<span class="n">flow</span><span class="p">[</span><span class="s1">&#39;action&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">action</span>
+                	<span class="bp">self</span><span class="o">.</span><span class="n">networkManager</span><span class="o">.</span><span class="n">generateFlow</span><span class="p">(</span><span class="s1">&#39;brData&#39;</span><span class="p">,</span> <span class="n">flow</span><span class="p">)</span>
+                	<span class="bp">self</span><span class="o">.</span><span class="n">generatedFlows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">flow</span><span class="p">)</span>
+			<span class="n">flow</span> <span class="o">=</span> <span class="p">{}</span>
+                	<span class="n">match</span> <span class="o">=</span> <span class="p">{}</span>
+                	<span class="n">match</span><span class="p">[</span><span class="s1">&#39;in_port&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">psa</span><span class="p">[</span><span class="s1">&#39;interfaces&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;name&#39;</span><span class="p">]</span>
+                	<span class="n">flow</span><span class="p">[</span><span class="s1">&#39;match&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">match</span>
+                	<span class="n">action</span> <span class="o">=</span> <span class="p">{}</span>
+                	<span class="n">action</span><span class="p">[</span><span class="s1">&#39;output&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">lastInterface</span>
+                	<span class="n">flow</span><span class="p">[</span><span class="s1">&#39;action&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">action</span>
+                	<span class="bp">self</span><span class="o">.</span><span class="n">networkManager</span><span class="o">.</span><span class="n">generateFlow</span><span class="p">(</span><span class="s1">&#39;brData&#39;</span><span class="p">,</span> <span class="n">flow</span><span class="p">)</span>
+                	<span class="bp">self</span><span class="o">.</span><span class="n">generatedFlows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">flow</span><span class="p">)</span>
+			<span class="n">lastInterface</span> <span class="o">=</span> <span class="n">psa</span><span class="p">[</span><span class="s1">&#39;interfaces&#39;</span><span class="p">][</span><span class="mi">1</span><span class="p">][</span><span class="s1">&#39;name&#39;</span><span class="p">]</span>
+		<span class="n">flow</span> <span class="o">=</span> <span class="p">{}</span>
+                <span class="n">match</span> <span class="o">=</span> <span class="p">{}</span>
+                <span class="n">match</span><span class="p">[</span><span class="s1">&#39;in_port&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">lastInterface</span>
+                <span class="n">flow</span><span class="p">[</span><span class="s1">&#39;match&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">match</span>
+                <span class="n">action</span> <span class="o">=</span> <span class="p">{}</span>
+                <span class="n">action</span><span class="p">[</span><span class="s1">&#39;output&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">EXIT_INTERFACE</span>
+                <span class="n">flow</span><span class="p">[</span><span class="s1">&#39;action&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">action</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">networkManager</span><span class="o">.</span><span class="n">generateFlow</span><span class="p">(</span><span class="s1">&#39;brData&#39;</span><span class="p">,</span> <span class="n">flow</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">generatedFlows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">flow</span><span class="p">)</span>
+
+		<span class="n">flow</span> <span class="o">=</span> <span class="p">{}</span>
+		<span class="n">flow</span><span class="p">[</span><span class="s1">&#39;priority&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;10&quot;</span>
+		<span class="n">match</span> <span class="o">=</span> <span class="p">{}</span>
+		<span class="n">match</span><span class="p">[</span><span class="s1">&#39;in_port&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">EXIT_INTERFACE</span>
+		<span class="n">match</span><span class="p">[</span><span class="s1">&#39;dl_type&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;0x0806&quot;</span>
+		<span class="n">match</span><span class="p">[</span><span class="s1">&#39;nw_dst&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">interfaceIP</span>
+		<span class="n">flow</span><span class="p">[</span><span class="s1">&#39;match&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">match</span>
+		<span class="n">action</span> <span class="o">=</span> <span class="p">{}</span>
+		<span class="n">action</span><span class="p">[</span><span class="s1">&#39;output&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">lastInterface</span>
+		<span class="n">flow</span><span class="p">[</span><span class="s1">&#39;action&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">action</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">networkManager</span><span class="o">.</span><span class="n">generateFlow</span><span class="p">(</span><span class="s1">&#39;brData&#39;</span><span class="p">,</span> <span class="n">flow</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">generatedFlows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">flow</span><span class="p">)</span>
+
+		<span class="n">flow</span> <span class="o">=</span> <span class="p">{}</span>
+		<span class="n">flow</span><span class="p">[</span><span class="s1">&#39;priority&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;10&quot;</span>
+		<span class="n">match</span> <span class="o">=</span> <span class="p">{}</span>
+		<span class="n">match</span><span class="p">[</span><span class="s1">&#39;in_port&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">EXIT_INTERFACE</span>
+		<span class="n">match</span><span class="p">[</span><span class="s1">&#39;dl_type&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;0x0800&quot;</span>
+		<span class="n">match</span><span class="p">[</span><span class="s1">&#39;nw_dst&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">interfaceIP</span>
+		<span class="n">flow</span><span class="p">[</span><span class="s1">&#39;match&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">match</span>
+		<span class="n">action</span> <span class="o">=</span> <span class="p">{}</span>
+		<span class="n">action</span><span class="p">[</span><span class="s1">&#39;output&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">lastInterface</span>
+		<span class="n">flow</span><span class="p">[</span><span class="s1">&#39;action&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">action</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">networkManager</span><span class="o">.</span><span class="n">generateFlow</span><span class="p">(</span><span class="s1">&#39;brData&#39;</span><span class="p">,</span> <span class="n">flow</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">generatedFlows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">flow</span><span class="p">)</span>
+
+		<span class="k">for</span> <span class="n">ipAddr</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">psaIPaddresses</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+			<span class="n">flow</span> <span class="o">=</span> <span class="p">{}</span>
+			<span class="n">flow</span><span class="p">[</span><span class="s1">&#39;priority&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;10&quot;</span>
+			<span class="n">match</span> <span class="o">=</span> <span class="p">{}</span>
+			<span class="n">match</span><span class="p">[</span><span class="s1">&#39;in_port&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">EXIT_INTERFACE</span>
+			<span class="n">match</span><span class="p">[</span><span class="s1">&#39;dl_type&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;0x0806&quot;</span>
+			<span class="n">match</span><span class="p">[</span><span class="s1">&#39;nw_dst&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">ipAddr</span>
+			<span class="n">flow</span><span class="p">[</span><span class="s1">&#39;match&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">match</span>
+			<span class="n">action</span> <span class="o">=</span> <span class="p">{}</span>
+			<span class="n">action</span><span class="p">[</span><span class="s1">&#39;output&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">lastInterface</span>
+			<span class="n">flow</span><span class="p">[</span><span class="s1">&#39;action&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">action</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">networkManager</span><span class="o">.</span><span class="n">generateFlow</span><span class="p">(</span><span class="s1">&#39;brData&#39;</span><span class="p">,</span> <span class="n">flow</span><span class="p">)</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">generatedFlows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">flow</span><span class="p">)</span>
+
+			<span class="n">flow</span> <span class="o">=</span> <span class="p">{}</span>
+			<span class="n">flow</span><span class="p">[</span><span class="s1">&#39;priority&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;10&quot;</span>
+			<span class="n">match</span> <span class="o">=</span> <span class="p">{}</span>
+			<span class="n">match</span><span class="p">[</span><span class="s1">&#39;in_port&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">EXIT_INTERFACE</span>
+			<span class="n">match</span><span class="p">[</span><span class="s1">&#39;dl_type&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;0x0800&quot;</span>
+			<span class="n">match</span><span class="p">[</span><span class="s1">&#39;nw_dst&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">ipAddr</span>
+			<span class="n">flow</span><span class="p">[</span><span class="s1">&#39;match&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">match</span>
+			<span class="n">action</span> <span class="o">=</span> <span class="p">{}</span>
+			<span class="n">action</span><span class="p">[</span><span class="s1">&#39;output&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">lastInterface</span>
+			<span class="n">flow</span><span class="p">[</span><span class="s1">&#39;action&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">action</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">networkManager</span><span class="o">.</span><span class="n">generateFlow</span><span class="p">(</span><span class="s1">&#39;brData&#39;</span><span class="p">,</span> <span class="n">flow</span><span class="p">)</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">generatedFlows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">flow</span><span class="p">)</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../index.html">
+              <img class="logo" src="../_static/secured.png" alt="Logo"/>
+            </a></p><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, SECURity at the network EDge.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

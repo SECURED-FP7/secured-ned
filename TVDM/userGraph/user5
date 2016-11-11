@@ -1,0 +1,74 @@
+{
+	"name": "user_profile_type",
+	"user_token": "",
+	"profile_type": "AD",			
+
+	"PSASet": [
+		
+		{
+			"id": "12345",
+			"security_controls": [
+				
+				{
+					"imgName": "iptables.img",
+					"conf_id":"iptables_user1"
+				}
+				
+			] 
+			
+		},
+        {
+			"id": "12345",
+			"security_controls": [
+				
+				{
+					"imgName": "iptables.img",
+					"conf_id":"iptables_user2"
+				}
+				
+			] 
+			
+		},
+        {
+			"id": "12345",
+			"security_controls": [
+				
+				{
+					"imgName": "iptables.img",
+					"conf_id":"iptables_user3"
+				}
+				
+			] 
+			
+		},
+        {
+			"id": "12345",
+			"security_controls": [
+				
+				{
+					"imgName": "iptables.img",
+					"conf_id":"iptables_user3"
+				}
+				
+			] 
+			
+		},
+        {
+			"id": "12345",
+			"security_controls": [
+				
+				{
+					"imgName": "iptables.img",
+					"conf_id":"iptables_user3"
+				}
+				
+			] 
+			
+		}
+
+	], 
+	
+	"ingress_flow": ["12345"],
+	"egress_flow": ["12345"]
+
+}

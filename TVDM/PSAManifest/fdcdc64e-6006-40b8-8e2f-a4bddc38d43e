@@ -1,0 +1,22 @@
+{
+	"PSA_id":"fdcdc64e-6006-40b8-8e2f-a4bddc38d43e",
+	"disk": "reencrypt.qcow2",
+	"interface": [
+			{
+			"network":"data", 
+			"type":"data_in"
+			},
+			{
+			"network":"data", 
+			"type":"data_out"
+			},
+			{
+			"network":"control", 
+			"type":"manage"
+			}
+		],
+	"memory": "256",
+	"IP": true,
+	"os-architecture": "x86_64",
+	"vcpu": "1"
+}

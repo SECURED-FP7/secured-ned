@@ -1,0 +1,37 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<tns:Mapping xmlns:tns='http://www.example.org/Refinement_Schema' xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xsi:schemaLocation='http://www.example.org/Refinement_Schema Refinement_Schema.xsd '>
+  
+  <tns:psa_list>
+    <tns:psa  name='ipTablesPSA'>
+      <tns:PSA_info />
+      <tns:PSA_characteristic cost='1' latency='0.3' rating='2' />
+      <tns:capability>
+        <tns:capability_list>Filtering_L4</tns:capability_list>
+        <tns:capability_list>Timing</tns:capability_list>
+      </tns:capability>
+    </tns:psa>
+    
+     <tns:psa  name='squid'>
+      <tns:PSA_info />
+ 		<tns:PSA_characteristic cost='2' latency='0.2' rating='3'  />
+       <tns:capability>
+        <tns:capability_list>Filtering_L7</tns:capability_list>
+        <tns:capability_list>Timing</tns:capability_list>
+      </tns:capability>
+    </tns:psa>
+    
+        
+      <tns:psa  name='PSA-parental-control'>
+      <tns:PSA_info />
+      <tns:PSA_characteristic cost='4' latency='0.2' rating='1' />
+      <tns:capability>
+         <tns:capability_list>Filtering_L7</tns:capability_list>
+        <tns:capability_list>TrafficInspection_L7</tns:capability_list>
+          <tns:capability_list>Timing</tns:capability_list>
+      </tns:capability>
+          </tns:psa>
+      
+      
+    
+  </tns:psa_list>
+</tns:Mapping>

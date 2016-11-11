@@ -1,0 +1,274 @@
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0"/>  
+	<title>Login to the NED</title>
+	<script type="text/javascript">
+
+var timer;
+var loadingText = ""
+var PSC_URL = "http://10.2.2.251:8080/psc/"
+var pscBootTime = 0
+function onPageLoad()
+{
+	//checkPSC();
+}
+
+function startCheckPSC() {
+    timer = setTimeout(checkPSC, 2);
+}
+
+function redirect() {
+    window.location.assign(PSC_URL);
+}
+
+var count=1
+function checkPSC()
+{
+    clearTimeout(timer)
+	var xmlhttp=new XMLHttpRequest();
+
+	xmlhttp.onreadystatechange = function() 
+    {
+        
+    	if (xmlhttp.readyState == 4)
+        {
+            //alert(xmlhttp.status)
+			if( xmlhttp.status == 0) 
+            {
+                pscBootTime = new Date().getTime() - pscBootTime;
+		        //document.getElementById("psc-status").innerHTML = "Got response from PSC in " + pscBootTime + " ms.</br>" 
+                document.getElementById("psc-status").innerHTML = "Redirecting to PSC GUI...</br>" 
+                
+                setTimeout(redirect, 2000);
+            }
+            else
+            {
+                loadingText += "."
+                if(loadingText == "......"){
+                    loadingText = "."
+                }
+                document.getElementById("psc-status").innerHTML = "Waiting for PSC and redirecting " + loadingText
+
+                timer = setTimeout(checkPSC, 1000);
+            } 
+		}
+
+	}
+	xmlhttp.open("GET", PSC_URL + "status", true);
+    xmlhttp.timeout = 2000;
+    xmlhttp.setRequestHeader("Access-Control-Allow-Origin", "*");
+    xmlhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+    xmlhttp.setRequestHeader("Connection", "close");
+	xmlhttp.send();
+}
+
+
+function sendLoginRequest()
+{
+
+		user = document.forms[0].username.value;
+		var wait2 = document.getElementById("login_ok");
+		var form = document.getElementById("login-form");
+		wait2.style.display = "block";
+		form.style.display = "none";
+		var xmlhttp=new XMLHttpRequest();
+
+		xmlhttp.open("POST","login",false);
+
+ 		xmlhttp.setRequestHeader("Content-type","application/json");
+		xmlhttp.setRequestHeader("Content-type","application/json");
+
+                xmlhttp.send("{\"user\":\""+document.forms[0].username.value+"\",\"password\":\""+document.forms[0].password.value+"\"}");
+ 
+		var result = xmlhttp.status
+
+		 if(result==200)
+		 {
+			wait2.style.display = "none";
+			var ok = document.getElementById("login_ok");
+			ok.style.display = "block";
+			var header = document.getElementById("login-intro");
+			var errorBox =  document.getElementById("error-msg");
+			errorBox.style.display = 'none';
+            // Start checking if PSC is up
+            pscBootTime = new Date().getTime();
+            //startCheckPSC();
+
+			//header.style.display = "none";
+//			var header2 = document.getElementById("afterlogin-intro");
+//			header2.style.display = "block";
+//			localserver_addr = (response.split(",")[2]).split("}")[0];
+			//var uri  = (response.split(",")[2]).split("}")[0];
+			//window.location.replace(uri);
+		 }
+		 else
+		  {
+		  	wait2.style.display = "none";
+			form.style.display = "block";
+		 	if(result==401)
+			{
+				var errorBox =  document.getElementById("error-msg");
+				errorBox.style.display = 'block';
+				errorBox.innerHTML = "Login failed: username and/or password wrong.";
+		 	}
+			else
+			{
+		 		var errorBox =  document.getElementById("error-msg");
+				errorBox.style.display = 'block';
+				errorBox.innerHTML = "Error: you are already logged in the SECURED network.";
+		 	}
+		 }
+}
+
+function openWithoutReferrer() {
+  var site = window.open("", "hide_referrer");
+  site.document.open();
+  site.document.writeln('<script type="text/javascript">window.location = "'+'http://10.2.2.251:8080/psc'+'";<script>');
+  site.document.close();
+}
+
+
+function sendLogoutRequest()
+{
+
+		user = document.forms[0].username.value;
+		var wait2 = document.getElementById("login-form");
+		var form = document.getElementById("login_ok");
+		//wait2.style.display = "block";
+		//form.style.display = "none";
+		var xmlhttp=new XMLHttpRequest();
+
+		 xmlhttp.open("DELETE","login",false);
+
+ 		 xmlhttp.setRequestHeader("Content-type","application/json");
+		 xmlhttp.setRequestHeader("Content-type","application/json");
+
+                 xmlhttp.send();
+ 
+		//var result = (xmlhttp.responseText.split(",")[1]).split("}")[0];
+
+		 var result = xmlhttp.status
+		//var response = xmlhttp.responseText;
+
+		 if(result==200)
+		 {
+			wait2.style.display = "block";
+			form.style.display = "none";
+			var errorBox =  document.getElementById("error-msg");
+                        errorBox.style.display = 'none';	
+			//wait2.style.display = "none";
+			//var ok = document.getElementById("login_ok");
+			//ok.style.display = "block";
+			//var header = document.getElementById("login-intro");
+			//header.style.display = "none";
+//			var header2 = document.getElementById("afterlogin-intro");
+//			header2.style.display = "block";
+//			localserver_addr = (response.split(",")[2]).split("}")[0];
+			//var uri  = (response.split(",")[2]).split("}")[0];
+			//window.location.replace(uri);
+			//console.log(localserver_addr);
+		 }
+		 else
+		 {
+		  	wait2.style.display = "none";
+			form.style.display = "block";
+		 	if(result==401)
+			{
+				var errorBox =  document.getElementById("error-msg");
+				errorBox.style.display = 'block';
+				errorBox.innerHTML = "Logout failed: wait until the service is instantiated.";
+		 	}
+			else
+			{
+		 		var errorBox =  document.getElementById("error-msg");
+				errorBox.style.display = 'block';
+				errorBox.innerHTML = "Error: you are already logged in the FROG network.";
+		 	}
+		 }
+}
+
+</script>
+</head>
+<!--
+<body style="background: #D2D8FF;">
+-->
+<body onload="onPageLoad()" style="background: #000000; color: white;">
+
+	<div id="page">	
+
+		<!-- TOP BAR -->
+		<div id="top-bar">	
+		</div> <!-- end TOP BAR -->
+
+		<!-- HEADER -->
+		<div id="header">
+<!--- Removed img temporary
+        	<img src="http://192.168.2.250/secured_logo_150x122.png" align="right"/>
+-->
+			<div class="page-full-width cf">
+				<div id="login-intro" class="fl">
+					<h1>Login to the <strong>SECURED</strong> network</h1>
+					<h5><center>Enter your credentials below</center></h5>
+				</div>
+			</div>
+			<div class="page-full-width cf">
+				<div id="afterlogin-intro" class="fl" style="display:none;">
+					<h1>Login to the <strong>SECURED</strong> network</h1>
+					<h5>Success!</h5>
+				</div>					
+			</div>
+		</div>  <!-- end HEADER -->
+			
+		
+		<!-- MAIN CONTENT -->
+		<div id="content" align="center">	
+			<form action="#" method="" id="login-form" style="width: 400px;">	
+				<fieldset>
+					<p>
+						<label for="login-username">Username:</label>
+						<input type="text" placeholder="Username" name="username" id="input-username" class="round full-width-input" autofocus maxlength="32" onKeyPress="submitonenter('submit',event,this)" />
+					</p>
+
+					<p>
+						<label for="login-password">Password:</label>
+						<input type="password" placeholder="Password" name="password" id="input-password" class="round full-width-input" maxlength="32" onKeyPress="submitonenter('submit',event,this)"/>
+					</p>
+					
+					<input type="button" onClick="sendLoginRequest();" name="submit" id="submit" class="button round blue image-right ic-right-arrow fr" value="LOGIN">
+				</fieldset>
+				
+			  <br/><div class="information-box round">Just click on the "LOGIN" button to continue.</div>
+			</form>		
+			
+			<div id="message" style="display:none;" align="center"> Loading...</div>
+			
+			<div id="login_ok" style="display:none;" align="center">			
+				<br>
+				<h1 align= "center"><b>Congratulations!</b></h1>
+				<br>
+				<h1 align= "center">You have been successfully logged in the SECURED network.</h1>
+				</br>
+                <div id="psc-status" class="fl">Waiting for PSC and redirecting...</div>
+                Check out your 
+                    <a href="http://10.2.2.251:8080/psc/" target="_blank">PSC GUI</a>
+				</br></br>
+				<div id="logout_button" align="center">
+					<input type="button" onClick="sendLogoutRequest();" name="logout" id="logout" class="button round blue image-right ic-right-arrow" value="LOGOUT">
+				</div>
+				
+			</div>
+			<br/><div id="error-msg" class="error-box round"> </div>
+			
+		</div> <!-- end content -->
+		
+
+		<!-- FOOTER -->
+		<div id="footer">
+			<p>&copy; Copyright 2013-2016 SECURED, <a href="http://www.polito.it">Politecnico di Torino</a>. All rights reserved.</p>	
+		</div> <!-- end footer -->
+
+	</div> <!-- end PAGE -->
+
+</body>
+</html>

@@ -1,0 +1,21 @@
+{
+	"PSA_id":"1234567",
+	"disk": "veryLightPSA.img",
+	"interface": [
+			{
+			"network":"data", 
+			"type":"data_in"
+			},
+			{
+			"network":"data", 
+			"type":"data_out"
+			},
+			{
+			"network":"control", 
+			"type":"manage"
+			}
+		],
+	"memory": "256",
+	"os-architecture": "x86_64",
+	"vcpu": "1"
+}

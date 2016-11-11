@@ -1,0 +1,7 @@
+psarClient module
+=================
+
+.. automodule:: psarClient
+    :members:
+    :undoc-members:
+    :show-inheritance:

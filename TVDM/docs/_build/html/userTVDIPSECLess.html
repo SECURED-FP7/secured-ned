@@ -1,0 +1,167 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>userTVDIPSECLess module &mdash; TVDM  documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="TVDM  documentation" href="index.html" />
+    <link rel="prev" title="userTVD module" href="userTVD.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-userTVDIPSECLess">
+<span id="usertvdipsecless-module"></span><h1>userTVDIPSECLess module<a class="headerlink" href="#module-userTVDIPSECLess" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="userTVDIPSECLess.UserTVD">
+<em class="property">class </em><code class="descclassname">userTVDIPSECLess.</code><code class="descname">UserTVD</code><span class="sig-paren">(</span><em>userName</em>, <em>vlanID</em>, <em>networkManager</em>, <em>computeManager</em>, <em>config</em>, <em>logger</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/userTVDIPSECLess.html#UserTVD"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#userTVDIPSECLess.UserTVD" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<p>User TVD class in case of IPSEC NED configuration</p>
+<dl class="method">
+<dt id="userTVDIPSECLess.UserTVD.addNewIP">
+<code class="descname">addNewIP</code><span class="sig-paren">(</span><em>newIP</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/userTVDIPSECLess.html#UserTVD.addNewIP"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#userTVDIPSECLess.UserTVD.addNewIP" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a new machine on the TVD with the given IP</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="userTVDIPSECLess.UserTVD.associateIPPSA">
+<code class="descname">associateIPPSA</code><span class="sig-paren">(</span><em>psaID</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/userTVDIPSECLess.html#UserTVD.associateIPPSA"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#userTVDIPSECLess.UserTVD.associateIPPSA" title="Permalink to this definition">¶</a></dt>
+<dd><p>Associate an IP on a PSA</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="userTVDIPSECLess.UserTVD.definePSA">
+<code class="descname">definePSA</code><span class="sig-paren">(</span><em>psaID</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/userTVDIPSECLess.html#UserTVD.definePSA"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#userTVDIPSECLess.UserTVD.definePSA" title="Permalink to this definition">¶</a></dt>
+<dd><p>Define a new PSA for the TVD</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="userTVDIPSECLess.UserTVD.delUserIP">
+<code class="descname">delUserIP</code><span class="sig-paren">(</span><em>newIP</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/userTVDIPSECLess.html#UserTVD.delUserIP"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#userTVDIPSECLess.UserTVD.delUserIP" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove the flow for the given IP</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="userTVDIPSECLess.UserTVD.deleteAllTVD">
+<code class="descname">deleteAllTVD</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/userTVDIPSECLess.html#UserTVD.deleteAllTVD"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#userTVDIPSECLess.UserTVD.deleteAllTVD" title="Permalink to this definition">¶</a></dt>
+<dd><p>Delete the TVD</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="userTVDIPSECLess.UserTVD.deleteTVD">
+<code class="descname">deleteTVD</code><span class="sig-paren">(</span><em>IPaddr</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/userTVDIPSECLess.html#UserTVD.deleteTVD"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#userTVDIPSECLess.UserTVD.deleteTVD" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove an IP from the TVD in case of the last IP the TVD will be deleted</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="userTVDIPSECLess.UserTVD.generatePSCflows">
+<code class="descname">generatePSCflows</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/userTVDIPSECLess.html#UserTVD.generatePSCflows"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#userTVDIPSECLess.UserTVD.generatePSCflows" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generete the flow for the PSC</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="userTVDIPSECLess.UserTVD.generateUserPSCflows">
+<code class="descname">generateUserPSCflows</code><span class="sig-paren">(</span><em>userIP</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/userTVDIPSECLess.html#UserTVD.generateUserPSCflows"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#userTVDIPSECLess.UserTVD.generateUserPSCflows" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generete the flow for the PSC</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="userTVDIPSECLess.UserTVD.instantiatePSA">
+<code class="descname">instantiatePSA</code><span class="sig-paren">(</span><em>PSAList</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/userTVDIPSECLess.html#UserTVD.instantiatePSA"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#userTVDIPSECLess.UserTVD.instantiatePSA" title="Permalink to this definition">¶</a></dt>
+<dd><p>Instantiate the PSAs for the TVD</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="userTVDIPSECLess.UserTVD.setPSC">
+<code class="descname">setPSC</code><span class="sig-paren">(</span><em>newPSC</em>, <em>pscAddr</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/userTVDIPSECLess.html#UserTVD.setPSC"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#userTVDIPSECLess.UserTVD.setPSC" title="Permalink to this definition">¶</a></dt>
+<dd><p>Configure the PSC of the TVD</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="index.html">
+              <img class="logo" src="_static/secured.png" alt="Logo"/>
+            </a></p><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="userTVD.html" title="previous chapter">userTVD module</a></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/userTVDIPSECLess.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, SECURity at the network EDge.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      
+      |
+      <a href="_sources/userTVDIPSECLess.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

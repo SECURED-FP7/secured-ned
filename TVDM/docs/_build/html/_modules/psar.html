@@ -1,0 +1,467 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>psar &mdash; TVDM  documentation</title>
+    
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="TVDM  documentation" href="../index.html" />
+    <link rel="up" title="Module code" href="index.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for psar</h1><div class="highlight"><pre>
+<span></span>
+<span class="kn">from</span> <span class="nn">requests</span> <span class="kn">import</span> <span class="n">get</span><span class="p">,</span> <span class="n">put</span><span class="p">,</span> <span class="n">delete</span><span class="p">,</span> <span class="n">patch</span><span class="p">,</span> <span class="n">post</span>
+<span class="kn">import</span> <span class="nn">urllib</span>
+<span class="kn">from</span> <span class="nn">keystoneclient.v2_0</span> <span class="kn">import</span> <span class="n">client</span>
+<span class="kn">import</span> <span class="nn">argparse</span>
+
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">Client for the PSAR API. All methods return a Response object.</span>
+
+<span class="sd">TO-DO: Currently only tested without authentication. </span>
+<span class="sd">&#39;&#39;&#39;</span>
+
+	
+<div class="viewcode-block" id="Client"><a class="viewcode-back" href="../psar.html#psar.Client">[docs]</a><span class="k">class</span> <span class="nc">Client</span><span class="p">:</span>
+	<span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">base_url</span><span class="p">):</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">base_url</span><span class="o">=</span><span class="n">base_url</span><span class="o">+</span><span class="s1">&#39;/v1/&#39;</span>
+	
+	
+<div class="viewcode-block" id="Client.get_token"><a class="viewcode-back" href="../psar.html#psar.Client.get_token">[docs]</a>	<span class="k">def</span> <span class="nf">get_token</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">user</span><span class="p">,</span><span class="n">password</span><span class="p">,</span><span class="n">tenant</span><span class="p">,</span><span class="n">auth_URL</span><span class="p">):</span>
+		<span class="n">keystone</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">Client</span><span class="p">(</span><span class="n">username</span><span class="o">=</span><span class="n">user</span><span class="p">,</span> <span class="n">password</span><span class="o">=</span><span class="n">password</span><span class="p">,</span> <span class="n">tenant_name</span><span class="o">=</span><span class="n">tenant</span><span class="p">,</span> <span class="n">auth_url</span><span class="o">=</span><span class="n">auth_URL</span><span class="p">)</span>
+		<span class="k">return</span> <span class="n">keystone</span><span class="o">.</span><span class="n">get_raw_token_from_identity_service</span><span class="p">(</span><span class="n">auth_url</span><span class="o">=</span><span class="n">auth_URL</span><span class="p">,</span><span class="n">username</span><span class="o">=</span><span class="n">user</span><span class="p">,</span> <span class="n">password</span><span class="o">=</span><span class="n">password</span><span class="p">,</span><span class="n">tenant_name</span><span class="o">=</span><span class="n">tenant</span><span class="p">)</span><span class="o">.</span><span class="n">auth_token</span></div>
+	
+<div class="viewcode-block" id="Client.add_token_param"><a class="viewcode-back" href="../psar.html#psar.Client.add_token_param">[docs]</a>	<span class="k">def</span> <span class="nf">add_token_param</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">token</span><span class="p">,</span><span class="n">first_param</span><span class="p">):</span> <span class="c1">#TO-DO:Change authentication so that it goes on the header instead of url</span>
+		<span class="k">return</span> <span class="p">(</span><span class="s1">&#39;?&#39;</span> <span class="k">if</span> <span class="n">first_param</span> <span class="k">else</span> <span class="s1">&#39;&amp;&#39;</span><span class="p">)</span><span class="o">+</span><span class="n">urllib</span><span class="o">.</span><span class="n">urlencode</span><span class="p">({</span><span class="s1">&#39;auth_token&#39;</span><span class="p">:</span><span class="n">token</span><span class="p">})</span></div>
+	
+	<span class="c1">#Status</span>
+	
+	
+<div class="viewcode-block" id="Client.get_status"><a class="viewcode-back" href="../psar.html#psar.Client.get_status">[docs]</a>	<span class="k">def</span> <span class="nf">get_status</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">token</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+		
+		<span class="n">url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_url</span><span class="o">+</span><span class="s1">&#39;status&#39;</span>
+		<span class="k">if</span> <span class="n">token</span><span class="p">:</span>
+			<span class="n">url</span> <span class="o">+=</span> <span class="n">add_token_param</span><span class="p">(</span><span class="n">token</span><span class="o">=</span><span class="n">token</span><span class="p">,</span><span class="n">first_param</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+		<span class="k">return</span> <span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">)</span></div>
+		
+	<span class="c1">#PSA</span>
+		
+<div class="viewcode-block" id="Client.create_psa"><a class="viewcode-back" href="../psar.html#psar.Client.create_psa">[docs]</a>	<span class="k">def</span> <span class="nf">create_psa</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">name</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span><span class="n">token</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+		<span class="n">url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_url</span><span class="o">+</span><span class="s1">&#39;PSA/images/&#39;</span>
+		<span class="k">if</span> <span class="n">token</span><span class="p">:</span>
+	                <span class="n">url</span> <span class="o">+=</span><span class="n">add_token_param</span><span class="p">(</span><span class="n">token</span><span class="o">=</span><span class="n">token</span><span class="p">,</span><span class="n">first_param</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+		<span class="k">if</span> <span class="n">name</span><span class="p">:</span>
+				<span class="n">url</span> <span class="o">+=</span> <span class="s1">&#39;&amp;name=&#39;</span><span class="o">+</span><span class="n">name</span>
+		<span class="k">return</span> <span class="n">post</span><span class="p">(</span><span class="n">url</span><span class="p">)</span></div>
+		
+<div class="viewcode-block" id="Client.delete_psa"><a class="viewcode-back" href="../psar.html#psar.Client.delete_psa">[docs]</a>	<span class="k">def</span> <span class="nf">delete_psa</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">image_id</span><span class="p">,</span><span class="n">token</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+		<span class="n">url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_url</span><span class="o">+</span><span class="s1">&#39;PSA/images/&#39;</span><span class="o">+</span><span class="n">image_id</span><span class="o">+</span><span class="s1">&#39;/&#39;</span>
+		<span class="k">if</span> <span class="n">token</span><span class="p">:</span>
+			<span class="n">url</span> <span class="o">+=</span><span class="n">add_token_param</span><span class="p">(</span><span class="n">token</span><span class="o">=</span><span class="n">token</span><span class="p">,</span><span class="n">first_param</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+		<span class="k">return</span> <span class="n">delete</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>		</div>
+	
+<div class="viewcode-block" id="Client.get_image_list"><a class="viewcode-back" href="../psar.html#psar.Client.get_image_list">[docs]</a>	<span class="k">def</span> <span class="nf">get_image_list</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">id</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span><span class="n">token</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+		<span class="n">url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_url</span><span class="o">+</span><span class="s1">&#39;PSA/images/&#39;</span>
+		<span class="k">if</span> <span class="nb">id</span><span class="p">:</span>
+			<span class="n">url</span> <span class="o">+=</span> <span class="s1">&#39;?id=&#39;</span><span class="o">+</span><span class="nb">id</span>
+		<span class="k">if</span> <span class="n">token</span><span class="p">:</span>
+			<span class="n">url</span> <span class="o">+=</span> <span class="n">add_token_param</span><span class="p">(</span><span class="n">token</span><span class="o">=</span><span class="n">token</span><span class="p">,</span><span class="n">first_param</span><span class="o">=</span><span class="ow">not</span> <span class="nb">id</span><span class="p">)</span>
+		<span class="k">return</span> <span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">)</span></div>
+	
+	
+	
+	<span class="c1">#Manifest</span>
+	
+	
+	
+<div class="viewcode-block" id="Client.get_manifest"><a class="viewcode-back" href="../psar.html#psar.Client.get_manifest">[docs]</a>	<span class="k">def</span> <span class="nf">get_manifest</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">image_id</span><span class="p">,</span><span class="n">token</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+		<span class="n">url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_url</span><span class="o">+</span><span class="s1">&#39;PSA/manifest/&#39;</span><span class="o">+</span><span class="n">image_id</span>
+		<span class="k">if</span> <span class="n">token</span><span class="p">:</span>
+			<span class="n">url</span> <span class="o">+=</span> <span class="n">add_token_param</span><span class="p">(</span><span class="n">token</span><span class="o">=</span><span class="n">token</span><span class="p">,</span><span class="n">first_param</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+		<span class="k">return</span> <span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">)</span></div>
+	
+<div class="viewcode-block" id="Client.delete_manifest"><a class="viewcode-back" href="../psar.html#psar.Client.delete_manifest">[docs]</a>	<span class="k">def</span> <span class="nf">delete_manifest</span> <span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">image_id</span><span class="p">,</span><span class="n">token</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+		<span class="n">url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_url</span><span class="o">+</span><span class="s1">&#39;PSA/manifest/&#39;</span><span class="o">+</span><span class="n">image_id</span><span class="o">+</span><span class="s1">&#39;/file&#39;</span>
+		<span class="k">if</span> <span class="n">token</span><span class="p">:</span>
+			<span class="n">url</span> <span class="o">+=</span> <span class="n">add_token_param</span><span class="p">(</span><span class="n">token</span><span class="o">=</span><span class="n">token</span><span class="p">,</span><span class="n">first_param</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+		<span class="k">return</span> <span class="n">delete</span><span class="p">(</span><span class="n">url</span><span class="p">)</span></div>
+	
+<div class="viewcode-block" id="Client.put_manifest_file"><a class="viewcode-back" href="../psar.html#psar.Client.put_manifest_file">[docs]</a>	<span class="k">def</span> <span class="nf">put_manifest_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">image_id</span><span class="p">,</span><span class="n">path</span><span class="p">,</span><span class="n">token</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+		<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span><span class="s1">&#39;rb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+			<span class="n">url</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">base_url</span><span class="o">+</span><span class="s1">&#39;PSA/manifest/&#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">image_id</span><span class="p">)</span><span class="o">+</span><span class="s1">&#39;/file&#39;</span>
+			<span class="k">if</span> <span class="n">token</span><span class="p">:</span>
+				<span class="n">url</span> <span class="o">+=</span> <span class="n">add_token_param</span><span class="p">(</span><span class="n">token</span><span class="o">=</span><span class="n">token</span><span class="p">,</span><span class="n">first_param</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+			<span class="n">files</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;file&#39;</span><span class="p">:</span><span class="n">f</span><span class="p">}</span>
+			<span class="k">return</span> <span class="n">put</span><span class="p">(</span><span class="n">url</span><span class="p">,</span><span class="n">files</span><span class="o">=</span><span class="n">files</span><span class="p">)</span></div>
+	
+	
+	
+	
+	<span class="c1">#Images</span>
+	
+	
+<div class="viewcode-block" id="Client.get_image_file"><a class="viewcode-back" href="../psar.html#psar.Client.get_image_file">[docs]</a>	<span class="k">def</span> <span class="nf">get_image_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">image_id</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span><span class="n">token</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+		<span class="n">url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_url</span><span class="o">+</span><span class="s1">&#39;PSA/images/&#39;</span><span class="o">+</span><span class="n">image_id</span><span class="o">+</span><span class="s1">&#39;/file&#39;</span>
+		<span class="k">if</span> <span class="n">token</span><span class="p">:</span>
+			<span class="n">url</span> <span class="o">+=</span> <span class="n">add_token_param</span><span class="p">(</span><span class="n">token</span><span class="o">=</span><span class="n">token</span><span class="p">,</span><span class="n">first_param</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+		<span class="n">r</span><span class="o">=</span><span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
+		<span class="k">if</span> <span class="n">r</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">200</span><span class="p">:</span>
+			<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s1">&#39;wb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+				<span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">r</span><span class="o">.</span><span class="n">iter_content</span><span class="p">(</span><span class="n">chunk_size</span><span class="o">=</span><span class="mi">1024</span><span class="p">):</span>
+					<span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span>
+		<span class="k">return</span> <span class="n">r</span></div>
+
+<div class="viewcode-block" id="Client.put_image_file"><a class="viewcode-back" href="../psar.html#psar.Client.put_image_file">[docs]</a>	<span class="k">def</span> <span class="nf">put_image_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">image_id</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">disk_format</span><span class="p">,</span> <span class="n">container_format</span><span class="p">,</span><span class="n">token</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+		<span class="n">url</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">base_url</span><span class="o">+</span><span class="s1">&#39;PSA/images/&#39;</span><span class="o">+</span><span class="n">image_id</span><span class="o">+</span><span class="s1">&#39;/file?&#39;</span><span class="o">+</span><span class="n">urllib</span><span class="o">.</span><span class="n">urlencode</span><span class="p">({</span><span class="s2">&quot;disk_format&quot;</span><span class="p">:</span><span class="n">disk_format</span><span class="p">,</span><span class="s1">&#39;container_format&#39;</span><span class="p">:</span><span class="n">container_format</span><span class="p">})</span>
+
+		<span class="k">if</span> <span class="n">token</span><span class="p">:</span>
+			<span class="n">url</span> <span class="o">+=</span> <span class="n">add_token_param</span><span class="p">(</span><span class="n">token</span><span class="o">=</span><span class="n">token</span><span class="p">,</span><span class="n">first_param</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+				
+		<span class="k">with</span> <span class="nb">open</span> <span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s1">&#39;rb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+			<span class="n">files</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;file&#39;</span><span class="p">:</span><span class="n">f</span><span class="p">}</span>
+			<span class="k">return</span> <span class="n">put</span><span class="p">(</span><span class="n">url</span><span class="p">,</span><span class="n">files</span><span class="o">=</span><span class="n">files</span><span class="p">)</span></div>
+	
+<div class="viewcode-block" id="Client.put_image"><a class="viewcode-back" href="../psar.html#psar.Client.put_image">[docs]</a>	<span class="k">def</span> <span class="nf">put_image</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">image_id</span><span class="p">,</span><span class="n">name</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span><span class="n">token</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+		<span class="n">url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_url</span><span class="o">+</span><span class="s1">&#39;PSA/images/&#39;</span><span class="o">+</span><span class="n">image_id</span><span class="o">+</span><span class="s1">&#39;/&#39;</span>
+		<span class="k">if</span> <span class="n">token</span><span class="p">:</span>
+	            <span class="n">url</span> <span class="o">+=</span> <span class="n">add_token_param</span><span class="p">(</span><span class="n">token</span><span class="o">=</span><span class="n">token</span><span class="p">,</span><span class="n">first_param</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+		<span class="k">if</span> <span class="n">name</span><span class="p">:</span>
+			<span class="n">url</span> <span class="o">+=</span> <span class="s1">&#39;&amp;name=&#39;</span><span class="o">+</span><span class="n">name</span>	
+		<span class="k">return</span> <span class="n">put</span><span class="p">(</span><span class="n">url</span><span class="p">)</span></div>
+	
+<div class="viewcode-block" id="Client.delete_image"><a class="viewcode-back" href="../psar.html#psar.Client.delete_image">[docs]</a>	<span class="k">def</span> <span class="nf">delete_image</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">image_id</span><span class="p">,</span><span class="n">token</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+		<span class="n">url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_url</span><span class="o">+</span><span class="s1">&#39;PSA/images/&#39;</span><span class="o">+</span><span class="n">image_id</span><span class="o">+</span><span class="s1">&#39;/file&#39;</span>
+		<span class="k">if</span> <span class="n">token</span><span class="p">:</span>
+			<span class="n">url</span> <span class="o">+=</span> <span class="n">add_token_param</span><span class="p">(</span><span class="n">token</span><span class="o">=</span><span class="n">token</span><span class="p">,</span><span class="n">first_param</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+		<span class="k">return</span> <span class="n">delete</span><span class="p">(</span><span class="n">url</span><span class="p">)</span></div>
+	
+<div class="viewcode-block" id="Client.get_image_location"><a class="viewcode-back" href="../psar.html#psar.Client.get_image_location">[docs]</a>	<span class="k">def</span> <span class="nf">get_image_location</span> <span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">image_id</span><span class="p">,</span><span class="n">token</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+		<span class="n">url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_url</span><span class="o">+</span><span class="s1">&#39;PSA/images/&#39;</span><span class="o">+</span><span class="n">image_id</span><span class="o">+</span><span class="s1">&#39;/image_location&#39;</span>
+		<span class="k">if</span> <span class="n">token</span><span class="p">:</span>
+			<span class="n">url</span> <span class="o">+=</span> <span class="n">add_token_param</span><span class="p">(</span><span class="n">token</span><span class="o">=</span><span class="n">token</span><span class="p">,</span><span class="n">first_param</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+		<span class="k">return</span> <span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>	</div>
+
+<div class="viewcode-block" id="Client.patch_image"><a class="viewcode-back" href="../psar.html#psar.Client.patch_image">[docs]</a>	<span class="k">def</span> <span class="nf">patch_image</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">image_id</span><span class="p">,</span> <span class="n">new_status</span><span class="p">,</span><span class="n">token</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+		<span class="n">url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_url</span><span class="o">+</span><span class="s1">&#39;PSA/images/&#39;</span><span class="o">+</span><span class="n">image_id</span><span class="o">+</span><span class="s1">&#39;/?status=&#39;</span><span class="o">+</span><span class="n">new_status</span>
+		<span class="k">if</span> <span class="n">token</span><span class="p">:</span>
+			<span class="n">url</span> <span class="o">+=</span> <span class="n">add_token_param</span><span class="p">(</span><span class="n">token</span><span class="o">=</span><span class="n">token</span><span class="p">,</span><span class="n">first_param</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+		<span class="k">return</span> <span class="n">patch</span><span class="p">(</span><span class="n">url</span><span class="p">)</span></div>
+
+	<span class="c1">#Plugin</span>
+
+<div class="viewcode-block" id="Client.get_plugin_file"><a class="viewcode-back" href="../psar.html#psar.Client.get_plugin_file">[docs]</a>	<span class="k">def</span> <span class="nf">get_plugin_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">image_id</span><span class="p">,</span><span class="n">path</span><span class="p">,</span><span class="n">token</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+		<span class="n">url</span> <span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">base_url</span><span class="o">+</span><span class="s1">&#39;PSA/M2Lplugins/&#39;</span><span class="o">+</span><span class="n">image_id</span><span class="o">+</span><span class="s1">&#39;/&#39;</span>
+		<span class="k">if</span> <span class="n">token</span><span class="p">:</span>
+			<span class="n">url</span> <span class="o">+=</span> <span class="n">add_token_param</span><span class="p">(</span><span class="n">token</span><span class="o">=</span><span class="n">token</span><span class="p">,</span><span class="n">first_param</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+		<span class="n">r</span><span class="o">=</span><span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
+		<span class="k">if</span> <span class="n">r</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">200</span><span class="p">:</span>
+			<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s1">&#39;wb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+				<span class="k">for</span> <span class="n">chunk</span> <span class="ow">in</span> <span class="n">r</span><span class="o">.</span><span class="n">iter_content</span><span class="p">(</span><span class="n">chunk_size</span><span class="o">=</span><span class="mi">1024</span><span class="p">):</span>
+					<span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span>
+		<span class="k">return</span> <span class="n">r</span></div>
+
+<div class="viewcode-block" id="Client.put_plugin_file"><a class="viewcode-back" href="../psar.html#psar.Client.put_plugin_file">[docs]</a>	<span class="k">def</span> <span class="nf">put_plugin_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">image_id</span><span class="p">,</span><span class="n">path</span><span class="p">,</span><span class="n">token</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+		<span class="n">url</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">base_url</span><span class="o">+</span><span class="s1">&#39;PSA/M2Lplugins/&#39;</span><span class="o">+</span><span class="n">image_id</span><span class="o">+</span><span class="s1">&#39;/file&#39;</span>
+		<span class="k">if</span> <span class="n">token</span><span class="p">:</span>
+			<span class="n">url</span> <span class="o">+=</span> <span class="n">add_token_param</span><span class="p">(</span><span class="n">token</span><span class="o">=</span><span class="n">token</span><span class="p">,</span><span class="n">first_param</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+		<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">path</span><span class="p">,</span><span class="s1">&#39;rb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+			<span class="n">files</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;file&#39;</span><span class="p">:</span><span class="n">f</span><span class="p">}</span>
+			<span class="k">return</span> <span class="n">put</span><span class="p">(</span><span class="n">url</span><span class="p">,</span><span class="n">files</span><span class="o">=</span><span class="n">files</span><span class="p">)</span></div>
+<div class="viewcode-block" id="Client.put_plugin"><a class="viewcode-back" href="../psar.html#psar.Client.put_plugin">[docs]</a>	<span class="k">def</span> <span class="nf">put_plugin</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">image_id</span><span class="p">,</span><span class="n">name</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span><span class="n">new_url</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span><span class="n">token</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+		<span class="n">url</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">base_url</span><span class="o">+</span><span class="s1">&#39;PSA/M2Lplugins/&#39;</span><span class="o">+</span><span class="n">image_id</span><span class="o">+</span><span class="s1">&#39;/&#39;</span>
+		<span class="k">if</span> <span class="n">name</span><span class="p">:</span> 
+			<span class="n">url</span> <span class="o">+=</span> <span class="s1">&#39;?name=&#39;</span><span class="o">+</span><span class="n">name</span>
+		<span class="k">if</span> <span class="n">token</span><span class="p">:</span>
+			<span class="n">url</span> <span class="o">+=</span> <span class="n">add_token_param</span><span class="p">(</span><span class="n">token</span><span class="o">=</span><span class="n">token</span><span class="p">,</span><span class="n">first_param</span><span class="o">=</span><span class="ow">not</span><span class="p">(</span><span class="n">name</span><span class="p">))</span>
+		<span class="k">if</span> <span class="n">new_url</span><span class="p">:</span>
+			<span class="n">url</span><span class="o">+=</span><span class="s1">&#39;&amp;url=&#39;</span><span class="o">+</span><span class="n">new_url</span></div>
+<div class="viewcode-block" id="Client.delete_plugin"><a class="viewcode-back" href="../psar.html#psar.Client.delete_plugin">[docs]</a>	<span class="k">def</span> <span class="nf">delete_plugin</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">image_id</span><span class="p">,</span><span class="n">token</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+		<span class="n">url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_url</span><span class="o">+</span><span class="s1">&#39;PSA/M2Lplugins/&#39;</span><span class="o">+</span><span class="n">image_id</span><span class="o">+</span><span class="s1">&#39;/file&#39;</span>
+		<span class="k">if</span> <span class="n">token</span><span class="p">:</span>
+			<span class="n">url</span> <span class="o">+=</span> <span class="n">add_token_param</span><span class="p">(</span><span class="n">token</span><span class="o">=</span><span class="n">token</span><span class="p">,</span><span class="n">first_param</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+		<span class="k">return</span> <span class="n">delete</span><span class="p">(</span><span class="n">url</span><span class="p">)</span></div>
+	
+<div class="viewcode-block" id="Client.get_plugin_location"><a class="viewcode-back" href="../psar.html#psar.Client.get_plugin_location">[docs]</a>	<span class="k">def</span> <span class="nf">get_plugin_location</span> <span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">image_id</span><span class="p">,</span><span class="n">token</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+		<span class="n">url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_url</span><span class="o">+</span><span class="s1">&#39;PSA/M2Lplugins/&#39;</span><span class="o">+</span><span class="n">image_id</span><span class="o">+</span><span class="s1">&#39;/plugin_location&#39;</span>
+		<span class="k">if</span> <span class="n">token</span><span class="p">:</span>
+			<span class="n">url</span> <span class="o">+=</span> <span class="n">add_token_param</span><span class="p">(</span><span class="n">token</span><span class="o">=</span><span class="n">token</span><span class="p">,</span><span class="n">first_param</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+		<span class="k">return</span> <span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="p">)</span></div>
+
+		
+
+	
+
+	<span class="c1">#PSARL</span>
+			
+	
+<div class="viewcode-block" id="Client.put_psarl_location"><a class="viewcode-back" href="../psar.html#psar.Client.put_psarl_location">[docs]</a>	<span class="k">def</span> <span class="nf">put_psarl_location</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">psarl_id</span><span class="p">,</span><span class="n">new_location</span><span class="p">,</span><span class="n">token</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+		<span class="n">url</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">base_url</span><span class="o">+</span><span class="s1">&#39;PSARLs/&#39;</span><span class="o">+</span><span class="n">psarl_id</span><span class="o">+</span><span class="s1">&#39;/?location=&#39;</span><span class="o">+</span><span class="n">new_location</span>
+		<span class="k">if</span> <span class="n">token</span><span class="p">:</span>
+			<span class="n">url</span> <span class="o">+=</span> <span class="n">add_token_param</span><span class="p">(</span><span class="n">token</span><span class="o">=</span><span class="n">token</span><span class="p">,</span><span class="n">first_param</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+		
+		<span class="k">return</span> <span class="n">put</span><span class="p">(</span><span class="n">url</span><span class="p">)</span></div></div>
+
+
+
+
+
+<span class="k">if</span> <span class="n">__name__</span><span class="o">==</span><span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+	<span class="c1">#TO-DO: Take arguments (such as the url of the psar) from environment</span>
+	<span class="c1">#Functions</span>
+	<span class="k">def</span> <span class="nf">list_images</span><span class="p">(</span><span class="n">args</span><span class="p">):</span>
+		<span class="n">c</span><span class="o">=</span><span class="n">Client</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">url</span><span class="p">)</span>
+		<span class="n">r</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">get_image_list</span><span class="p">(</span><span class="n">token</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">token</span><span class="p">)</span>
+		<span class="k">print</span> <span class="n">r</span><span class="o">.</span><span class="n">content</span>
+	<span class="k">def</span> <span class="nf">download_image</span><span class="p">(</span><span class="n">args</span><span class="p">):</span>
+                <span class="n">c</span><span class="o">=</span><span class="n">Client</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">url</span><span class="p">)</span>
+		<span class="n">c</span><span class="o">.</span><span class="n">get_image_file</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">path</span><span class="p">,</span><span class="n">image_id</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">id</span><span class="p">,</span><span class="n">token</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">token</span><span class="p">)</span>
+        <span class="k">def</span> <span class="nf">upload_image</span><span class="p">(</span><span class="n">args</span><span class="p">):</span>
+                <span class="n">c</span><span class="o">=</span><span class="n">Client</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">url</span><span class="p">)</span>
+		<span class="n">c</span><span class="o">.</span><span class="n">put_image_file</span><span class="p">(</span><span class="n">image_id</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">id</span><span class="p">,</span><span class="n">path</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">path</span><span class="p">,</span><span class="n">disk_format</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">disk_format</span><span class="p">,</span><span class="n">container_format</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">container_format</span><span class="p">,</span><span class="n">token</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">token</span><span class="p">)</span>
+        <span class="k">def</span> <span class="nf">delete_image</span><span class="p">(</span><span class="n">args</span><span class="p">):</span>
+		<span class="n">c</span><span class="o">=</span><span class="n">Client</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">url</span><span class="p">)</span>
+		<span class="n">c</span><span class="o">.</span><span class="n">delete_image</span><span class="p">(</span><span class="n">image_id</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">id</span><span class="p">,</span><span class="n">token</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">token</span><span class="p">)</span>    
+	<span class="k">def</span> <span class="nf">download_manifest</span><span class="p">(</span><span class="n">args</span><span class="p">):</span>
+		<span class="n">c</span><span class="o">=</span><span class="n">Client</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">url</span><span class="p">)</span>
+		<span class="n">r</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">get_manifest</span><span class="p">(</span><span class="n">image_id</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">id</span><span class="p">,</span><span class="n">token</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">token</span><span class="p">)</span>
+		<span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">path</span><span class="p">,</span><span class="s1">&#39;w&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+			<span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">content</span><span class="p">)</span>
+	<span class="k">def</span> <span class="nf">upload_manifest</span><span class="p">(</span><span class="n">args</span><span class="p">):</span>
+		<span class="n">c</span><span class="o">=</span><span class="n">Client</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">url</span><span class="p">)</span>
+		<span class="n">c</span><span class="o">.</span><span class="n">put_manifest_file</span><span class="p">(</span><span class="n">image_id</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">id</span><span class="p">),</span><span class="n">path</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">path</span><span class="p">,</span><span class="n">token</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">token</span><span class="p">)</span>
+	<span class="k">def</span> <span class="nf">delete_manifest</span><span class="p">(</span><span class="n">args</span><span class="p">):</span>
+        	<span class="n">c</span><span class="o">=</span><span class="n">Client</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">url</span><span class="p">)</span>
+		<span class="n">c</span><span class="o">.</span><span class="n">delete_manifest_file</span><span class="p">(</span><span class="n">image_id</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">id</span><span class="p">,</span><span class="n">token</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">token</span><span class="p">)</span>
+	<span class="k">def</span> <span class="nf">download_plugin</span><span class="p">(</span><span class="n">args</span><span class="p">):</span>
+       		<span class="n">c</span><span class="o">=</span><span class="n">Client</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">url</span><span class="p">)</span>
+        	<span class="n">c</span><span class="o">.</span><span class="n">get_plugin_file</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">path</span><span class="p">,</span><span class="n">image_id</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">id</span><span class="p">,</span><span class="n">token</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">token</span><span class="p">)</span>
+
+	<span class="k">def</span> <span class="nf">upload_plugin</span><span class="p">(</span><span class="n">args</span><span class="p">):</span>
+        	<span class="n">c</span><span class="o">=</span><span class="n">Client</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">url</span><span class="p">)</span>
+        	<span class="n">c</span><span class="o">.</span><span class="n">put_plugin_file</span><span class="p">(</span><span class="n">image_id</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">id</span><span class="p">,</span><span class="n">path</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">path</span><span class="p">,</span><span class="n">token</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">token</span><span class="p">)</span>
+	<span class="k">def</span> <span class="nf">delete_plugin</span><span class="p">(</span><span class="n">args</span><span class="p">):</span>
+        	<span class="n">c</span><span class="o">=</span><span class="n">Client</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">url</span><span class="p">)</span>
+        	<span class="n">c</span><span class="o">.</span><span class="n">delete_plugin_file</span><span class="p">(</span><span class="n">image_id</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">id</span><span class="p">,</span><span class="n">token</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">token</span><span class="p">)</span>
+	<span class="k">def</span> <span class="nf">create_psa</span><span class="p">(</span><span class="n">args</span><span class="p">):</span>
+		<span class="n">c</span><span class="o">=</span><span class="n">Client</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">url</span><span class="p">)</span>
+		<span class="n">r</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">create_psa</span><span class="p">()</span>
+		<span class="k">print</span> <span class="n">r</span><span class="o">.</span><span class="n">text</span>
+	<span class="k">def</span> <span class="nf">delete_psa</span><span class="p">(</span><span class="n">args</span><span class="p">):</span>
+		<span class="n">c</span><span class="o">=</span><span class="n">Client</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">url</span><span class="p">)</span>
+		<span class="n">r</span><span class="o">=</span><span class="n">c</span><span class="o">.</span><span class="n">delete_psa</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>		
+	
+	<span class="c1">#General</span>
+	<span class="n">parser</span><span class="o">=</span><span class="n">argparse</span><span class="o">.</span><span class="n">ArgumentParser</span><span class="p">(</span><span class="n">description</span><span class="o">=</span><span class="s2">&quot;Command line client for the PSAR API&quot;</span><span class="p">)</span>
+	<span class="n">subparsers</span> <span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">add_subparsers</span><span class="p">(</span><span class="n">help</span><span class="o">=</span><span class="s1">&#39;groups&#39;</span><span class="p">)</span>
+	
+	<span class="n">create_parser</span><span class="o">=</span><span class="n">subparsers</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span><span class="s1">&#39;create&#39;</span><span class="p">,</span><span class="n">help</span><span class="o">=</span><span class="s1">&#39;Creates a new empty PSA&#39;</span><span class="p">)</span>
+	<span class="n">create_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--url&#39;</span><span class="p">,</span><span class="n">action</span><span class="o">=</span><span class="s1">&#39;store&#39;</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;URL of the PSAR&#39;</span><span class="p">)</span>
+	<span class="n">create_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--token&#39;</span><span class="p">,</span><span class="n">action</span><span class="o">=</span><span class="s1">&#39;store&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Authentication token&#39;</span><span class="p">)</span>
+
+	<span class="n">create_parser</span><span class="o">.</span><span class="n">set_defaults</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="n">create_psa</span><span class="p">)</span>
+	
+	<span class="n">delete_parser</span><span class="o">=</span><span class="n">subparsers</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span><span class="s1">&#39;delete&#39;</span><span class="p">,</span><span class="n">help</span><span class="o">=</span><span class="s1">&#39;Deletes the PSA&#39;</span><span class="p">)</span>
+        <span class="n">delete_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--url&#39;</span><span class="p">,</span><span class="n">action</span><span class="o">=</span><span class="s1">&#39;store&#39;</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;URL of the PSAR&#39;</span><span class="p">)</span>
+        <span class="n">delete_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">,</span><span class="n">action</span><span class="o">=</span><span class="s1">&#39;store&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;ID of the PSA to delete&#39;</span><span class="p">)</span>
+	<span class="n">delete_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--token&#39;</span><span class="p">,</span><span class="n">action</span><span class="o">=</span><span class="s1">&#39;store&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Authentication token&#39;</span><span class="p">)</span>
+
+	<span class="n">delete_parser</span><span class="o">.</span><span class="n">set_defaults</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="n">delete_psa</span><span class="p">)</span>
+
+
+	<span class="c1">#Images</span>
+	<span class="n">image_parser</span><span class="o">=</span><span class="n">subparsers</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span><span class="s1">&#39;image&#39;</span><span class="p">,</span><span class="n">help</span><span class="o">=</span><span class="s1">&#39;Interacts with the images&#39;</span><span class="p">)</span>
+	<span class="n">image_subparser</span><span class="o">=</span><span class="n">image_parser</span><span class="o">.</span><span class="n">add_subparsers</span><span class="p">(</span><span class="n">help</span><span class="o">=</span><span class="s1">&#39;commands&#39;</span><span class="p">)</span>
+	
+	<span class="c1">#	List</span>
+	<span class="n">list_image_parser</span> <span class="o">=</span> <span class="n">image_subparser</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span><span class="s1">&#39;list&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;List images stored&#39;</span><span class="p">)</span>
+	<span class="n">list_image_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--id&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Returns only matching PSAs&#39;</span><span class="p">)</span>
+	<span class="n">list_image_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--url&#39;</span><span class="p">,</span><span class="n">action</span><span class="o">=</span><span class="s1">&#39;store&#39;</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;URL of the PSAR&#39;</span><span class="p">)</span>
+	<span class="n">list_image_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--token&#39;</span><span class="p">,</span><span class="n">action</span><span class="o">=</span><span class="s1">&#39;store&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Authentication token&#39;</span><span class="p">)</span>
+
+	<span class="n">list_image_parser</span><span class="o">.</span><span class="n">set_defaults</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="n">list_images</span><span class="p">)</span>
+	
+
+	<span class="c1">#	Download</span>
+	<span class="n">download_image_parser</span><span class="o">=</span><span class="n">image_subparser</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span><span class="s1">&#39;download&#39;</span><span class="p">,</span><span class="n">help</span><span class="o">=</span><span class="s1">&#39;Download an image&#39;</span><span class="p">)</span>
+	<span class="n">download_image_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;PSA to download&#39;</span><span class="p">)</span>
+	<span class="n">download_image_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;path&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Path&#39;</span><span class="p">)</span>
+	<span class="n">download_image_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--url&#39;</span><span class="p">,</span><span class="n">action</span><span class="o">=</span><span class="s1">&#39;store&#39;</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;URL of the PSAR&#39;</span><span class="p">)</span>
+	<span class="n">download_image_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--token&#39;</span><span class="p">,</span><span class="n">action</span><span class="o">=</span><span class="s1">&#39;store&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Authentication token&#39;</span><span class="p">)</span>
+
+	<span class="n">download_image_parser</span><span class="o">.</span><span class="n">set_defaults</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="n">download_image</span><span class="p">)</span>
+	
+	
+	<span class="c1">#	Upload</span>
+	<span class="n">upload_image_parser</span><span class="o">=</span><span class="n">image_subparser</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span><span class="s1">&#39;upload&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Upload an image&#39;</span><span class="p">)</span>
+	<span class="n">upload_image_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;PSA to upload&#39;</span><span class="p">)</span>
+	<span class="n">upload_image_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;path&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Path&#39;</span><span class="p">)</span>
+	<span class="n">upload_image_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--disk_format&#39;</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">choices</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;qcow2&#39;</span><span class="p">,</span> <span class="s1">&#39;raw&#39;</span><span class="p">,</span> <span class="s1">&#39;vhd&#39;</span><span class="p">,</span> <span class="s1">&#39;vmdk&#39;</span><span class="p">,</span> <span class="s1">&#39;vdi&#39;</span><span class="p">,</span> <span class="s1">&#39;iso&#39;</span><span class="p">,</span> <span class="s1">&#39;aki&#39;</span><span class="p">,</span><span class="s1">&#39;ari&#39;</span><span class="p">,</span><span class="s1">&#39;ami&#39;</span><span class="p">]</span> <span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Disk format&#39;</span><span class="p">)</span>
+	<span class="n">upload_image_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--container_format&#39;</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">choices</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;bare&#39;</span><span class="p">,</span> <span class="s1">&#39;ovf&#39;</span><span class="p">,</span> <span class="s1">&#39;aki&#39;</span><span class="p">,</span> <span class="s1">&#39;ari&#39;</span><span class="p">,</span> <span class="s1">&#39;ami&#39;</span><span class="p">],</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Container format&#39;</span><span class="p">)</span>
+	<span class="n">upload_image_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--name&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Name&#39;</span><span class="p">)</span>
+	<span class="n">upload_image_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--status&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;status&#39;</span><span class="p">)</span>
+	<span class="n">upload_image_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--manifest_id&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Manifest ID&#39;</span><span class="p">)</span>
+	<span class="n">upload_image_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--storage_id&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Storage ID&#39;</span><span class="p">)</span>
+	<span class="n">upload_image_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--plugin_id&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Plugin ID&#39;</span><span class="p">)</span>
+	<span class="n">upload_image_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--url&#39;</span><span class="p">,</span><span class="n">action</span><span class="o">=</span><span class="s1">&#39;store&#39;</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;URL of the PSAR&#39;</span><span class="p">)</span>
+	<span class="n">upload_image_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--token&#39;</span><span class="p">,</span><span class="n">action</span><span class="o">=</span><span class="s1">&#39;store&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Authentication token&#39;</span><span class="p">)</span>
+
+
+	<span class="n">upload_image_parser</span><span class="o">.</span><span class="n">set_defaults</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="n">upload_image</span><span class="p">)</span>
+
+
+	<span class="c1">#	Delete</span>
+	<span class="n">delete_image_parser</span><span class="o">=</span><span class="n">image_subparser</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span><span class="s1">&#39;delete&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Delete an image&#39;</span><span class="p">)</span>
+        <span class="n">delete_image_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;PSA to delete&#39;</span><span class="p">)</span>
+	<span class="n">delete_image_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--url&#39;</span><span class="p">,</span><span class="n">action</span><span class="o">=</span><span class="s1">&#39;store&#39;</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;URL of the PSAR&#39;</span><span class="p">)</span>
+	<span class="n">delete_image_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--token&#39;</span><span class="p">,</span><span class="n">action</span><span class="o">=</span><span class="s1">&#39;store&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Authentication token&#39;</span><span class="p">)</span>
+
+	<span class="n">delete_image_parser</span><span class="o">.</span><span class="n">set_defaults</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="n">delete_image</span><span class="p">)</span>
+
+
+	<span class="c1">#Manifest</span>
+	<span class="n">manifest_parser</span><span class="o">=</span><span class="n">subparsers</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span><span class="s1">&#39;manifest&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Interacts with the manifests&#39;</span><span class="p">)</span>
+	<span class="n">manifest_subparser</span><span class="o">=</span><span class="n">manifest_parser</span><span class="o">.</span><span class="n">add_subparsers</span><span class="p">(</span><span class="n">help</span><span class="o">=</span><span class="s1">&#39;commands&#39;</span><span class="p">)</span>
+
+        <span class="c1">#       Download</span>
+        <span class="n">download_manifest_parser</span><span class="o">=</span><span class="n">manifest_subparser</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span><span class="s1">&#39;download&#39;</span><span class="p">,</span><span class="n">help</span><span class="o">=</span><span class="s1">&#39;Download a manifest&#39;</span><span class="p">)</span>
+        <span class="n">download_manifest_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;ID of the PSA which manifest is to be downloaded&#39;</span><span class="p">)</span>
+        <span class="n">download_manifest_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;path&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Path&#39;</span><span class="p">)</span>
+       	<span class="n">download_manifest_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--url&#39;</span><span class="p">,</span><span class="n">action</span><span class="o">=</span><span class="s1">&#39;store&#39;</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;URL of the PSAR&#39;</span><span class="p">)</span>
+	<span class="n">download_manifest_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--token&#39;</span><span class="p">,</span><span class="n">action</span><span class="o">=</span><span class="s1">&#39;store&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Authentication token&#39;</span><span class="p">)</span>
+
+	<span class="n">download_manifest_parser</span><span class="o">.</span><span class="n">set_defaults</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="n">download_manifest</span><span class="p">)</span>
+
+
+        <span class="c1">#       Upload</span>
+        <span class="n">upload_manifest_parser</span><span class="o">=</span><span class="n">manifest_subparser</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span><span class="s1">&#39;upload&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Upload a manifest&#39;</span><span class="p">)</span>
+        <span class="n">upload_manifest_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;ID of the PSA which manifest is to be uploaded&#39;</span><span class="p">)</span>
+        <span class="n">upload_manifest_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;path&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Path&#39;</span><span class="p">)</span>
+       	<span class="n">upload_manifest_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--url&#39;</span><span class="p">,</span><span class="n">action</span><span class="o">=</span><span class="s1">&#39;store&#39;</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;URL of the PSAR&#39;</span><span class="p">)</span>
+	<span class="n">upload_manifest_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--token&#39;</span><span class="p">,</span><span class="n">action</span><span class="o">=</span><span class="s1">&#39;store&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Authentication token&#39;</span><span class="p">)</span>
+
+	<span class="n">upload_manifest_parser</span><span class="o">.</span><span class="n">set_defaults</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="n">upload_manifest</span><span class="p">)</span>
+
+
+        <span class="c1">#       Delete</span>
+        <span class="n">delete_manifest_parser</span><span class="o">=</span><span class="n">manifest_subparser</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span><span class="s1">&#39;delete&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Delete a manifest&#39;</span><span class="p">)</span>
+        <span class="n">delete_manifest_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;ID of the PSA which manifest is to be deleted&#39;</span><span class="p">)</span>
+       	<span class="n">delete_manifest_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--url&#39;</span><span class="p">,</span><span class="n">action</span><span class="o">=</span><span class="s1">&#39;store&#39;</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;URL of the PSAR&#39;</span><span class="p">)</span>
+	<span class="n">delete_manifest_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--token&#39;</span><span class="p">,</span><span class="n">action</span><span class="o">=</span><span class="s1">&#39;store&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Authentication token&#39;</span><span class="p">)</span>
+
+	<span class="n">delete_manifest_parser</span><span class="o">.</span><span class="n">set_defaults</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="n">delete_manifest</span><span class="p">)</span>
+	
+	
+	<span class="c1">#Plugins</span>
+        <span class="n">plugin_parser</span><span class="o">=</span><span class="n">subparsers</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span><span class="s1">&#39;plugin&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Interacts with the plugins&#39;</span><span class="p">)</span>
+	<span class="n">plugin_subparser</span><span class="o">=</span><span class="n">plugin_parser</span><span class="o">.</span><span class="n">add_subparsers</span><span class="p">(</span><span class="n">help</span><span class="o">=</span><span class="s1">&#39;commands&#39;</span><span class="p">)</span>
+
+
+        <span class="c1">#       Download</span>
+        <span class="n">download_plugin_parser</span><span class="o">=</span><span class="n">plugin_subparser</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span><span class="s1">&#39;download&#39;</span><span class="p">,</span><span class="n">help</span><span class="o">=</span><span class="s1">&#39;Download a plugin&#39;</span><span class="p">)</span>
+        <span class="n">download_plugin_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;PSA to download&#39;</span><span class="p">)</span>
+        <span class="n">download_plugin_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;path&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Path&#39;</span><span class="p">)</span>
+       	<span class="n">download_plugin_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--url&#39;</span><span class="p">,</span><span class="n">action</span><span class="o">=</span><span class="s1">&#39;store&#39;</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;URL of the PSAR&#39;</span><span class="p">)</span>
+	<span class="n">download_plugin_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--token&#39;</span><span class="p">,</span><span class="n">action</span><span class="o">=</span><span class="s1">&#39;store&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Authentication token&#39;</span><span class="p">)</span>
+
+	<span class="n">download_plugin_parser</span><span class="o">.</span><span class="n">set_defaults</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="n">download_plugin</span><span class="p">)</span>
+
+
+        <span class="c1">#       Upload</span>
+        <span class="n">upload_plugin_parser</span><span class="o">=</span><span class="n">plugin_subparser</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span><span class="s1">&#39;upload&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Upload a plugin&#39;</span><span class="p">)</span>
+        <span class="n">upload_plugin_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;PSA to upload&#39;</span><span class="p">)</span>
+        <span class="n">upload_plugin_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;path&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Path&#39;</span><span class="p">)</span>
+        <span class="n">upload_plugin_parser</span><span class="o">.</span><span class="n">set_defaults</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="n">upload_plugin</span><span class="p">)</span>
+	<span class="n">upload_plugin_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--url&#39;</span><span class="p">,</span><span class="n">action</span><span class="o">=</span><span class="s1">&#39;store&#39;</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;URL of the PSAR&#39;</span><span class="p">)</span>
+	<span class="n">upload_plugin_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--token&#39;</span><span class="p">,</span><span class="n">action</span><span class="o">=</span><span class="s1">&#39;store&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Authentication token&#39;</span><span class="p">)</span>
+
+
+        <span class="c1">#       Delete</span>
+        <span class="n">delete_plugin_parser</span><span class="o">=</span><span class="n">plugin_subparser</span><span class="o">.</span><span class="n">add_parser</span><span class="p">(</span><span class="s1">&#39;delete&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Delete a plugin&#39;</span><span class="p">)</span>
+        <span class="n">delete_plugin_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;id&#39;</span><span class="p">,</span> <span class="n">action</span><span class="o">=</span><span class="s1">&#39;store&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;PSA to delete&#39;</span><span class="p">)</span>
+       	<span class="n">delete_plugin_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--url&#39;</span><span class="p">,</span><span class="n">action</span><span class="o">=</span><span class="s1">&#39;store&#39;</span><span class="p">,</span> <span class="n">required</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;URL of the PSAR&#39;</span><span class="p">)</span>
+	<span class="n">delete_plugin_parser</span><span class="o">.</span><span class="n">add_argument</span><span class="p">(</span><span class="s1">&#39;--token&#39;</span><span class="p">,</span><span class="n">action</span><span class="o">=</span><span class="s1">&#39;store&#39;</span><span class="p">,</span> <span class="n">help</span><span class="o">=</span><span class="s1">&#39;Authentication token&#39;</span><span class="p">)</span>
+
+	<span class="n">delete_plugin_parser</span><span class="o">.</span><span class="n">set_defaults</span><span class="p">(</span><span class="n">func</span><span class="o">=</span><span class="n">delete_plugin</span><span class="p">)</span>	
+
+	
+
+	<span class="n">args</span><span class="o">=</span> <span class="n">parser</span><span class="o">.</span><span class="n">parse_args</span><span class="p">()</span>
+	<span class="n">args</span><span class="o">.</span><span class="n">func</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../index.html">
+              <img class="logo" src="../_static/secured.png" alt="Logo"/>
+            </a></p><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, SECURity at the network EDge.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

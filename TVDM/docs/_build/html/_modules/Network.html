@@ -1,0 +1,203 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Network &mdash; TVDM  documentation</title>
+    
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="TVDM  documentation" href="../index.html" />
+    <link rel="up" title="Module code" href="index.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for Network</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">uuid</span>
+<span class="kn">import</span> <span class="nn">commands</span>
+<span class="kn">from</span> <span class="nn">netaddr</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">import</span> <span class="nn">random</span>
+<span class="kn">import</span> <span class="nn">subprocess</span>
+<span class="kn">import</span> <span class="nn">copy</span>
+
+<div class="viewcode-block" id="Network"><a class="viewcode-back" href="../Network.html#Network.Network">[docs]</a><span class="k">class</span> <span class="nc">Network</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+
+	<span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">configure</span><span class="p">):</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">vlanID</span> <span class="o">=</span> <span class="mi">0</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">managingNetwork</span> <span class="o">=</span> <span class="n">IPNetwork</span><span class="p">(</span><span class="n">configure</span><span class="o">.</span><span class="n">MANAGING_NETWORK_ADDRESS</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">psaNetwork</span> <span class="o">=</span> <span class="n">IPNetwork</span><span class="p">(</span><span class="n">configure</span><span class="o">.</span><span class="n">PSA_NETWORK_ADDRESS</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">nextPSAIP</span> <span class="o">=</span> <span class="mi">0</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">userNetwork</span> <span class="o">=</span> <span class="n">IPNetwork</span><span class="p">(</span><span class="n">configure</span><span class="o">.</span><span class="n">USER_NETWORK_ADDRESS</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">userInterfaceNetwork</span> <span class="o">=</span> <span class="n">IPNetwork</span><span class="p">(</span><span class="n">configure</span><span class="o">.</span><span class="n">USER_INTERFACE_NETWORK_ADDRESS</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">nextManageIP</span> <span class="o">=</span> <span class="mi">100</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">nextUserIP</span> <span class="o">=</span> <span class="mi">1</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">script_location</span> <span class="o">=</span> <span class="n">configure</span><span class="o">.</span><span class="n">SCRIPT_LOCATION</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">nextTableID</span> <span class="o">=</span> <span class="mi">100</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">userGatewayAddr</span> <span class="o">=</span> <span class="n">configure</span><span class="o">.</span><span class="n">GATEWAY_IP</span>
+
+<div class="viewcode-block" id="Network.generatePort"><a class="viewcode-back" href="../Network.html#Network.Network.generatePort">[docs]</a>	<span class="k">def</span> <span class="nf">generatePort</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bridgeName</span><span class="p">):</span>
+		<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">		Generate a port on a bridge</span>
+<span class="sd">		&#39;&#39;&#39;</span>
+		<span class="n">generated</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">())</span>
+		<span class="n">interfaceName</span> <span class="o">=</span> <span class="s2">&quot;tap&quot;</span> <span class="o">+</span> <span class="n">generated</span><span class="p">[:</span><span class="mi">12</span><span class="p">]</span>
+		<span class="n">commands</span><span class="o">.</span><span class="n">createNewPort</span><span class="p">(</span><span class="n">bridgeName</span><span class="p">,</span> <span class="n">interfaceName</span><span class="p">)</span>
+		<span class="k">return</span> <span class="n">interfaceName</span></div>
+
+<div class="viewcode-block" id="Network.deletePort"><a class="viewcode-back" href="../Network.html#Network.Network.deletePort">[docs]</a>	<span class="k">def</span> <span class="nf">deletePort</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bridgeName</span><span class="p">,</span> <span class="n">portName</span><span class="p">):</span>
+		<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">		Delete a port from a bridge</span>
+<span class="sd">		&#39;&#39;&#39;</span>
+		<span class="n">commands</span><span class="o">.</span><span class="n">deletePort</span><span class="p">(</span><span class="n">bridgeName</span><span class="p">,</span> <span class="n">portName</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Network.generateVMPort"><a class="viewcode-back" href="../Network.html#Network.Network.generateVMPort">[docs]</a>	<span class="k">def</span> <span class="nf">generateVMPort</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">		Generate a port name for a VM</span>
+<span class="sd">		&#39;&#39;&#39;</span>
+		<span class="n">generated</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">())</span>
+		<span class="n">interfaceName</span> <span class="o">=</span> <span class="s2">&quot;tap&quot;</span> <span class="o">+</span> <span class="n">generated</span><span class="p">[:</span><span class="mi">12</span><span class="p">]</span>
+		<span class="k">return</span> <span class="n">interfaceName</span></div>
+
+<div class="viewcode-block" id="Network.getNewVLANID"><a class="viewcode-back" href="../Network.html#Network.Network.getNewVLANID">[docs]</a>	<span class="k">def</span> <span class="nf">getNewVLANID</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">		Return a new VLAN ID to use</span>
+<span class="sd">		&#39;&#39;&#39;</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">vlanID</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">vlanID</span> <span class="o">+</span> <span class="mi">1</span>
+		<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">vlanID</span></div>
+
+<div class="viewcode-block" id="Network.generateRoutingTable"><a class="viewcode-back" href="../Network.html#Network.Network.generateRoutingTable">[docs]</a>	<span class="k">def</span> <span class="nf">generateRoutingTable</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">netInterface</span><span class="p">):</span>
+		<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">		Generate a new routing table</span>
+<span class="sd">		&#39;&#39;&#39;</span>
+		<span class="n">newID</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nextTableID</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">nextTableID</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nextTableID</span> <span class="o">+</span> <span class="mi">1</span>
+		<span class="n">commands</span><span class="o">.</span><span class="n">generateNewTable</span><span class="p">(</span><span class="n">newID</span><span class="p">,</span> <span class="n">netInterface</span><span class="p">)</span>
+		<span class="n">ipAddr</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">userInterfaceNetwork</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">nextUserIP</span><span class="p">])</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">nextUserIP</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nextUserIP</span> <span class="o">+</span> <span class="mi">1</span>
+		<span class="n">commands</span><span class="o">.</span><span class="n">configureInterface</span><span class="p">(</span><span class="n">netInterface</span><span class="p">,</span> <span class="n">netNs</span><span class="o">=</span><span class="s1">&#39;default&#39;</span><span class="p">)</span>
+		<span class="n">commands</span><span class="o">.</span><span class="n">configureInterface</span><span class="p">(</span><span class="n">netInterface</span><span class="p">[:</span><span class="mi">11</span><span class="p">],</span> <span class="n">netNs</span><span class="o">=</span><span class="s1">&#39;default&#39;</span><span class="p">,</span> <span class="n">ipAddr</span><span class="o">=</span><span class="n">ipAddr</span><span class="p">,</span> <span class="n">prefix</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">userNetwork</span><span class="o">.</span><span class="n">prefixlen</span><span class="p">),</span> <span class="n">broadcast</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">userNetwork</span><span class="o">.</span><span class="n">broadcast</span><span class="p">))</span>
+		<span class="n">commands</span><span class="o">.</span><span class="n">addRoute</span><span class="p">(</span><span class="n">table</span><span class="o">=</span><span class="n">netInterface</span><span class="p">,</span> <span class="n">addr</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">userNetwork</span><span class="p">),</span> <span class="n">dev</span><span class="o">=</span><span class="n">netInterface</span><span class="p">[:</span><span class="mi">11</span><span class="p">],</span> <span class="n">src</span><span class="o">=</span><span class="n">ipAddr</span><span class="p">,</span> <span class="n">netNs</span><span class="o">=</span><span class="s2">&quot;default&quot;</span><span class="p">)</span>
+		<span class="n">commands</span><span class="o">.</span><span class="n">addRoute</span><span class="p">(</span><span class="n">table</span><span class="o">=</span><span class="n">netInterface</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">addr</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">userGatewayAddr</span><span class="p">,</span> <span class="n">dev</span><span class="o">=</span><span class="n">netInterface</span><span class="p">[:</span><span class="mi">11</span><span class="p">],</span> <span class="n">netNs</span><span class="o">=</span><span class="s2">&quot;default&quot;</span><span class="p">)</span>
+		<span class="k">return</span> <span class="n">ipAddr</span></div>
+
+<div class="viewcode-block" id="Network.configureNewIPOnDHCP"><a class="viewcode-back" href="../Network.html#Network.Network.configureNewIPOnDHCP">[docs]</a>	<span class="k">def</span> <span class="nf">configureNewIPOnDHCP</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mac</span><span class="p">,</span> <span class="n">token</span><span class="p">):</span>
+		<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">		Configure a new IP on the DHCP</span>
+<span class="sd">		&#39;&#39;&#39;</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">nextManageIP</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nextManageIP</span> <span class="o">+</span> <span class="mi">1</span>
+		<span class="n">ipAddr</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">managingNetwork</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">nextManageIP</span><span class="p">])</span>
+		<span class="n">PSCIp</span> <span class="o">=</span> <span class="n">mac</span><span class="o">+</span><span class="s2">&quot;,id:&quot;</span><span class="o">+</span><span class="n">token</span><span class="o">+</span><span class="s2">&quot;PSC,&quot;</span><span class="o">+</span><span class="n">ipAddr</span>
+		<span class="n">subprocess</span><span class="o">.</span><span class="n">Popen</span><span class="p">(</span><span class="s2">&quot;ip netns exec default bash &quot;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">script_location</span> <span class="o">+</span><span class="s2">&quot;addIP.sh &quot;</span> <span class="o">+</span> <span class="n">PSCIp</span><span class="p">,</span> <span class="n">stdout</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">PIPE</span><span class="p">,</span> <span class="n">shell</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+		<span class="k">return</span> <span class="n">ipAddr</span></div>
+
+<div class="viewcode-block" id="Network.getPSAnewAddress"><a class="viewcode-back" href="../Network.html#Network.Network.getPSAnewAddress">[docs]</a>	<span class="k">def</span> <span class="nf">getPSAnewAddress</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">		Return a new IP address for a PSA</span>
+<span class="sd">		&#39;&#39;&#39;</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">nextPSAIP</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nextPSAIP</span> <span class="o">+</span> <span class="mi">1</span>
+		<span class="n">ipAddr</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">psaNetwork</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">nextPSAIP</span><span class="p">])</span>
+		<span class="k">return</span> <span class="n">ipAddr</span></div>
+
+<div class="viewcode-block" id="Network.generateMACaddress"><a class="viewcode-back" href="../Network.html#Network.Network.generateMACaddress">[docs]</a>	<span class="k">def</span> <span class="nf">generateMACaddress</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">		Generate a MAC address</span>
+<span class="sd">		&#39;&#39;&#39;</span>
+		<span class="n">mac</span> <span class="o">=</span> <span class="p">[</span> <span class="mh">0x00</span><span class="p">,</span> <span class="mh">0x16</span><span class="p">,</span> <span class="mh">0x3e</span><span class="p">,</span>
+			<span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mh">0x00</span><span class="p">,</span> <span class="mh">0x7f</span><span class="p">),</span>
+			<span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mh">0x00</span><span class="p">,</span> <span class="mh">0xff</span><span class="p">),</span>
+			<span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="mh">0x00</span><span class="p">,</span> <span class="mh">0xff</span><span class="p">)]</span>
+		<span class="k">return</span> <span class="s1">&#39;:&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="s2">&quot;</span><span class="si">%02x</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">x</span><span class="p">,</span> <span class="n">mac</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="Network.generateFlow"><a class="viewcode-back" href="../Network.html#Network.Network.generateFlow">[docs]</a>	<span class="k">def</span> <span class="nf">generateFlow</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bridgeName</span><span class="p">,</span> <span class="n">flow</span><span class="p">):</span>
+		<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">		Generate a flow on the bridge</span>
+<span class="sd">		&#39;&#39;&#39;</span>
+		<span class="n">newFlow</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">flow</span><span class="p">)</span>
+		<span class="k">if</span> <span class="s1">&#39;in_port&#39;</span> <span class="ow">in</span> <span class="n">flow</span><span class="p">[</span><span class="s1">&#39;match&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+			<span class="n">newFlow</span><span class="p">[</span><span class="s1">&#39;match&#39;</span><span class="p">][</span><span class="s1">&#39;in_port&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">commands</span><span class="o">.</span><span class="n">findPort</span><span class="p">(</span><span class="n">bridgeName</span><span class="p">,</span> <span class="n">flow</span><span class="p">[</span><span class="s1">&#39;match&#39;</span><span class="p">][</span><span class="s1">&#39;in_port&#39;</span><span class="p">])</span>
+		<span class="k">if</span> <span class="s1">&#39;output&#39;</span> <span class="ow">in</span> <span class="n">flow</span><span class="p">[</span><span class="s1">&#39;action&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+			<span class="n">newFlow</span><span class="p">[</span><span class="s1">&#39;action&#39;</span><span class="p">][</span><span class="s1">&#39;output&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">commands</span><span class="o">.</span><span class="n">findPort</span><span class="p">(</span><span class="n">bridgeName</span><span class="p">,</span> <span class="n">flow</span><span class="p">[</span><span class="s1">&#39;action&#39;</span><span class="p">][</span><span class="s1">&#39;output&#39;</span><span class="p">])</span>
+		<span class="n">commands</span><span class="o">.</span><span class="n">generateFlow</span><span class="p">(</span><span class="n">newFlow</span><span class="p">,</span> <span class="n">bridgeName</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Network.deleteFlow"><a class="viewcode-back" href="../Network.html#Network.Network.deleteFlow">[docs]</a>	<span class="k">def</span> <span class="nf">deleteFlow</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bridgeName</span><span class="p">,</span> <span class="n">flow</span><span class="p">):</span>
+		<span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">		Delete a flow on the bridge</span>
+<span class="sd">		&#39;&#39;&#39;</span>
+		<span class="n">newFlow</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">flow</span><span class="p">)</span>
+		<span class="k">if</span> <span class="s1">&#39;in_port&#39;</span> <span class="ow">in</span> <span class="n">flow</span><span class="p">[</span><span class="s1">&#39;match&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+			<span class="n">newFlow</span><span class="p">[</span><span class="s1">&#39;match&#39;</span><span class="p">][</span><span class="s1">&#39;in_port&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">commands</span><span class="o">.</span><span class="n">findPort</span><span class="p">(</span><span class="n">bridgeName</span><span class="p">,</span> <span class="n">flow</span><span class="p">[</span><span class="s1">&#39;match&#39;</span><span class="p">][</span><span class="s1">&#39;in_port&#39;</span><span class="p">])</span>
+		<span class="n">commands</span><span class="o">.</span><span class="n">deleteFlow</span><span class="p">(</span><span class="n">newFlow</span><span class="p">,</span> <span class="n">bridgeName</span><span class="p">)</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../index.html">
+              <img class="logo" src="../_static/secured.png" alt="Logo"/>
+            </a></p><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, SECURity at the network EDge.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

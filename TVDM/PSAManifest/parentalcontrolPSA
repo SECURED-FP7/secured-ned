@@ -1,0 +1,22 @@
+{
+	"PSA_id":"parentalcontrolPSA",
+	"disk": "parentalcontrol.img",
+	"interface": [
+			{
+			"network":"data", 
+			"type":"data_in"
+			},
+			{
+			"network":"data", 
+			"type":"data_out"
+			},
+			{
+			"network":"control", 
+			"type":"manage"
+			}
+		],
+	"memory": "256",
+	"IP": true,
+	"os-architecture": "x86_64",
+	"vcpu": "1"
+}

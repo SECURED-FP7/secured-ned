@@ -1,0 +1,46 @@
+{
+	"name": "user_profile_type",
+	"user_token": "ABCDEF123456",
+	"profile_type": "AD",			
+
+	"PSASet": [
+		
+		{
+			"id": "firePro1234",
+			"security_controls": [
+				
+				{
+					"imgName": "firepro_v1.img",
+					"conf":	"firepro_v1_ABCDEF123456"
+				}
+				
+			] 
+			
+		},
+
+		{
+			"name": "parentalSuite1234",
+			"security_controls": [
+				
+				{
+					"imgName": "contentFilter_v2",
+					"conf": "contentFilter_v2_ABCDEF123456"
+				},
+
+				{
+					"imgName": "netMon_v1",
+					"conf": "netMon_v1_ABCDEF123456"
+				}
+			],
+			
+			"ingress_flow": [0,1],
+			"egress_flow": [0,1]
+				
+		}
+
+	],
+
+	"ingress_flow": ["firePro1234", "parentalSuite1234"],
+	"egress_flow": ["parentalSuite1234", "firePro1234"]
+
+} 

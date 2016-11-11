@@ -1,0 +1,2 @@
+measure func=BPRM_CHECK mask=MAY_EXEC
+measure func=FILE_MMAP mask=MAY_EXEC

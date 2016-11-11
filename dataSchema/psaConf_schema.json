@@ -1,0 +1,43 @@
+{
+	"title":"PSA_conf_file",
+	"type": "object",
+
+	"properties": {
+
+		"name": {
+			"type": "string",
+			"description": "Document name, same as title"
+		},
+
+		"user_token": {
+			"type":"string",
+			"description": "Authentication token"
+		},
+
+		"configurations": {
+
+			"type": "array",
+			"description": "Array of object, each of them containing the configuration of a specific PSA",
+			"items": {
+
+				"PSA_id": {
+					"type": "string",
+					"description": "Reference PSA name"
+				},
+				
+				"conf_id": {
+					"type": "string",
+					"description": "Reference configuration file id"
+				},
+
+				"conf_script": {
+					"type": "string",
+					"description": "The script to be launched on the PSA to configure it"
+				}
+
+			}			
+
+		}
+
+	}
+}

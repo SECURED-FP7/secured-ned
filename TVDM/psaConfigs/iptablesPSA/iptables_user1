@@ -1,0 +1,7 @@
+# iptables
+*filter
+:INPUT ACCEPT [0:0]
+:FORWARD DROP [0:0]
+:OUTPUT ACCEPT [0:0]
+-A FORWARD -i br0 -m time --timestart 10:00:00 --timestop 12:00:00 --kerneltz -j ACCEPT
+COMMIT

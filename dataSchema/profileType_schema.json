@@ -1,0 +1,119 @@
+{
+	
+	"title": "user_profile_type",
+	"type": "object",
+	
+	"properties": {
+		
+		"name": {
+			"type": "string",
+			"description": "Document name, same as title"
+		},
+
+		"user_token": {
+			"type": "string",
+			"description": "Authentication token"
+		},
+
+		"profile_type": {
+			"type": "string",
+			"description": "Field to indicate the profile_type, app-driven (AD) or policy-driven (PD)"
+		},
+
+		"PSASet": {
+			
+			"type": "array",
+			"description": "Array of objects; each item represents a PSA",
+			"items": {
+
+				"type": "object",
+				"description": "This object is an array including all the security service enforced by the PSA",
+				"properties": {
+
+					"id": {
+						"type": "string",
+						"description": "id of the PSA"
+					},
+
+					"security_controls": {
+						"type": "array",
+						"description": "This array includes all the security services which the PSA enforces; it is a vertex list for the complex PSA internal graph",
+						"items": {
+
+							"type": "object",
+							"description": "Each object is a simple PSA (a security control), including its configuration URI specific for the user",
+							"properties": {
+								
+								"imgName": {
+									"type": "string",
+									"description": "PSA repo name"
+								},
+
+								"conf_id": {
+									"type": "string",
+									"description": "URI to user's PSA configuration file in the repo"
+								}
+
+							},
+							"required": ["imgName", "conf"]
+
+						}
+					},
+										
+					"set_ingress_flow": {
+						"type": "array",
+						"description": "Adjancency list of inteconnected security controls enforced by the PSA; ingress traffic flow",
+						"items": {
+
+							"type": "integer",
+							"description": "Edge's list for the PSA's security controls graph"
+
+						}
+					},
+
+					"set_egress_flow": {
+						"type": "array",
+						"description": "Adjancency list of inteconnected security controls enforced by the PSA; egress traffic flow",
+						"items": {
+
+							"type": "integer",
+							"description": "Edge's list for the PSA's security controls graph"
+
+						}
+					}
+
+				},
+
+				"required": ["name", "security_controls"] 
+
+			}
+
+		},
+
+		"ingress_flow": {
+			"type": "array",
+			"description": "Adjancency list of inteconnected PSAs; ingress traffic flow",
+			"items": {
+
+				"type": "string",
+				"description": "Edge's list for the PSA's service graph"
+
+			}
+		},
+
+		"egress_flow": {
+			"type": "array",
+			"description": "Adjancency list of inteconnected PSAs; egress traffic flow",
+			"items": {
+
+				"type": "string",
+				"description": "Edge's list for the PSA's service graph"
+
+			}
+		}
+
+	},
+
+	"required": ["name", "user_id", "user_token", "profile_type", "PSASet"]
+
+}

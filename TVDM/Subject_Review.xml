@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<tns:associationList xmlns:tns='http://www.example.org/AssociationList' xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xsi:schemaLocation='http://www.example.org/AssociationList ../../java/schema/AssociationList_Schema.xsd '>
+  <tns:associations Name='son'>
+    <tns:IP ip_value='0.0.0.0/0.0.0.0'/>
+  </tns:associations>
+   <tns:associations Name='daughter'>
+    <tns:IP ip_value='0.0.0.0/0.0.0.0'/>
+  </tns:associations>
+  
+  <tns:associations Name='father'>
+    <tns:IP ip_value='0.0.0.0/0.0.0.0'/>
+  </tns:associations>
+
+</tns:associationList>

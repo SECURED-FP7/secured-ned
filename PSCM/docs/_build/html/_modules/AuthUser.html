@@ -1,0 +1,191 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>AuthUser &mdash; PSCM  documentation</title>
+    
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="PSCM  documentation" href="../index.html" />
+    <link rel="up" title="Module code" href="index.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for AuthUser</h1><div class="highlight"><pre>
+<span></span><span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">Created on 12/set/2014</span>
+
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="kn">import</span> <span class="nn">falcon</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">subprocess</span>
+<span class="kn">import</span> <span class="nn">requests</span>
+<span class="kn">import</span> <span class="nn">hashlib</span>
+<span class="kn">import</span> <span class="nn">upr_client</span>
+
+<div class="viewcode-block" id="Authenticate"><a class="viewcode-back" href="../AuthUser.html#AuthUser.Authenticate">[docs]</a><span class="k">class</span> <span class="nc">Authenticate</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    classdocs</span>
+<span class="sd">    &#39;&#39;&#39;</span>
+
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">):</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Constructor</span>
+<span class="sd">        &#39;&#39;&#39;</span>       
+        <span class="bp">self</span><span class="o">.</span><span class="n">loginPageLocation</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">LOGIN_PAGE_LOCATION</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">orchestratorLocation</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">ORCHESTRATOR_LOCATION</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">use_local_file</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">USE_LOCAL_FILE</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">upr_client</span> <span class="o">=</span> <span class="n">upr_client</span><span class="o">.</span><span class="n">UPRClient</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">UPR_LOCATION</span><span class="p">)</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;PSCM AuthUser.Authenticate loaded, use local users accounts:&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">use_local_file</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_local_file</span><span class="p">:</span>
+           <span class="n">fp</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">USER_DATA_LOCATION</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span>
+           <span class="n">users</span> <span class="o">=</span> <span class="n">fp</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+           <span class="n">fp</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+           <span class="bp">self</span><span class="o">.</span><span class="n">users</span> <span class="o">=</span> <span class="p">{}</span>
+           <span class="n">listUsr</span> <span class="o">=</span> <span class="n">users</span><span class="o">.</span><span class="n">split</span><span class="p">()</span>
+           <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">name</span> <span class="o">=</span> <span class="n">listUsr</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">users</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">listUsr</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+                <span class="k">except</span><span class="p">:</span>
+                    <span class="k">break</span>
+        
+<div class="viewcode-block" id="Authenticate.on_get"><a class="viewcode-back" href="../AuthUser.html#AuthUser.Authenticate.on_get">[docs]</a>    <span class="k">def</span> <span class="nf">on_get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">response</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">fp</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">loginPageLocation</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span>
+            <span class="n">page</span> <span class="o">=</span> <span class="n">fp</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+            <span class="n">fp</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+            <span class="n">response</span><span class="o">.</span><span class="n">set_header</span><span class="p">(</span><span class="s2">&quot;Content-Type&quot;</span><span class="p">,</span> <span class="s2">&quot;text/html&quot;</span><span class="p">)</span>
+            <span class="n">response</span><span class="o">.</span><span class="n">body</span> <span class="o">=</span> <span class="n">page</span>
+            <span class="n">response</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="n">falcon</span><span class="o">.</span><span class="n">HTTP_200</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">exc_info</span><span class="p">()[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="n">response</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="n">falcon</span><span class="o">.</span><span class="n">HTTP_501</span></div>
+    
+<div class="viewcode-block" id="Authenticate.on_post"><a class="viewcode-back" href="../AuthUser.html#AuthUser.Authenticate.on_post">[docs]</a>    <span class="k">def</span> <span class="nf">on_post</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">response</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">args</span> <span class="o">=</span> <span class="n">request</span><span class="o">.</span><span class="n">stream</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">method</span><span class="o">+</span><span class="s2">&quot; &quot;</span><span class="o">+</span><span class="n">request</span><span class="o">.</span><span class="n">uri</span><span class="o">+</span><span class="s2">&quot; &quot;</span><span class="o">+</span><span class="n">args</span><span class="p">)</span>
+            <span class="n">session</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="s1">&#39;utf-8&#39;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">use_local_file</span><span class="p">:</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">users</span><span class="o">.</span><span class="n">has_key</span><span class="p">(</span><span class="n">session</span><span class="p">[</span><span class="s1">&#39;user&#39;</span><span class="p">]):</span>
+               	    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">users</span><span class="p">[</span><span class="n">session</span><span class="p">[</span><span class="s1">&#39;user&#39;</span><span class="p">]]</span> <span class="o">==</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span><span class="n">session</span><span class="p">[</span><span class="s1">&#39;password&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">():</span>
+                        <span class="n">subprocess</span><span class="o">.</span><span class="n">call</span><span class="p">([</span><span class="s2">&quot;ip&quot;</span><span class="p">,</span> <span class="s2">&quot;netns&quot;</span><span class="p">,</span> <span class="s2">&quot;exec&quot;</span><span class="p">,</span> <span class="s2">&quot;orchNet&quot;</span><span class="p">,</span> <span class="s2">&quot;curl&quot;</span><span class="p">,</span> <span class="s2">&quot;-X&quot;</span><span class="p">,</span> <span class="s2">&quot;PUT&quot;</span><span class="p">,</span> <span class="s2">&quot;--header&quot;</span><span class="p">,</span> <span class="s2">&quot;Accept: application/json&quot;</span><span class="p">,</span> <span class="s2">&quot;--header&quot;</span><span class="p">,</span> <span class="s2">&quot;Content-Type: application/json&quot;</span><span class="p">,</span> <span class="s2">&quot;-d&quot;</span><span class="p">,</span> <span class="s1">&#39;{&quot;token&quot;:&quot;&#39;</span><span class="o">+</span><span class="n">session</span><span class="p">[</span><span class="s1">&#39;user&#39;</span><span class="p">]</span><span class="o">+</span><span class="s1">&#39;&quot;, &quot;IP&quot;:&quot;&#39;</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">get_client_address</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">env</span><span class="p">)</span><span class="o">+</span><span class="s1">&#39;&quot;}&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">orchestratorLocation</span><span class="p">])</span>
+                        <span class="n">response</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="n">falcon</span><span class="o">.</span><span class="n">HTTP_200</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Auth error: &quot;</span><span class="o">+</span><span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span><span class="n">session</span><span class="p">[</span><span class="s1">&#39;password&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">())</span>
+                        <span class="n">response</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="n">falcon</span><span class="o">.</span><span class="n">HTTP_401</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;User does not exsist&quot;</span><span class="p">)</span>
+                    <span class="n">response</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="n">falcon</span><span class="o">.</span><span class="n">HTTP_401</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">r</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">upr_client</span><span class="o">.</span><span class="n">auth_user</span><span class="p">(</span><span class="n">session</span><span class="p">[</span><span class="s1">&#39;user&#39;</span><span class="p">],</span> <span class="n">session</span><span class="p">[</span><span class="s1">&#39;password&#39;</span><span class="p">])</span>
+                <span class="k">if</span> <span class="n">r</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="n">requests</span><span class="o">.</span><span class="n">codes</span><span class="o">.</span><span class="n">ok</span><span class="p">:</span>
+                    <span class="n">subprocess</span><span class="o">.</span><span class="n">call</span><span class="p">([</span><span class="s2">&quot;ip&quot;</span><span class="p">,</span> <span class="s2">&quot;netns&quot;</span><span class="p">,</span> <span class="s2">&quot;exec&quot;</span><span class="p">,</span> <span class="s2">&quot;orchNet&quot;</span><span class="p">,</span> <span class="s2">&quot;curl&quot;</span><span class="p">,</span> <span class="s2">&quot;-X&quot;</span><span class="p">,</span> <span class="s2">&quot;PUT&quot;</span><span class="p">,</span> <span class="s2">&quot;--header&quot;</span><span class="p">,</span> <span class="s2">&quot;Accept: application/json&quot;</span><span class="p">,</span> <span class="s2">&quot;--header&quot;</span><span class="p">,</span> <span class="s2">&quot;Content-Type: application/json&quot;</span><span class="p">,</span> <span class="s2">&quot;-d&quot;</span><span class="p">,</span> <span class="s1">&#39;{&quot;token&quot;:&quot;&#39;</span><span class="o">+</span><span class="n">session</span><span class="p">[</span><span class="s1">&#39;user&#39;</span><span class="p">]</span><span class="o">+</span><span class="s1">&#39;&quot;, &quot;IP&quot;:&quot;&#39;</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">get_client_address</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">env</span><span class="p">)</span><span class="o">+</span><span class="s1">&#39;&quot;}&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">orchestratorLocation</span><span class="p">])</span>
+                    <span class="n">response</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="n">falcon</span><span class="o">.</span><span class="n">HTTP_200</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Auth error&quot;</span><span class="p">)</span>
+                    <span class="n">response</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="n">falcon</span><span class="o">.</span><span class="n">HTTP_401</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">exc_info</span><span class="p">()[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="n">response</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="n">falcon</span><span class="o">.</span><span class="n">HTTP_501</span></div>
+
+<div class="viewcode-block" id="Authenticate.on_delete"><a class="viewcode-back" href="../AuthUser.html#AuthUser.Authenticate.on_delete">[docs]</a>    <span class="k">def</span> <span class="nf">on_delete</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">response</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">method</span><span class="o">+</span><span class="s2">&quot; &quot;</span><span class="o">+</span><span class="n">request</span><span class="o">.</span><span class="n">uri</span><span class="p">)</span>
+            <span class="n">proc</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">Popen</span><span class="p">(</span><span class="s2">&quot;ip netns exec orchNet curl -X DELETE --header Accept: application/json --header Content-Type: application/json -d &#39;{</span><span class="se">\&quot;</span><span class="s2">IP</span><span class="se">\&quot;</span><span class="s2">:</span><span class="se">\&quot;</span><span class="s2">&quot;</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">get_client_address</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">env</span><span class="p">)</span><span class="o">+</span><span class="s2">&quot;</span><span class="se">\&quot;</span><span class="s2">}&#39; -sw &#39;%{http_code}&#39; &quot;</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">orchestratorLocation</span><span class="p">,</span> <span class="n">stdout</span><span class="o">=</span><span class="n">subprocess</span><span class="o">.</span><span class="n">PIPE</span><span class="p">,</span> <span class="n">shell</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+            <span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="n">err</span><span class="p">)</span> <span class="o">=</span> <span class="n">proc</span><span class="o">.</span><span class="n">communicate</span><span class="p">()</span> 
+            <span class="n">returnedValue</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">out</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">returnedValue</span> <span class="o">==</span> <span class="mi">200</span><span class="p">:</span>
+                <span class="n">response</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="n">falcon</span><span class="o">.</span><span class="n">HTTP_200</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;User is not already instantiated&quot;</span><span class="p">)</span>
+                <span class="n">response</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="n">falcon</span><span class="o">.</span><span class="n">HTTP_401</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">exc_info</span><span class="p">()[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="n">response</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="n">falcon</span><span class="o">.</span><span class="n">HTTP_501</span></div>
+            
+<div class="viewcode-block" id="Authenticate.get_client_address"><a class="viewcode-back" href="../AuthUser.html#AuthUser.Authenticate.get_client_address">[docs]</a>    <span class="k">def</span> <span class="nf">get_client_address</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">environ</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">environ</span><span class="p">[</span><span class="s1">&#39;HTTP_X_FORWARDED_FOR&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">environ</span><span class="p">[</span><span class="s1">&#39;REMOTE_ADDR&#39;</span><span class="p">]</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../index.html">
+              <img class="logo" src="../_static/secured.png" alt="Logo"/>
+            </a></p><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, SECURity at the network EDge.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

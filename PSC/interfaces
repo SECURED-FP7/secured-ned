@@ -1,0 +1,29 @@
+# This file should be place in /etc/network in the debian template of the PSC
+
+# This file describes the network interfaces available on your system
+# and how to activate them. For more information, see interfaces(5).
+
+# The loopback network interface
+auto lo
+iface lo inet loopback
+
+# The primary network interface
+allow-hotplug eth0
+allow-hotplug eth1
+allow-hotplug eth2
+
+# eth0 is the ctrl&mgmt interface between the PSC and the TVDM
+# its address is provided by a DHCP listening on the brCtl switch 
+iface eth0 inet dhcp
+
+# eth1 is the ctrl&mgmt interface for the user's TVD PSAs
+iface eth1 inet static
+	address 192.168.2.1
+	netmask 255.255.255.0
+
+# eth2 is the dataplane interface for user monitoring
+# it has a fixed IP address and the traffic towards it is steered through OF 
+# rules in the brData switch
+iface eth2 inet static
+	address 10.2.2.251
+	netmask 255.0.0.0

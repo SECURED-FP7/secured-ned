@@ -1,0 +1,7 @@
+workflow_manager module
+=======================
+
+.. automodule:: workflow_manager
+    :members:
+    :undoc-members:
+    :show-inheritance:

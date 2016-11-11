@@ -1,0 +1,143 @@
+{
+   "flow-graph": {
+      "VNFs": [
+        {
+          "id": "firewall",
+          "template": "template_uri"
+        },
+        {
+          "id": "vpn",
+          "template": "template_uri"
+        },
+        {
+          "id": "traffic_shaper",
+          "template": "template_uri"
+        },
+        {
+          "id": "monitor",
+          "template": "template_uri"
+        }
+      ],
+    "flow-rules": [
+      {
+          "id": "00000001",
+          "match":
+          {
+              "port" : "eth0"      
+          },
+          "action":
+          {
+              "VNF_id": "firewall:1"
+          }
+    },
+      {
+          "id": "00000002",
+          "match":
+          {
+              "port" : "eth1",
+              "vlan_id" : "25"
+          },
+          "action":
+          {
+              "VNF_id": "firewall:2"
+          }
+     },
+     {
+      "id": "00000003",
+      "match":
+      {
+          "port" : "eth1",
+          "ethertype" : "0x800",
+          "ipv4_src" : "10.0.0.1",
+          "ipv4_src_mask" : "255.255.255.0"
+      },
+      "action": {
+          "VNF_id" : "monitor:1"
+      }
+     },
+     {
+       "id": "00000004",
+       "match":
+{
+         "VNF_id": "firewall:1",
+         "vlan_id" : "11"
+       },
+       "action": {
+         "port": "eth1"
+       }
+     },
+     {
+       "id": "00000005",
+       "match":
+       {
+          "VNF_id" : "firewall:2",
+"ethertype" : "0x800",
+        "ipv4_src" : "10.1.1.0",
+          "ipv4_src_mask" : "255.255.255.0"
+       },
+       "action":
+       {
+          "VNF_id": "VPN:1"
+       }
+     },
+     {
+      "id": "00000006",
+      "match":
+      {
+          "VNF_id": "VPN:1",
+    },
+      "action":
+      {
+          "VNF_id": "traffic_shaper:1"
+      }
+     },
+     {
+       "id": "00000007",
+       "match":
+       {
+          "VNF_id": "firewall:3",
+       },
+       "action":
+       {
+          "VNF_id": "traffic_shaper:2"      
+      }
+     },
+     {
+      "id": "00000008",
+      "match":
+      {
+          "VNF_id": "traffic_shaper:1"
+      },
+      "action":
+      {
+           "port": "eth0"
+      }
+     },
+     {
+      "id": "00000009",
+      "match":
+      {
+          "VNF_id": "monitor:1"
+      },
+      "action":
+      {
+             "port": "eth0"
+      }
+     },
+     {
+      "id": "0000000A",
+      "match":
+      {
+          "port" : "eth0",
+          "ethertype" : "0x800",
+          "ip_proto" : "6",
+          "tcp_src" : "80"
+      },
+      "action":
+      {
+             "port": "eth1"
+      }
+     }
+    ]
+ }
+}

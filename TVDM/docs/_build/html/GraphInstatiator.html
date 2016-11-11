@@ -1,0 +1,142 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>GraphInstatiator module &mdash; TVDM  documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="TVDM  documentation" href="index.html" />
+    <link rel="next" title="Network module" href="Network.html" />
+    <link rel="prev" title="GraphInfo module" href="GraphInfo.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-GraphInstatiator">
+<span id="graphinstatiator-module"></span><h1>GraphInstatiator module<a class="headerlink" href="#module-GraphInstatiator" title="Permalink to this headline">¶</a></h1>
+<p>Created on 29/lug/2014</p>
+<dl class="class">
+<dt id="GraphInstatiator.GraphInstantiator">
+<em class="property">class </em><code class="descclassname">GraphInstatiator.</code><code class="descname">GraphInstantiator</code><span class="sig-paren">(</span><em>configure</em>, <em>logger</em>, <em>useIPSEC=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/GraphInstatiator.html#GraphInstantiator"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#GraphInstatiator.GraphInstantiator" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<p>Class used to instantiate the TVD and the Profile Graph</p>
+<dl class="method">
+<dt id="GraphInstatiator.GraphInstantiator.definePSC">
+<code class="descname">definePSC</code><span class="sig-paren">(</span><em>vlanID</em>, <em>mac</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/GraphInstatiator.html#GraphInstantiator.definePSC"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#GraphInstatiator.GraphInstantiator.definePSC" title="Permalink to this definition">¶</a></dt>
+<dd><p>Define the template for the PSC of the TVD</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="GraphInstatiator.GraphInstantiator.deleteUser">
+<code class="descname">deleteUser</code><span class="sig-paren">(</span><em>session</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/GraphInstatiator.html#GraphInstantiator.deleteUser"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#GraphInstatiator.GraphInstantiator.deleteUser" title="Permalink to this definition">¶</a></dt>
+<dd><p>This function is used for the user log out. If there are multiple devices connected it will be deleted only the flows for the specifc device that did the log out.
+If the last device for that specific user is disconnected the graph will be destroyed</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="GraphInstatiator.GraphInstantiator.instantiatePSA">
+<code class="descname">instantiatePSA</code><span class="sig-paren">(</span><em>session</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/GraphInstatiator.html#GraphInstantiator.instantiatePSA"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#GraphInstatiator.GraphInstantiator.instantiatePSA" title="Permalink to this definition">¶</a></dt>
+<dd><p>Instatiate the PSA of the TVD</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="GraphInstatiator.GraphInstantiator.instatiateTVD">
+<code class="descname">instatiateTVD</code><span class="sig-paren">(</span><em>session</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/GraphInstatiator.html#GraphInstantiator.instatiateTVD"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#GraphInstatiator.GraphInstantiator.instatiateTVD" title="Permalink to this definition">¶</a></dt>
+<dd><p>Intantiate the TVD for a logged user.
+In case for a TVD already instatiated it will generate the flows used for reedirecting the traffic of the new defice on it</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="GraphInstatiator.GraphInstantiator.signal_term_handler">
+<code class="descname">signal_term_handler</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/GraphInstatiator.html#GraphInstantiator.signal_term_handler"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#GraphInstatiator.GraphInstantiator.signal_term_handler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Used on SIGTERM signal to destroy all the instantiated TVD</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="index.html">
+              <img class="logo" src="_static/secured.png" alt="Logo"/>
+            </a></p><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="GraphInfo.html" title="previous chapter">GraphInfo module</a></li>
+      <li>Next: <a href="Network.html" title="next chapter">Network module</a></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/GraphInstatiator.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, SECURity at the network EDge.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      
+      |
+      <a href="_sources/GraphInstatiator.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

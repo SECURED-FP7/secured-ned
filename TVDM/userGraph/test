@@ -1,0 +1,27 @@
+{
+	"name": "user_profile_type",
+        "user_token": "",
+        "profile_type": "AD",
+
+	"PSASet": [
+
+	    {
+	        "id": "fdcdc64e-6006-40b8-8e2f-a4bddc38d43e",
+	        "security_controls": [
+
+			{ 
+                	"imgName": "reencrypt.qcow2",
+                	"conf_id":"psaConf"
+			}
+
+	        ] 
+
+   	    }
+    
+	],
+
+	"ingress_flow": ["fdcdc64e-6006-40b8-8e2f-a4bddc38d43e"],
+        "egress_flow": ["fdcdc64e-6006-40b8-8e2f-a4bddc38d43e"]
+
+
+}

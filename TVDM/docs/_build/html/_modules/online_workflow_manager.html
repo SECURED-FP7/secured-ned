@@ -1,0 +1,554 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>online_workflow_manager &mdash; TVDM  documentation</title>
+    
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="TVDM  documentation" href="../index.html" />
+    <link rel="up" title="Module code" href="index.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for online_workflow_manager</h1><div class="highlight"><pre>
+<span></span><span class="ch">#!/usr/bin/env python</span>
+
+<span class="c1">#</span>
+<span class="c1"># NED Policy Manager (a.k.a the online workflow manager)</span>
+<span class="c1">#</span>
+<span class="c1"># Dependencies: pip install json2xml dicttoxml termcolor</span>
+<span class="c1">#</span>
+<span class="c1"># Example usage: ./online_workflow_manager.py child child 195.235.93.146 130.192.1.102 testCoop</span>
+
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">base64</span>
+<span class="kn">import</span> <span class="nn">inspect</span>
+<span class="kn">import</span> <span class="nn">requests</span>
+<span class="kn">import</span> <span class="nn">dicttoxml</span>
+<span class="kn">import</span> <span class="nn">upr_client</span>
+<span class="kn">import</span> <span class="nn">online_workflow_manager</span>
+<span class="kn">from</span> <span class="nn">sys</span> <span class="kn">import</span> <span class="n">argv</span>
+<span class="kn">from</span> <span class="nn">time</span> <span class="kn">import</span> <span class="n">sleep</span>
+<span class="kn">from</span> <span class="nn">xml.dom</span> <span class="kn">import</span> <span class="n">minidom</span>
+<span class="kn">from</span> <span class="nn">termcolor</span> <span class="kn">import</span> <span class="n">colored</span>
+<span class="kn">from</span> <span class="nn">lxml</span> <span class="kn">import</span> <span class="n">etree</span><span class="p">,</span> <span class="n">objectify</span>
+<span class="kn">from</span> <span class="nn">lxml.etree</span> <span class="kn">import</span> <span class="n">XMLSyntaxError</span>
+<span class="kn">from</span> <span class="nn">requests.auth</span> <span class="kn">import</span> <span class="n">HTTPBasicAuth</span>
+<span class="kn">import</span> <span class="nn">xml.etree.ElementTree</span> <span class="kn">as</span> <span class="nn">ET</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">datetime</span> <span class="kn">as</span> <span class="nn">dt</span>
+
+<span class="c1"># TODO: control if there are sessions open, if true close them</span>
+<div class="viewcode-block" id="MyFormatter"><a class="viewcode-back" href="../online_workflow_manager.html#online_workflow_manager.MyFormatter">[docs]</a><span class="k">class</span> <span class="nc">MyFormatter</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">Formatter</span><span class="p">):</span>
+    <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">    Formats logs with particular time-stamps. </span>
+<span class="sd">    &#39;&#39;&#39;</span>
+    <span class="n">converter</span><span class="o">=</span><span class="n">dt</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">fromtimestamp</span>
+<div class="viewcode-block" id="MyFormatter.formatTime"><a class="viewcode-back" href="../online_workflow_manager.html#online_workflow_manager.MyFormatter.formatTime">[docs]</a>    <span class="k">def</span> <span class="nf">formatTime</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">record</span><span class="p">,</span> <span class="n">datefmt</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="n">ct</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">converter</span><span class="p">(</span><span class="n">record</span><span class="o">.</span><span class="n">created</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">datefmt</span><span class="p">:</span>
+            <span class="n">s</span> <span class="o">=</span> <span class="n">ct</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="n">datefmt</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">t</span> <span class="o">=</span> <span class="n">ct</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;%Y-%m-</span><span class="si">%d</span><span class="s2"> %H:%M:%S&quot;</span><span class="p">)</span>
+            <span class="n">s</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">%s</span><span class="s2">,</span><span class="si">%03d</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">t</span><span class="p">,</span> <span class="n">record</span><span class="o">.</span><span class="n">msecs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">s</span></div></div>
+
+
+<div class="viewcode-block" id="WorkflowManager"><a class="viewcode-back" href="../online_workflow_manager.html#online_workflow_manager.WorkflowManager">[docs]</a><span class="k">class</span> <span class="nc">WorkflowManager</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+	<span class="n">DEBUG</span> <span class="o">=</span> <span class="bp">False</span>
+
+<div class="viewcode-block" id="WorkflowManager.dbprint"><a class="viewcode-back" href="../online_workflow_manager.html#online_workflow_manager.WorkflowManager.dbprint">[docs]</a>	<span class="k">def</span> <span class="nf">dbprint</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">string</span><span class="p">):</span>
+            <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">            Debug function. When enabled</span>
+<span class="sd">            produces more verbose logs.</span>
+<span class="sd">            &#39;&#39;&#39;</span>
+	    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">DEBUG</span> <span class="o">==</span> <span class="bp">True</span><span class="p">:</span>
+	            <span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">string</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="WorkflowManager.spm_reconcile"><a class="viewcode-back" href="../online_workflow_manager.html#online_workflow_manager.WorkflowManager.spm_reconcile">[docs]</a>        <span class="k">def</span> <span class="nf">spm_reconcile</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">spm_url</span><span class="p">,</span> <span class="n">rec_input</span><span class="p">):</span>
+            <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">            Low-level auxiliary function which calls the SPM reconciliation</span>
+<span class="sd">            service.</span>
+<span class="sd">            &#39;&#39;&#39;</span>
+	    <span class="n">rec_svc</span> <span class="o">=</span> <span class="s2">&quot;:8181/restconf/operations/reconciliation:reconciliation&quot;</span>
+	    <span class="n">url</span> <span class="o">=</span> <span class="s2">&quot;http://&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">spm_url</span><span class="p">)</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">rec_svc</span><span class="p">)</span>
+
+	    <span class="bp">self</span><span class="o">.</span><span class="n">dbprint</span><span class="p">(</span><span class="s2">&quot;Contacting the SPM H2M service&quot;</span><span class="p">)</span>
+
+            <span class="n">r</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+            <span class="n">headers</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;content-type&#39;</span><span class="p">:</span> <span class="s1">&#39;application/json&#39;</span><span class="p">}</span>
+
+            <span class="n">counter</span> <span class="o">=</span> <span class="mi">0</span>
+	    <span class="k">while</span> <span class="n">counter</span> <span class="o">&lt;</span> <span class="mi">3</span><span class="p">:</span>
+		<span class="k">try</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">DEBUG</span> <span class="o">==</span> <span class="bp">True</span><span class="p">:</span>
+                        <span class="c1">#print str(rec_input)</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">dbprint</span><span class="p">(</span> <span class="nb">str</span><span class="p">(</span><span class="n">url</span><span class="p">)</span> <span class="p">)</span>
+		    <span class="n">r</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="n">url</span><span class="p">,</span> <span class="n">auth</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;admin&#39;</span><span class="p">,</span> <span class="s1">&#39;admin&#39;</span><span class="p">),</span>
+			<span class="n">headers</span><span class="o">=</span><span class="n">headers</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">rec_input</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="bp">None</span><span class="p">)</span>
+		    <span class="k">return</span> <span class="n">r</span>
+		<span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+		    <span class="n">counter</span> <span class="o">=</span> <span class="n">counter</span> <span class="o">+</span> <span class="mi">1</span>
+		    <span class="k">if</span> <span class="n">counter</span> <span class="o">&lt;</span> <span class="mi">3</span><span class="p">:</span>
+		    	<span class="k">continue</span>
+		    <span class="c1"># Give up</span>
+		    <span class="bp">self</span><span class="o">.</span><span class="n">dbprint</span><span class="p">(</span><span class="s2">&quot;ERROR: Could not reach SPM at &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">url</span><span class="p">))</span>
+		    <span class="k">raise</span> <span class="ne">Exception</span> <span class="p">(</span><span class="s1">&#39;Could not reach SPM.&#39;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">None</span></div>
+
+<div class="viewcode-block" id="WorkflowManager.get_capability_from_mspl"><a class="viewcode-back" href="../online_workflow_manager.html#online_workflow_manager.WorkflowManager.get_capability_from_mspl">[docs]</a>        <span class="k">def</span> <span class="nf">get_capability_from_mspl</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mspl</span><span class="p">):</span>
+            <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">            Parse a specific MSPL and return a list of capabilities</span>
+<span class="sd">            that are discovered inside</span>
+<span class="sd">            &#39;&#39;&#39;</span>
+            <span class="n">capabilities</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+            <span class="n">tree</span> <span class="o">=</span> <span class="n">ET</span><span class="o">.</span><span class="n">fromstring</span><span class="p">(</span><span class="n">mspl</span><span class="p">)</span>
+            <span class="n">root</span> <span class="o">=</span> <span class="n">tree</span>
+            <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">root</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">child</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">a</span><span class="o">.</span><span class="n">tag</span><span class="p">)</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;capability&quot;</span><span class="p">)):</span>
+                        <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="n">a</span><span class="p">:</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">dbprint</span><span class="p">(</span><span class="s2">&quot;Found a capability: &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">b</span><span class="o">.</span><span class="n">text</span><span class="p">))</span>
+                            <span class="n">capabilities</span> <span class="o">=</span> <span class="n">capabilities</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">b</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">capabilities</span></div>
+
+<div class="viewcode-block" id="WorkflowManager.get_creator"><a class="viewcode-back" href="../online_workflow_manager.html#online_workflow_manager.WorkflowManager.get_creator">[docs]</a>	<span class="k">def</span> <span class="nf">get_creator</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user</span><span class="p">,</span> <span class="n">upr</span><span class="p">):</span>
+                <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">                Get the administrator who created a given user</span>
+<span class="sd">                &#39;&#39;&#39;</span>
+		<span class="n">r</span> <span class="o">=</span> <span class="n">upr</span><span class="o">.</span><span class="n">get_user_creator</span><span class="p">(</span><span class="n">user</span><span class="p">)</span>
+		<span class="k">if</span> <span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">status_code</span> <span class="o">!=</span> <span class="mi">200</span><span class="p">):</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">dbprint</span><span class="p">(</span> <span class="s2">&quot;ERROR getting creator of user during reconciliation&quot;</span> \
+					<span class="o">+</span> <span class="s2">&quot;. Status code = &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">status_code</span><span class="p">))</span>
+			<span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Error getting creator of &#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">user</span><span class="p">)</span> \
+					<span class="o">+</span> <span class="s2">&quot;. Error is &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">status_code</span><span class="p">)</span> \
+					<span class="o">+</span> <span class="s1">&#39;. Does &#39;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">user</span><span class="p">)</span> <span class="o">+</span> <span class="s1">&#39; exist?&#39;</span><span class="p">)</span> 
+		<span class="n">data</span> <span class="o">=</span> <span class="n">r</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+		<span class="k">return</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;creator&#39;</span><span class="p">]</span></div>
+		
+<div class="viewcode-block" id="WorkflowManager.get_PolicyStack"><a class="viewcode-back" href="../online_workflow_manager.html#online_workflow_manager.WorkflowManager.get_PolicyStack">[docs]</a>	<span class="k">def</span> <span class="nf">get_PolicyStack</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user</span><span class="p">,</span> <span class="n">upr</span><span class="p">,</span> <span class="n">cooperative</span><span class="p">,</span> <span class="n">coop</span><span class="p">,</span> <span class="n">uncoop</span><span class="p">):</span>
+                <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">                Get the policy stack of a particular user.</span>
+<span class="sd">                &#39;&#39;&#39;</span>
+		<span class="n">mspls</span> <span class="o">=</span> <span class="p">[]</span>	
+		<span class="n">coopList</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="n">uncoopList</span> <span class="o">=</span> <span class="p">[]</span>
+	
+		
+		<span class="n">creator</span> <span class="o">=</span> <span class="n">user</span>
+		
+		<span class="c1"># get all AG of user</span>
+		<span class="n">r</span> <span class="o">=</span> <span class="n">upr</span><span class="o">.</span><span class="n">get_user_ag</span><span class="p">(</span><span class="n">user</span><span class="p">)</span>
+		<span class="k">if</span> <span class="n">r</span><span class="o">.</span><span class="n">status_code</span> <span class="o">!=</span> <span class="mi">200</span><span class="p">:</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">dbprint</span><span class="p">(</span> <span class="s2">&quot;ERROR getting AG of user + &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">user</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot; with error code &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">status_code</span><span class="p">))</span>
+		<span class="n">applicationGraphs</span> <span class="o">=</span> <span class="n">r</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+
+		<span class="k">while</span> <span class="n">creator</span> <span class="o">!=</span> <span class="bp">None</span><span class="p">:</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">dbprint</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">dbprint</span><span class="p">(</span><span class="s2">&quot;Computing policy stack of layer : &quot;</span> <span class="o">+</span> <span class="n">user</span><span class="o">+</span> <span class="s2">&quot; &quot;</span> <span class="o">+</span><span class="n">creator</span><span class="p">)</span>
+
+			<span class="c1">#get all MSPLs of current stack layer</span>
+			<span class="n">r</span> <span class="o">=</span> <span class="n">upr</span><span class="o">.</span><span class="n">get_mspl</span><span class="p">(</span><span class="n">is_reconciled</span><span class="o">=</span><span class="s1">&#39;false&#39;</span><span class="p">,</span> <span class="n">target</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">user</span><span class="p">),</span> <span class="n">editor</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">creator</span><span class="p">))</span>
+                        <span class="k">if</span> <span class="n">r</span><span class="o">.</span><span class="n">status_code</span> <span class="o">!=</span> <span class="mi">200</span><span class="p">:</span>
+                            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s1">&#39;Could not get policies for user!&#39;</span><span class="p">)</span>
+                        
+                        <span class="n">mspl_list_json</span> <span class="o">=</span> <span class="n">r</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+
+			<span class="k">for</span> <span class="n">mspl</span> <span class="ow">in</span> <span class="n">mspl_list_json</span><span class="p">:</span>
+				<span class="bp">self</span><span class="o">.</span><span class="n">dbprint</span><span class="p">(</span><span class="s2">&quot;Getting MSPL...&quot;</span><span class="p">)</span>
+				<span class="c1"># add MSPL to msplList</span>
+                                <span class="n">mspls</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">mspl</span><span class="p">[</span><span class="s1">&#39;mspl&#39;</span><span class="p">])</span>
+			
+			<span class="n">r</span> <span class="o">=</span> <span class="n">upr</span><span class="o">.</span><span class="n">get_user_list</span><span class="p">(</span><span class="n">user_id</span><span class="o">=</span><span class="n">creator</span><span class="p">)</span>
+			<span class="k">if</span> <span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">status_code</span> <span class="o">!=</span> <span class="mi">200</span><span class="p">):</span>
+				<span class="bp">self</span><span class="o">.</span><span class="n">dbprint</span><span class="p">(</span><span class="s2">&quot;ERROR finding out cooperative data with + &quot;</span> \
+						<span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">status_code</span><span class="p">))</span>
+				<span class="k">raise</span> <span class="ne">Exception</span> <span class="p">(</span><span class="s2">&quot;Can&#39;t tell if cooperative: &quot;</span> \
+						<span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">status_code</span><span class="p">)</span> <span class="p">)</span>
+			<span class="n">data</span> <span class="o">=</span> <span class="n">r</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+			<span class="n">creator_is_cooperative</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;is_cooperative&#39;</span><span class="p">]</span>
+
+			<span class="k">if</span> <span class="n">cooperative</span> <span class="ow">and</span> <span class="n">creator_is_cooperative</span><span class="p">:</span>
+                                <span class="k">try</span><span class="p">:</span>
+				    <span class="n">data</span> <span class="o">=</span> <span class="p">{}</span>
+				    <span class="n">data</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">coop</span><span class="p">)</span>
+				    <span class="n">data</span><span class="p">[</span><span class="s1">&#39;ag&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">filter</span><span class="p">(</span><span class="k">lambda</span> <span class="n">ag</span><span class="p">:</span> <span class="n">ag</span><span class="p">[</span><span class="s1">&#39;editor&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span> <span class="o">==</span> <span class="nb">str</span><span class="p">(</span><span class="n">creator</span><span class="p">)</span><span class="o">.</span><span class="n">upper</span><span class="p">(),</span> <span class="n">applicationGraphs</span><span class="p">)[</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;ag&#39;</span><span class="p">];</span>
+				    <span class="n">data</span><span class="p">[</span><span class="s1">&#39;creator&#39;</span><span class="p">]</span>  <span class="o">=</span> <span class="n">creator</span>
+				    <span class="n">coopList</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+				    <span class="n">coop</span> <span class="o">+=</span> <span class="mi">1</span>
+				    <span class="bp">self</span><span class="o">.</span><span class="n">dbprint</span><span class="p">(</span><span class="s2">&quot;Adding to user&#39;s cooperative stack&quot;</span><span class="p">)</span>
+                                <span class="k">except</span> <span class="ne">IndexError</span><span class="p">:</span>
+                                    <span class="bp">self</span><span class="o">.</span><span class="n">dbprint</span><span class="p">(</span> <span class="n">colored</span><span class="p">(</span><span class="s2">&quot;ERROR: USER &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">creator</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot; DOES NOT HAVE AN AG&quot;</span><span class="p">,</span> <span class="s1">&#39;red&#39;</span><span class="p">)</span> <span class="p">)</span>
+			<span class="k">else</span><span class="p">:</span>
+				<span class="n">cooperative</span> <span class="o">=</span> <span class="bp">False</span>
+                                <span class="k">try</span><span class="p">:</span>
+				    <span class="n">data</span> <span class="o">=</span> <span class="p">{}</span>
+				    <span class="n">data</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">uncoop</span><span class="p">)</span>
+				    <span class="n">data</span><span class="p">[</span><span class="s1">&#39;ag&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">filter</span><span class="p">(</span><span class="k">lambda</span> <span class="n">ag</span><span class="p">:</span> <span class="n">ag</span><span class="p">[</span><span class="s1">&#39;editor&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span> <span class="o">==</span> <span class="nb">str</span><span class="p">(</span><span class="n">creator</span><span class="p">)</span><span class="o">.</span><span class="n">upper</span><span class="p">(),</span> <span class="n">applicationGraphs</span><span class="p">)[</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;ag&#39;</span><span class="p">];</span>
+				    <span class="n">data</span><span class="p">[</span><span class="s1">&#39;creator&#39;</span><span class="p">]</span>  <span class="o">=</span> <span class="n">creator</span>
+				    <span class="n">uncoopList</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+				    <span class="n">uncoop</span> <span class="o">+=</span> <span class="mi">1</span>
+				    <span class="bp">self</span><span class="o">.</span><span class="n">dbprint</span><span class="p">(</span><span class="s2">&quot;Adding to uncooperative stack&quot;</span><span class="p">)</span>
+                                <span class="k">except</span> <span class="ne">IndexError</span><span class="p">:</span>
+                                    <span class="bp">self</span><span class="o">.</span><span class="n">dbprint</span><span class="p">(</span> <span class="n">colored</span><span class="p">(</span><span class="s2">&quot;ERROR: USER &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">creator</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot; DOES NOT HAV AN AG&quot;</span><span class="p">,</span> <span class="s1">&#39;red&#39;</span><span class="p">)</span> <span class="p">)</span>
+			<span class="n">creator</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_creator</span><span class="p">(</span><span class="n">creator</span><span class="p">,</span> <span class="n">upr</span><span class="p">)</span>
+			
+		<span class="n">data</span> <span class="o">=</span> <span class="p">{}</span>
+		<span class="n">data</span><span class="p">[</span><span class="s1">&#39;mspls&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">mspls</span>
+		<span class="n">data</span><span class="p">[</span><span class="s1">&#39;coopList&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">coopList</span>
+		<span class="n">data</span><span class="p">[</span><span class="s1">&#39;uncoopList&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">uncoopList</span>
+		<span class="n">data</span><span class="p">[</span><span class="s1">&#39;cooperative&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">cooperative</span>
+		<span class="n">data</span><span class="p">[</span><span class="s1">&#39;coop&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">coop</span>
+		<span class="n">data</span><span class="p">[</span><span class="s1">&#39;uncoop&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">uncoop</span>
+		
+		<span class="k">return</span> <span class="n">data</span></div>
+	
+<div class="viewcode-block" id="WorkflowManager.reconcile"><a class="viewcode-back" href="../online_workflow_manager.html#online_workflow_manager.WorkflowManager.reconcile">[docs]</a>	<span class="k">def</span> <span class="nf">reconcile</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user</span><span class="p">,</span> <span class="n">password</span><span class="p">,</span> <span class="n">upr_url</span><span class="p">,</span> <span class="n">spm_url</span><span class="p">,</span> <span class="n">ned_ID</span><span class="p">):</span>
+                <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">                Function which gets all the users associated to a particular user</span>
+<span class="sd">                (e.g. stakedholders like parent, ISP, country) and identify</span>
+<span class="sd">                which policies are co-operative and non-co-operative.</span>
+<span class="sd">                If successful, a reconciled application/service graph is produced</span>
+<span class="sd">                and stored in the user&#39;s profile.</span>
+<span class="sd">                &#39;&#39;&#39;</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">dbprint</span><span class="p">(</span><span class="s2">&quot;Truth and reconciliation...&quot;</span><span class="p">)</span>
+		<span class="n">upr</span> <span class="o">=</span> <span class="n">upr_client</span><span class="o">.</span><span class="n">UPRClient</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">upr_url</span><span class="p">))</span>
+	
+	
+		<span class="n">mspls</span> <span class="o">=</span> <span class="p">[]</span>	
+		<span class="n">coopList</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="n">uncoopList</span> <span class="o">=</span> <span class="p">[]</span>
+                    
+		<span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_PolicyStack</span><span class="p">(</span><span class="n">user</span><span class="p">,</span> <span class="n">upr</span><span class="p">,</span> <span class="bp">True</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+		<span class="n">mspls</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;mspls&#39;</span><span class="p">])</span>
+		<span class="n">coopList</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;coopList&#39;</span><span class="p">])</span>
+		<span class="n">uncoopList</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;uncoopList&#39;</span><span class="p">])</span>
+		
+		<span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_PolicyStack</span><span class="p">(</span><span class="n">ned_ID</span><span class="p">,</span> <span class="n">upr</span><span class="p">,</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;cooperative&#39;</span><span class="p">],</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;coop&#39;</span><span class="p">],</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;uncoop&#39;</span><span class="p">])</span>
+		<span class="n">mspls</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;mspls&#39;</span><span class="p">])</span>
+		<span class="n">coopList</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;coopList&#39;</span><span class="p">])</span>
+		<span class="n">uncoopList</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;uncoopList&#39;</span><span class="p">])</span>
+
+		<span class="n">coopList</span><span class="o">.</span><span class="n">reverse</span><span class="p">()</span>
+		<span class="n">uncoopList</span><span class="o">.</span><span class="n">reverse</span><span class="p">()</span>
+		
+		<span class="c1"># Prepare input </span>
+		<span class="n">data</span> <span class="o">=</span> <span class="p">{}</span>
+		<span class="n">data</span><span class="p">[</span><span class="s1">&#39;coop&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">coopList</span>
+		<span class="n">data</span><span class="p">[</span><span class="s1">&#39;non_coop&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">uncoopList</span>
+		<span class="n">data</span><span class="p">[</span><span class="s1">&#39;MSPL&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">mspls</span>
+		
+		<span class="n">parent_json</span> <span class="o">=</span> <span class="p">{}</span>
+		<span class="n">parent_json</span><span class="p">[</span><span class="s1">&#39;input&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span>
+		<span class="n">rec_input</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">parent_json</span><span class="p">,</span> <span class="n">sort_keys</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+
+	
+		
+		<span class="bp">self</span><span class="o">.</span><span class="n">dbprint</span><span class="p">(</span><span class="n">rec_input</span><span class="p">)</span>
+
+                <span class="n">r</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">spm_reconcile</span><span class="p">(</span><span class="n">spm_url</span><span class="p">,</span> <span class="n">rec_input</span><span class="p">)</span>
+
+                <span class="k">if</span> <span class="n">r</span><span class="o">.</span><span class="n">status_code</span> <span class="o">!=</span> <span class="mi">200</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">dbprint</span><span class="p">(</span> <span class="s2">&quot;ERROR: SPM returned &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">status_code</span><span class="p">)</span> <span class="p">)</span>
+                    <span class="k">raise</span> <span class="ne">Exception</span> <span class="p">(</span><span class="s2">&quot;SPM returned &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">status_code</span><span class="p">))</span>
+
+                <span class="n">data</span> <span class="o">=</span> <span class="n">r</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+
+                <span class="n">rag</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+                <span class="n">reconciled_mspls</span> <span class="o">=</span> <span class="p">[]</span>
+
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">rag</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;output&#39;</span><span class="p">][</span><span class="s1">&#39;application_graph&#39;</span><span class="p">]</span>
+                    <span class="n">r</span> <span class="o">=</span> <span class="n">upr</span><span class="o">.</span><span class="n">post_rag</span><span class="p">(</span><span class="n">user</span><span class="p">,</span> <span class="n">ned_ID</span><span class="p">,</span> <span class="n">rag</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">r</span><span class="o">.</span><span class="n">status_code</span> <span class="o">!=</span> <span class="mi">201</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">dbprint</span><span class="p">(</span> <span class="n">colored</span><span class="p">(</span><span class="s2">&quot;UPR did not save RAG: error &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">status_code</span><span class="p">),</span> <span class="s1">&#39;red&#39;</span><span class="p">)</span> <span class="p">)</span>
+                <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">dbprint</span><span class="p">(</span> <span class="n">colored</span><span class="p">(</span><span class="s2">&quot;No reconciled application graph&quot;</span><span class="p">,</span> <span class="s1">&#39;red&#39;</span><span class="p">)</span> <span class="p">)</span>
+
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">report</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;output&#39;</span><span class="p">][</span><span class="s1">&#39;report&#39;</span><span class="p">]</span>
+                    <span class="n">upr</span><span class="o">.</span><span class="n">post_reconciliation_report</span><span class="p">(</span><span class="n">user</span><span class="p">,</span> <span class="n">ned_ID</span><span class="p">,</span> <span class="n">report</span><span class="p">)</span>
+                <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">dbprint</span><span class="p">(</span> <span class="n">colored</span><span class="p">(</span><span class="s1">&#39;No reconciliation report&#39;</span><span class="p">,</span> <span class="s1">&#39;red&#39;</span><span class="p">))</span>
+
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">reconciled_mspls</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;output&#39;</span><span class="p">][</span><span class="s1">&#39;MSPL&#39;</span><span class="p">]</span>
+                    <span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="n">reconciled_mspls</span><span class="p">:</span>
+                        <span class="n">capability</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_capability_from_mspl</span><span class="p">(</span><span class="n">base64</span><span class="o">.</span><span class="n">b64decode</span><span class="p">(</span><span class="n">m</span><span class="p">))</span>
+                        <span class="n">is_reconciled</span> <span class="o">=</span> <span class="bp">True</span>
+                        <span class="n">r</span> <span class="o">=</span> <span class="n">upr</span><span class="o">.</span><span class="n">create_mspl</span><span class="p">(</span><span class="n">user</span><span class="p">,</span> <span class="n">user</span><span class="p">,</span> <span class="n">capability</span><span class="p">,</span> <span class="n">is_reconciled</span><span class="p">,</span> <span class="n">m</span><span class="p">)</span>
+                <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">dbprint</span><span class="p">(</span> <span class="n">colored</span><span class="p">(</span><span class="s2">&quot;No MSPLs returned from SPM reconciliation&quot;</span><span class="p">,</span> <span class="s1">&#39;red&#39;</span><span class="p">)</span> <span class="p">)</span>
+		    
+		
+                <span class="k">return</span> <span class="p">(</span><span class="n">rag</span><span class="p">,</span> <span class="n">reconciled_mspls</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="WorkflowManager.translate"><a class="viewcode-back" href="../online_workflow_manager.html#online_workflow_manager.WorkflowManager.translate">[docs]</a>	<span class="k">def</span> <span class="nf">translate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">spm_url</span><span class="p">,</span> <span class="n">mspl</span><span class="p">,</span> <span class="n">psaID</span><span class="p">):</span>
+            <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">            Low-level auxiliary function which translates a single MSPL</span>
+<span class="sd">            rule into a specific PSA configuration, where PSA ID is</span>
+<span class="sd">            the name of the PSA.</span>
+<span class="sd">            &#39;&#39;&#39;</span>
+	    <span class="n">data</span> <span class="o">=</span> <span class="p">{}</span>
+	    <span class="n">data</span><span class="p">[</span><span class="s1">&#39;mspl&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">base64</span><span class="o">.</span><span class="n">b64encode</span><span class="p">(</span><span class="n">mspl</span><span class="p">)</span>
+	    <span class="n">data</span><span class="p">[</span><span class="s1">&#39;securityControl&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">psaID</span>
+	    <span class="n">m2l_input</span> <span class="o">=</span> <span class="p">{}</span>
+	    <span class="n">m2l_input</span><span class="p">[</span><span class="s1">&#39;input&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span>
+	    <span class="c1">#self.dbprint( &quot;INPUT IS: \n&quot; + str(m2l_input)</span>
+	    <span class="n">headers</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;content-type&#39;</span><span class="p">:</span> <span class="s1">&#39;application/json&#39;</span><span class="p">}</span>
+	    <span class="n">url</span> <span class="o">=</span> <span class="s2">&quot;http://&quot;</span> <span class="o">+</span> <span class="n">spm_url</span> <span class="o">+</span> <span class="s2">&quot;:8090/M2LServiceCoordinator/rest/translate/&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">psaID</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;/&quot;</span>
+	    <span class="bp">self</span><span class="o">.</span><span class="n">dbprint</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
+	    <span class="n">r</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">url</span><span class="p">),</span> <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;mspl&#39;</span><span class="p">],</span> <span class="n">timeout</span><span class="o">=</span><span class="bp">None</span><span class="p">)</span>
+	    <span class="k">if</span> <span class="n">r</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">200</span><span class="p">:</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">dbprint</span><span class="p">(</span> <span class="s2">&quot;SUCCESSFUL REPLY FROM THE M2L SERVICE&quot;</span><span class="p">)</span>
+		<span class="n">rawdata</span> <span class="o">=</span> <span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">text</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;This file contains specific configuration for the security control&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+		<span class="c1"># Marco!!! Don&#39;t mess with my data!</span>
+		<span class="n">data</span> <span class="o">=</span> <span class="n">base64</span><span class="o">.</span><span class="n">b64decode</span><span class="p">(</span><span class="n">rawdata</span><span class="p">)</span>
+		<span class="k">return</span> <span class="n">data</span>
+	    <span class="k">else</span><span class="p">:</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">dbprint</span><span class="p">(</span> <span class="p">(</span><span class="n">spm_url</span> <span class="o">+</span> <span class="s2">&quot;: &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">status_code</span><span class="p">)))</span>
+		<span class="k">return</span> <span class="bp">None</span></div>
+
+
+	<span class="c1"># Returns a string</span>
+<div class="viewcode-block" id="WorkflowManager.M2L"><a class="viewcode-back" href="../online_workflow_manager.html#online_workflow_manager.WorkflowManager.M2L">[docs]</a>	<span class="k">def</span> <span class="nf">M2L</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">upr_url</span><span class="p">,</span> <span class="n">spm_url</span><span class="p">,</span> <span class="n">service_graph_xml</span><span class="p">,</span> <span class="n">mspl_list_xml</span><span class="p">,</span> <span class="n">user</span><span class="p">,</span> <span class="n">password</span><span class="p">,</span> <span class="n">editor_id</span><span class="p">):</span>
+            <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">            High-level function which translates the MSPL rules into low-level configurations.</span>
+<span class="sd">            User is the username of the user.</span>
+<span class="sd">            Password is the token of the user.</span>
+<span class="sd">            Editor_id is the username of the user who created the policy.</span>
+<span class="sd">            MSPL_list_xml is an XML list of MSPL rules which is returned by the SPM H2M service. </span>
+<span class="sd">            &#39;&#39;&#39;</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">dbprint</span><span class="p">(</span> <span class="s2">&quot;Starting M2L&quot;</span><span class="p">)</span>
+	    <span class="n">j</span> <span class="o">=</span> <span class="mi">0</span>
+	    <span class="n">return_code</span> <span class="o">=</span> <span class="s2">&quot;ERROR&quot;</span>
+
+	    <span class="c1"># Get UPR connection</span>
+	    <span class="n">upr</span> <span class="o">=</span> <span class="n">upr_client</span><span class="o">.</span><span class="n">UPRClient</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">upr_url</span><span class="p">))</span>
+
+	    <span class="c1"># Extract data from the PSA list</span>
+	    <span class="n">xmldoc</span> <span class="o">=</span> <span class="n">minidom</span><span class="o">.</span><span class="n">parseString</span><span class="p">(</span><span class="n">service_graph_xml</span><span class="p">)</span>
+	    <span class="n">psa_list</span> <span class="o">=</span> <span class="n">xmldoc</span><span class="o">.</span><span class="n">getElementsByTagName</span><span class="p">(</span><span class="s1">&#39;PSA&#39;</span><span class="p">)</span>
+	    <span class="bp">self</span><span class="o">.</span><span class="n">dbprint</span><span class="p">(</span> <span class="s2">&quot;There are &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">psa_list</span><span class="p">))</span> <span class="o">+</span> <span class="s2">&quot; PSAs&quot;</span><span class="p">)</span>
+	    <span class="k">for</span> <span class="n">psa</span> <span class="ow">in</span> <span class="n">psa_list</span><span class="p">:</span>
+		<span class="n">psa_name</span> <span class="o">=</span> <span class="n">psa</span><span class="o">.</span><span class="n">attributes</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">value</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">dbprint</span><span class="p">(</span> <span class="s2">&quot;PSA name is &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">psa_name</span><span class="p">))</span>
+		<span class="n">mspl_ids</span> <span class="o">=</span> <span class="n">psa</span><span class="o">.</span><span class="n">getElementsByTagName</span><span class="p">(</span><span class="s1">&#39;mspl_list&#39;</span><span class="p">)</span>
+
+		<span class="c1"># ICT hack - for now just get the first MSPL ID</span>
+		<span class="c1"># TODO: need to support multiple MSPLs per PSA</span>
+		<span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">mspl_ids</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+		    <span class="n">mspl_id</span> <span class="o">=</span> <span class="n">mspl_ids</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">attributes</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">value</span>
+
+		    <span class="c1"># For each MSPL, get the configuration</span>
+		    <span class="k">for</span> <span class="n">mspl</span> <span class="ow">in</span> <span class="n">mspl_list_xml</span><span class="p">:</span>
+		        <span class="n">xml</span> <span class="o">=</span> <span class="n">minidom</span><span class="o">.</span><span class="n">parseString</span><span class="p">(</span><span class="n">mspl</span><span class="p">)</span>
+		        <span class="n">configuration</span> <span class="o">=</span> <span class="n">xml</span><span class="o">.</span><span class="n">getElementsByTagName</span><span class="p">(</span><span class="s1">&#39;configuration&#39;</span><span class="p">)</span>
+		        <span class="n">name_tag</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+		        <span class="bp">self</span><span class="o">.</span><span class="n">dbprint</span><span class="p">(</span> <span class="s2">&quot;DEBUG: Found &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">configuration</span><span class="p">))</span> <span class="o">+</span> <span class="s2">&quot; tags&quot;</span><span class="p">)</span>
+
+		        <span class="c1"># For each configuration, find the corresponding application</span>
+                        <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">configuration</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">childNodes</span><span class="p">:</span>
+		            <span class="k">if</span> <span class="n">child</span><span class="o">.</span><span class="n">nodeName</span> <span class="o">==</span> <span class="s2">&quot;Name&quot;</span><span class="p">:</span>
+		                <span class="n">mspl_name</span> <span class="o">=</span> <span class="n">child</span><span class="o">.</span><span class="n">firstChild</span><span class="o">.</span><span class="n">nodeValue</span>
+		                <span class="bp">self</span><span class="o">.</span><span class="n">dbprint</span><span class="p">(</span> <span class="s2">&quot;Comparing &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">mspl_name</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot; with &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">mspl_id</span><span class="p">))</span>
+
+		                <span class="c1"># If you find corresponding MSPL, get the translated LSPL from the SPM</span>
+		                <span class="k">if</span> <span class="n">mspl_id</span> <span class="o">==</span> <span class="n">mspl_name</span><span class="p">:</span>
+		                    <span class="bp">self</span><span class="o">.</span><span class="n">dbprint</span><span class="p">(</span> <span class="s2">&quot;Found corresponding MSPL, getting translated LSPL&quot;</span><span class="p">)</span>
+		                    <span class="n">lspl</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">translate</span><span class="p">(</span><span class="n">spm_url</span><span class="p">,</span> <span class="n">mspl</span><span class="p">,</span> <span class="n">psa_name</span><span class="p">)</span>
+		                    <span class="n">lspl</span> <span class="o">=</span> <span class="n">base64</span><span class="o">.</span><span class="n">b64encode</span><span class="p">(</span><span class="n">lspl</span><span class="p">)</span>
+		                    <span class="n">r</span> <span class="o">=</span> <span class="n">upr</span><span class="o">.</span><span class="n">post_psaconf</span><span class="p">(</span><span class="n">user</span><span class="p">,</span><span class="n">psa_name</span><span class="p">,</span><span class="n">lspl</span><span class="p">)</span>
+		                    <span class="k">if</span> <span class="n">r</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">201</span><span class="p">:</span>
+		                        <span class="bp">self</span><span class="o">.</span><span class="n">dbprint</span><span class="p">(</span>
+                                                <span class="n">colored</span><span class="p">(</span><span class="s2">&quot;yay, i has LSPL in the UPR.&quot;</span> <span class="o">+</span> \
+                                                        <span class="s2">&quot;Use get_userpsa_conf to get them&quot;</span><span class="p">,</span> <span class="s1">&#39;green&#39;</span><span class="p">))</span>
+		                    <span class="k">else</span><span class="p">:</span>
+		                        <span class="bp">self</span><span class="o">.</span><span class="n">dbprint</span><span class="p">(</span> <span class="n">colored</span><span class="p">(</span><span class="s2">&quot;Failed to get LSPL: Error code &quot;</span> <span class="o">+</span> \
+                                                <span class="nb">str</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">status_code</span><span class="p">),</span> <span class="s1">&#39;red&#39;</span><span class="p">))</span>
+		                        <span class="n">return_code</span> <span class="o">=</span> <span class="s2">&quot;ERROR &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">status_code</span><span class="p">)</span>
+		                        <span class="k">return</span> <span class="n">return_code</span>
+		        <span class="bp">self</span><span class="o">.</span><span class="n">dbprint</span><span class="p">(</span> <span class="s2">&quot;Finished looking for MSPL&quot;</span><span class="p">)</span>
+
+		<span class="k">else</span><span class="p">:</span>
+		    <span class="k">return</span> <span class="s2">&quot;ERROR: Multiple MSPLs per PSA unsupported at the moment&quot;</span>
+
+	    <span class="n">return_code</span> <span class="o">=</span>  <span class="s2">&quot;Success&quot;</span>
+	    <span class="k">return</span> <span class="n">return_code</span></div>
+
+<div class="viewcode-block" id="WorkflowManager.delete_all_rec_mspl"><a class="viewcode-back" href="../online_workflow_manager.html#online_workflow_manager.WorkflowManager.delete_all_rec_mspl">[docs]</a>        <span class="k">def</span> <span class="nf">delete_all_rec_mspl</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user</span><span class="p">,</span> <span class="n">password</span><span class="p">,</span> <span class="n">upr_url</span><span class="p">):</span>
+            <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">            Deletes old reconciled MSPLs which are no longer valid. </span>
+<span class="sd">            User Profile Repository (UPR) must be specified as well as the access token.</span>
+<span class="sd">            &#39;&#39;&#39;</span>
+            <span class="n">upr</span> <span class="o">=</span> <span class="n">upr_client</span><span class="o">.</span><span class="n">UPRClient</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">upr_url</span><span class="p">))</span>
+            <span class="n">r</span> <span class="o">=</span> <span class="n">upr</span><span class="o">.</span><span class="n">get_mspl</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="n">user</span><span class="p">,</span><span class="n">editor</span><span class="o">=</span><span class="n">user</span><span class="p">,</span><span class="n">is_reconciled</span><span class="o">=</span><span class="s1">&#39;true&#39;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">r</span><span class="o">.</span><span class="n">status_code</span> <span class="o">!=</span> <span class="mi">200</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">Exception</span> <span class="p">(</span><span class="s2">&quot;WFM could not delete MSPL policies from the UPR &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">status_code</span><span class="p">))</span>
+
+            <span class="n">data</span> <span class="o">=</span> <span class="n">r</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">mspl</span> <span class="ow">in</span> <span class="n">data</span><span class="p">:</span>
+                <span class="n">mspl_id</span> <span class="o">=</span> <span class="n">mspl</span><span class="p">[</span><span class="s1">&#39;mspl_id&#39;</span><span class="p">]</span>
+                <span class="n">r</span> <span class="o">=</span> <span class="n">upr</span><span class="o">.</span><span class="n">delete_mspl</span><span class="p">(</span><span class="n">mspl_id</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">r</span><span class="o">.</span><span class="n">status_code</span> <span class="o">!=</span> <span class="mi">204</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">dbprint</span><span class="p">(</span> <span class="s2">&quot;Could not delete MSPL??? &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">status_code</span><span class="p">)</span> <span class="p">)</span></div>
+
+	<span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user</span><span class="p">,</span> <span class="n">password</span><span class="p">,</span> <span class="n">upr_url</span><span class="p">,</span> <span class="n">spm_url</span><span class="p">,</span> <span class="n">ned_ID</span><span class="p">,</span> <span class="n">debug</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">init_log</span><span class="p">()</span>
+	
+		<span class="c1"># If debug is enabled</span>
+		<span class="k">if</span> <span class="p">(</span><span class="n">debug</span> <span class="o">==</span> <span class="bp">True</span><span class="p">):</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">DEBUG</span> <span class="o">=</span> <span class="bp">True</span>
+
+                <span class="bp">self</span><span class="o">.</span><span class="n">delete_all_rec_mspl</span><span class="p">(</span><span class="n">user</span><span class="p">,</span> <span class="n">password</span><span class="p">,</span> <span class="n">upr_url</span><span class="p">)</span>
+
+		<span class="n">results</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">reconcile</span><span class="p">(</span><span class="n">user</span><span class="p">,</span> <span class="n">password</span><span class="p">,</span> <span class="n">upr_url</span><span class="p">,</span> <span class="n">spm_url</span><span class="p">,</span> <span class="n">ned_ID</span><span class="p">)</span>
+
+                <span class="k">if</span> <span class="n">results</span> <span class="o">==</span> <span class="bp">None</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">Exception</span> <span class="p">(</span><span class="s2">&quot;Reconciliation failed&quot;</span><span class="p">)</span>
+
+                <span class="k">if</span> <span class="n">results</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;&quot;</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">Exception</span> <span class="p">(</span><span class="s2">&quot;No service graph returned from reconciliation&quot;</span><span class="p">)</span>
+
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">results</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">3</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">Exception</span> <span class="p">(</span><span class="s2">&quot;Didn&#39;t get the expected number of return values&quot;</span><span class="p">)</span>
+
+                <span class="n">sg</span> <span class="o">=</span> <span class="n">base64</span><span class="o">.</span><span class="n">b64decode</span><span class="p">(</span><span class="n">results</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+                <span class="n">mspl_list</span> <span class="o">=</span> <span class="n">results</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+                <span class="n">editor_id</span> <span class="o">=</span> <span class="n">results</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+
+                <span class="n">i</span><span class="o">=</span><span class="mi">0</span>
+                <span class="k">while</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">mspl_list</span><span class="p">):</span>
+                    <span class="n">mspl_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">base64</span><span class="o">.</span><span class="n">b64decode</span><span class="p">(</span><span class="n">mspl_list</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+                    <span class="n">i</span><span class="o">=</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span>
+
+                <span class="k">if</span> <span class="n">mspl_list</span> <span class="o">!=</span> <span class="p">[]</span> <span class="ow">and</span> <span class="n">sg</span> <span class="o">!=</span> <span class="s2">&quot;&quot;</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">dbprint</span><span class="p">(</span> <span class="s2">&quot;Running M2L&quot;</span> <span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">M2L</span><span class="p">(</span><span class="n">upr_url</span><span class="p">,</span> <span class="n">spm_url</span><span class="p">,</span> <span class="n">sg</span><span class="p">,</span> <span class="n">mspl_list</span><span class="p">,</span> <span class="n">user</span><span class="p">,</span> <span class="n">password</span><span class="p">,</span> <span class="n">editor_id</span><span class="p">)</span>
+
+<div class="viewcode-block" id="WorkflowManager.init_log"><a class="viewcode-back" href="../online_workflow_manager.html#online_workflow_manager.WorkflowManager.init_log">[docs]</a>	<span class="k">def</span> <span class="nf">init_log</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+                <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">                Initialises logger and logs to a file called WFM.log</span>
+<span class="sd">                &#39;&#39;&#39;</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="n">__name__</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">)</span>
+
+		<span class="n">fh</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">FileHandler</span><span class="p">(</span><span class="s2">&quot;WFM.log&quot;</span><span class="p">)</span>
+		<span class="n">fh</span><span class="o">.</span><span class="n">setLevel</span><span class="p">(</span><span class="n">logging</span><span class="o">.</span><span class="n">DEBUG</span><span class="p">)</span>
+
+		<span class="n">console</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">StreamHandler</span><span class="p">()</span>
+
+		<span class="n">formatter</span> <span class="o">=</span> <span class="n">MyFormatter</span><span class="p">(</span><span class="n">fmt</span><span class="o">=</span><span class="s1">&#39;</span><span class="si">%(asctime)s</span><span class="s1"> </span><span class="si">%(message)s</span><span class="s1">&#39;</span><span class="p">,</span><span class="n">datefmt</span><span class="o">=</span><span class="s1">&#39;%Y-%m-</span><span class="si">%d</span><span class="s1">,%H:%M:%S.</span><span class="si">%f</span><span class="s1">&#39;</span><span class="p">)</span>
+		<span class="n">fh</span><span class="o">.</span><span class="n">setFormatter</span><span class="p">(</span><span class="n">formatter</span><span class="p">)</span>
+		<span class="n">console</span><span class="o">.</span><span class="n">setFormatter</span><span class="p">(</span><span class="n">formatter</span><span class="p">)</span>
+
+		<span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">addHandler</span><span class="p">(</span><span class="n">console</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">addHandler</span><span class="p">(</span><span class="n">fh</span><span class="p">)</span>
+		<span class="c1">#logging.basicConfig(filename=conf.LOG_FILE,level=logging.DEBUG,format=&#39;%(asctime)s %(message)s&#39;, datefmt=&#39;%m/%d/%Y %I:%M:%S %p&#39;)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;--------&quot;</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;WFM running&quot;</span><span class="p">)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;--------&quot;</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="main"><a class="viewcode-back" href="../online_workflow_manager.html#online_workflow_manager.main">[docs]</a><span class="k">def</span> <span class="nf">main</span><span class="p">():</span>
+        <span class="sd">&#39;&#39;&#39;</span>
+<span class="sd">        Invoked when run manually from the command line</span>
+<span class="sd">        &#39;&#39;&#39;</span>
+	<span class="n">args</span> <span class="o">=</span> <span class="n">argv</span>
+	<span class="n">set_debug</span> <span class="o">=</span> <span class="bp">None</span>
+
+	<span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">args</span><span class="p">:</span>
+		<span class="k">if</span> <span class="n">a</span> <span class="o">==</span> <span class="s2">&quot;--debug&quot;</span><span class="p">:</span>
+			<span class="n">set_debug</span> <span class="o">=</span> <span class="bp">True</span>
+               		<span class="n">args</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="s1">&#39;--debug&#39;</span><span class="p">)</span>
+
+
+	<span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">6</span><span class="p">:</span>
+		<span class="k">print</span><span class="p">(</span><span class="s2">&quot;online_workflow_manager.py &lt;username&gt; &lt;password&gt;&quot;</span> <span class="o">+</span> \
+				<span class="s2">&quot;&lt;upr_address&gt; &lt;spm_address&gt; &lt;ned_ID&gt;&quot;</span><span class="p">)</span>
+		<span class="k">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">My job is turn MSPL into LSPL, just like water into wine&quot;</span><span class="p">)</span>
+	<span class="k">else</span><span class="p">:</span>
+		<span class="n">script</span><span class="p">,</span> <span class="n">user</span><span class="p">,</span> <span class="n">password</span><span class="p">,</span> <span class="n">upr_url</span><span class="p">,</span> <span class="n">spm_url</span><span class="p">,</span> <span class="n">ned_id</span> <span class="o">=</span> <span class="n">argv</span>
+		<span class="n">wfm</span> <span class="o">=</span> <span class="n">WorkflowManager</span><span class="p">(</span><span class="n">user</span><span class="p">,</span> <span class="n">password</span><span class="p">,</span> <span class="n">upr_url</span><span class="p">,</span> <span class="n">spm_url</span><span class="p">,</span> 
+				<span class="n">ned_id</span><span class="p">,</span> <span class="n">debug</span><span class="o">=</span><span class="n">set_debug</span><span class="p">)</span> </div>
+
+<span class="k">if</span> <span class="n">__name__</span> <span class="o">==</span> <span class="s1">&#39;__main__&#39;</span><span class="p">:</span>
+	<span class="n">main</span><span class="p">()</span>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../index.html">
+              <img class="logo" src="../_static/secured.png" alt="Logo"/>
+            </a></p><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, SECURity at the network EDge.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

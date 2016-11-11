@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0"/>  
+	<title>PSC GUI</title>
+
+<style>
+body {background-color:lightgray}
+
+div.ok {
+    color:green;
+}
+div.nok {
+    color:red;
+}
+div.waiting {
+    color:grey;
+}
+
+div.normal {
+    color:white;
+}
+</style>
+
+<script type="text/javascript">
+var PSC_URL = "http://10.2.2.251:8080/"
+var psaTimer;
+var psaTimer2;
+var psaListTimer;
+var loadingText = ""
+var loadingText2 = ""
+var psaBootTime = 0
+var psaListTime = 0
+var _psaList = []
+var _psaListOnline = []
+// For requesting PSA statuses from PSC
+// delay how often PSA tatuses are requested from PSC
+var PSA_STATUS_REQUEST_DELAY_MILLISECS = 5000
+// time to wait for PSC response
+var STATUS_REQUEST_TIMEOUT = 3000;
+var psaStatusesTimer;
+var _psaStatusesList = []
+
+// On page load request user ip and PSA list from PSC
+function onPageLoad() {
+	getIp();  
+    psaListTime = new Date().getTime();
+    getPsaList();
+}
+
+// Helper
+function getButtonHtml(ip, id) {
+    var ret = '<input type="button" onClick="init(\'' + id + '\');" name="submit" id="submit" value="Init">' + 
+        '<input type="button" onClick="start(\'' + ip + '\');" name="submit" id="submit" value="Start">' + 
+		'<input type="button" onClick="stop(\'' + ip + '\');" name="submit" id="submit" value="Stop">' + 
+		'<input type="button" onClick="status(\'' + ip + '\');" name="submit" id="submit" value="Status">' +
+		'<input type="button" onClick="getCurrentConfig(\'' + ip + '\');" name="submit" id="submit" value="Current config">' +
+		'<input type="button" onClick="window.open(\'' + PSC_URL + 'psa/get-log-psa/' + ip + '\');" name="submit" id="submit" value="PSA log">' +
+        ' | <input type="button" onClick="window.open(\'' + PSC_URL + 'psa/dump-log-psa-ctrl/' + ip + '\');" name="submit" id="submit" value="PSA ctrl log">' +
+         '<input type="button" onClick="checkInternet(\'' + ip + '\');" name="submit" id="submit" value="Internet?">';
+		//' | <a href="' + PSC_URL +  'psa/dump-log-psa-ctrl/' + ip + '" target="_blank">PSA ctrl log</a>'; 
+    return ret;
+}
+
+function myErrHandler(status) {
+	document.getElementById("user-ip").innerHTML = "Error getting user IP:" + status;
+}
+
+function myHandler(data) {
+	//document.getElementById("ip").innerHTML = JSON.stringify(data);
+	document.getElementById("user-ip").innerHTML = data["client_address"];
+}
+
+function updateElementStyleByStatus(element, status){
+    var element =  document.getElementById(element)
+    if(status == true){
+        element.className = "normal"; 
+    }else{
+        element.className = "waiting"; 
+    }
+}
+
+function updateSystemStatus(status){
+    var statusText = "OK";
+
+    var element =  document.getElementById("status")
+    if(status == "OK"){
+        statusText = "SECURED status: " + status
+        element.className = "ok"; 
+    }else if (status == "psa-status-problem"){
+        element.className = "nok"; 
+        statusText = "SECURED status: Error: <br>Some of your PSA(s) are not responding correctly (see below)!"
+    }else if (status == "psc-status-problem"){
+        element.className = "nok"; 
+        statusText = "SECURED status: Error: <br>Your PSC is not responding (see below)!"
+    }else{
+        element.className = "nok"; 
+        statusText = "SECURED status: Error: Something went wrong..."
+    }
+
+   element.innerHTML = statusText;
+}
+
+// Functions to call the PSC
+function getPsaList() {
+    clearTimeout(psaListTimer)
+	var xmlhttp=new XMLHttpRequest();
+
+	xmlhttp.onreadystatechange = function()  {
+    	if (xmlhttp.readyState == 4) {
+			if( xmlhttp.status == 200)  {
+				var myResp = JSON.parse(xmlhttp.responseText);
+                var psaText = myResp["psa_response"]
+                var psaList = JSON.parse(psaText)
+                var psa_str = "";
+                var count = 1;
+                
+                for(var i=0; i<psaList.length; i++)
+                {
+                    psa_str += "PSA #" + count + " (ID: " + psaList[i].id + ", config: " + psaList[i].conf + ")</br>";
+                    count++;
+                    _psaList.push(psaList[i]);
+                }
+
+                psa_str += "</br>";
+                if(psaText != null)
+                {
+				    //document.getElementById("psa-list").innerHTML = "PSA list received:" + "</br>" + psaText + "</br>" + psa_str + "</br>";
+                    document.getElementById("psa-list").innerHTML = "The PSA list (order by service graph):</br>" + psa_str + "</br>";
+                    updateElementStyleByStatus("psa-list", true);
+                    psaBootTime = new Date().getTime()
+                    getPsaListOnline();
+                   
+		    	}
+            }else{
+                var waitTime = (new Date().getTime() - psaListTime)/1000
+                  
+                document.getElementById("psa-list").innerHTML = "Waiting for the PSA list from PSC (" + waitTime + " s)</br>" + loadingText2 + 
+                    "</br>"+xmlhttp.responseText
+                    
+                updateElementStyleByStatus("psa-list", false);
+                loadingText2 += ".";
+	             psaListTimer = setTimeout(getPsaList, 1000);
+            }
+		}
+	}
+	xmlhttp.open("GET", PSC_URL + "psc/get-psa-list", true);
+	xmlhttp.send();
+}
+
+function getPsaListOnline() {
+    clearTimeout(psaTimer)
+	var xmlhttp=new XMLHttpRequest();
+
+    // when we get our async response
+	xmlhttp.onreadystatechange = function() {
+        // ready
+    	if (xmlhttp.readyState == 4) {
+            // ok
+			if( xmlhttp.status == 200) {
+				var myResp = JSON.parse(xmlhttp.responseText);
+                var psaText = myResp["psa_response"]
+                
+                var psaList = JSON.parse(psaText)
+                var psa_str = "";
+
+                var count = 1;
+                
+                for(var i=0; i<psaList.length; i++)
+                {
+                    psa_str += "<div id='" + psaList[i].psa_id + "'>(ID:" + psaList[i].psa_id + ", IP:" + psaList[i].ip + ") " + getButtonHtml(psaList[i].ip, psaList[i].psa_id) + "</br></div>";
+                    //psa_str += "(ID:" + psaList[i].psa_id + ", IP:" + psaList[i].ip + ") " + getButtonHtml(psaList[i].ip, psaList[i].psa_id) + "</br>";
+                    count++;
+                }
+
+                psa_str += "</br>";
+                if(psaText != null)
+                {
+				   //document.getElementById("psa-list-online").innerHTML = "PSA list online:" + "</br>" + psaText + "</br>" + psa_str + "</br>";
+		    	    document.getElementById("psa-list-online").innerHTML = "The PSA list online (order by PSA online events):</br>" + psa_str + "</br>";
+		    	}
+                
+                var waitTime = (new Date().getTime() - psaBootTime)/1000
+                updateElementStyleByStatus("psa-list-online", false);
+
+                // If all PSAs are not online..
+                if(psaList.length < _psaList.length){
+                    document.getElementById("psa-list-online").innerHTML += "</br>... Waiting for remaining PSAs (" + (_psaList.length - psaList.length) + " PSA(s)) online ... (" + waitTime + " s)</br>";
+                    
+                    updateElementStyleByStatus("psa-list-online", false);
+	                psaTimer = setTimeout(getPsaListOnline, 1000);
+                }else{
+                    updateSystemStatus("OK");
+                    updateElementStyleByStatus("psa-list-online", true);
+                    
+                    // TODO: Could be started earlier?
+                    // Start requesting PSA statuses once all are online.
+                    getPsaStatuses();
+                }
+
+
+            } else {
+                var waitTime = (new Date().getTime() - psaBootTime)/1000
+                updateElementStyleByStatus("psa-list-online", false);
+                document.getElementById("psa-list-online").innerHTML = "Waiting for PSA online list (" + waitTime + " s)</br>" + loadingText + 
+                    "</br>"+xmlhttp.responseText
+                
+                loadingText += "."
+	             psaTimer = setTimeout(getPsaListOnline, 1000);
+            }
+		}
+	}
+	xmlhttp.open("GET", PSC_URL + "psc/get-psa-list-online", true);
+	xmlhttp.send();
+}
+
+
+function getPsaStatuses() {
+    clearTimeout(psaStatusesTimer)
+    var xmlhttp=new XMLHttpRequest();
+    xmlhttp.timeout = STATUS_REQUEST_TIMEOUT;
+
+    // when we get our async response
+    xmlhttp.onreadystatechange = function() {
+        // ready
+	    if (xmlhttp.readyState == 4) {
+            // ok
+            if( xmlhttp.status == 200) {
+             var psaList = JSON.parse(xmlhttp.responseText);
+                var psa_str = "";
+                var count = 1;
+                for(var i=0; i<psaList.length; i++)
+                {
+                    count++;
+                    // PSA did not reply
+                    if(psaList[i].status == null){
+                        psa_str += "<div id='" + psaList[i].psa_id + "'>(ID:" + psaList[i].psa_id + ", not responding!)</br></div>";
+                        
+                    }else{
+                        // PSA reports OK
+                        if(psaList[i].status == "1" || psaList[i].status == 1){
+                        }
+                        else{
+                            psa_str += "<div id='" + psaList[i].psa_id + "'>(ID:" + psaList[i].psa_id + ", reported status: " +psaList[i].status+ "!)</br></div>";
+                        }
+                    }
+                }
+
+                if(psa_str != ""){   
+                    updateSystemStatus("psa-status-problem")
+                    psa_str += "</br>";
+			        document.getElementById("psas-not-responding").innerHTML = "PSA(s) status not OK:</br>" + psa_str + "</br>";
+	        	}else{
+                    updateSystemStatus("OK")
+                    document.getElementById("psas-not-responding").innerHTML = "";
+                }
+            } else {
+                // We don't even get an answer from PSC.. Something is really wrong
+                updateSystemStatus("psc-status-problem")
+                document.getElementById("psas-not-responding").innerHTML = "Did not receive a response from your PSC in time! Wait a while, or try to reload this page. If the same message appears again, report this problem and login again.";
+            }
+	    }
+    }
+    xmlhttp.open("GET", PSC_URL + "psc/get-psa-statuses", true);
+    xmlhttp.send();
+
+    psaStatusesTimer = setTimeout(getPsaStatuses, PSA_STATUS_REQUEST_DELAY_MILLISECS);
+}
+
+function getIp() {	
+	var xmlhttp=new XMLHttpRequest();
+	xmlhttp.onreadystatechange = function() {
+    	if (xmlhttp.readyState == 4){
+		    if( xmlhttp.status == 200) {
+			    var myResp = JSON.parse(xmlhttp.responseText);
+			    myHandler(myResp);
+        	}else{
+		        myErrHandler(xmlhttp.status);
+	        }
+	    }
+	}
+	xmlhttp.open("GET", PSC_URL + "psc/get-user-ip", true);
+	xmlhttp.send();
+}
+
+function handlePSAResponse(command, response){
+    //alert(response)
+    var ret = JSON.parse(response)["ret_code"]
+    if(ret == "1") {
+        alert(command + ": OK.");
+    } else{
+        alert(command + ", PSA Error: " + response)
+    }
+}
+
+// Functions for PSA-PSC API
+// ----------------------------------
+function init(psa) {
+	var xmlhttp=new XMLHttpRequest();
+	xmlhttp.onreadystatechange = function() {
+	    var myResp = JSON.parse(xmlhttp.responseText);
+	    if (xmlhttp.readyState == 4){
+	        if( xmlhttp.status == 200) {
+                var psaText = myResp["psa_response"]
+                handlePSAResponse("init", psaText);
+                
+        	}else{
+                var err = xmlhttp.status
+                alert("Error code: " + err + "\n" + "responseText: " + xmlhttp.responseText)
+            }
+        }
+    }
+	xmlhttp.open("GET", PSC_URL + "psa/init/" + psa, true);
+	xmlhttp.send();
+}
+
+function start(psa) { 
+	var xmlhttp=new XMLHttpRequest();
+	xmlhttp.onreadystatechange = function() {
+	    var myResp = JSON.parse(xmlhttp.responseText);
+
+	    if (xmlhttp.readyState == 4){
+	        if( xmlhttp.status == 200) {
+                var psaText = myResp["psa_response"]
+                handlePSAResponse("start", psaText);
+                
+        	}else{
+                var err = xmlhttp.status
+                alert("Error code: " + err + "\n" + "responseText: " + xmlhttp.responseText)
+            }
+        }
+	}
+	xmlhttp.open("GET", PSC_URL + "psa/start/" + psa, true);
+	xmlhttp.send();
+}
+
+function stop(psa){
+	var xmlhttp=new XMLHttpRequest();
+	xmlhttp.onreadystatechange = function() {
+		var myResp = JSON.parse(xmlhttp.responseText);
+    	if (xmlhttp.readyState == 4){
+		    if( xmlhttp.status == 200) {
+                var psaText = myResp["psa_response"]
+                handlePSAResponse("stop", psaText);
+               
+        	}else{
+                var err = xmlhttp.status
+                alert("Error code: " + err + "\n" + "responseText: " + xmlhttp.responseText)
+            }
+	    }
+	}
+	xmlhttp.open("GET", PSC_URL + "psa/stop/" + psa, true);
+	xmlhttp.send();
+}
+
+function status(psa) {
+	var xmlhttp=new XMLHttpRequest();
+	xmlhttp.onreadystatechange = function() {
+        
+    	if (xmlhttp.readyState == 4){
+		    if( xmlhttp.status == 200) {
+                var myResp = JSON.parse(xmlhttp.responseText);
+                var psaText = myResp["psa_response"]
+                handlePSAResponse("status", psaText);
+               
+        	}else{
+                var err = xmlhttp.status
+		        alert("PSC Error code: " + err + "\n" + "responseText: " + xmlhttp.responseText)
+	        }
+	    }
+	}
+	xmlhttp.open("GET", PSC_URL + "psa/status/" + psa, true);
+	xmlhttp.send();
+}
+
+
+
+function checkInternet(psa) {
+	var xmlhttp=new XMLHttpRequest();
+	xmlhttp.onreadystatechange = function() {
+		var myResp = JSON.parse(xmlhttp.responseText);
+    	if (xmlhttp.readyState == 4){
+		    if( xmlhttp.status == 200) {
+                var psaText = myResp["psa_response"]
+			    
+                if(psaText != null){
+		            alert(JSON.parse(psaText)["ret_code"])
+                }else{
+		            alert("PSA Error: " + xmlhttp.responseText)
+	            }           
+        	}else{
+                var err = xmlhttp.status
+		        alert("Error code: " + err + "\n" + "responseText: " + xmlhttp.responseText)
+	        }
+	    }
+	}
+	xmlhttp.open("GET", PSC_URL + "psa/internet/" + psa, true);
+	xmlhttp.send();
+}
+
+function getCurrentConfig(psa) {
+	var xmlhttp=new XMLHttpRequest();
+	xmlhttp.onreadystatechange = function() {
+		var myResp = JSON.parse(xmlhttp.responseText);
+    	if (xmlhttp.readyState == 4){
+		    if( xmlhttp.status == 200) {
+                var psaText = myResp["psa_response"]
+			    
+                if(psaText != null){
+		            alert(JSON.parse(psaText)["ret_code"])
+                }else{
+		            alert("PSA Error: " + xmlhttp.responseText)
+	            }           
+        	}else{
+                var err = xmlhttp.status
+		        alert("Error code: " + err + "\n" + "responseText: " + xmlhttp.responseText)
+	        }
+	    }
+	}
+	xmlhttp.open("GET", PSC_URL + "psa/configuration/" + psa, true);
+	xmlhttp.send();
+}
+</script>
+</head>
+
+
+<body onload="onPageLoad()" style="background: #000000; color: white;">
+	<div id="page">	
+        <center>
+         <h4>
+            <div id="status" class="normal">
+	            Please wait while SECURED finishes applying your security policies...
+	        </div>
+         </h4>
+            <h5>
+            <br>
+            <div id="psa-list" class="normal">
+	            ...
+	        </div>
+            </br>
+            <div id="psa-list-online" class="waiting">
+	            ...
+	        </div>
+            <div id="psas-not-responding" class="nok"> 
+	        </div>
+            </br>
+        </h5>
+        </center>
+
+        <!-- divider -->
+        <hr>
+		
+		<!-- MAIN CONTENT -->
+		<div id="content" align="center">
+		
+
+        <!-- FOR DEBUG -->
+            <h5>
+                <div class="fl">
+                    SECURED debugging links: 
+                    <a href="/psc/dump-log-psc" target="_blank">PSC log</a> | 
+                    <a href="http://10.2.2.253:8080/login">SECURED login site</a>
+                    
+		        </div>
+            </h5>
+            <h5>
+               Your IP in the SECURED network is: <div id="user-ip">...</div>
+            </h5>
+		
+		</div> <!-- end content -->
+		<!-- FOOTER -->
+		<div id="footer">
+			<p>&copy; Copyright 2013-2016 SECURED project. All rights reserved.</p>	
+		</div> <!-- end footer -->
+	</div> <!-- end PAGE -->
+</body>
+</html>

@@ -1,0 +1,208 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>mobReport &mdash; PSC  documentation</title>
+    
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="PSC  documentation" href="../index.html" />
+    <link rel="up" title="Module code" href="index.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for mobReport</h1><div class="highlight"><pre>
+<span></span><span class="sd">&#39;&#39;&#39;   </span>
+
+<span class="sd">    File:       mobReport.py</span>
+<span class="sd">    Created:    1/9/2015</span>
+<span class="sd">  </span>
+<span class="sd">    @author:    UPC</span>
+<span class="sd">  </span>
+<span class="sd">    Description:</span>
+<span class="sd">        This Module handles the mobility of the nodes by accepting the</span>
+<span class="sd">        reporting of AP data, returning whether the system needs to migrate</span>
+<span class="sd">        or not. It handles too the possibility to force the migration.</span>
+
+<span class="sd">&#39;&#39;&#39;</span>
+<span class="kn">import</span> <span class="nn">falcon</span>
+<span class="kn">import</span> <span class="nn">json</span>
+
+<span class="n">force</span> <span class="o">=</span> <span class="bp">False</span>
+ 
+<div class="viewcode-block" id="mobReport"><a class="viewcode-back" href="../mobReport.html#mobReport.mobReport">[docs]</a><span class="k">class</span> <span class="nc">mobReport</span><span class="p">:</span>
+
+<div class="viewcode-block" id="mobReport.getStrongestAP"><a class="viewcode-back" href="../mobReport.html#mobReport.mobReport.getStrongestAP">[docs]</a>	<span class="k">def</span> <span class="nf">getStrongestAP</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">aps</span><span class="p">,</span><span class="n">strongestSignal</span><span class="p">,</span> <span class="n">handOver</span><span class="p">,</span><span class="n">newAPbssid</span><span class="p">):</span>
+		<span class="k">print</span> <span class="s2">&quot;HandOver just al entrar: &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">handOver</span><span class="p">)</span>
+		<span class="k">print</span> <span class="s2">&quot;strongestSignal: &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">strongestSignal</span><span class="p">)</span>
+		<span class="k">for</span> <span class="n">ap</span> <span class="ow">in</span> <span class="n">aps</span><span class="p">:</span>
+			<span class="k">print</span> <span class="n">ap</span><span class="p">[</span><span class="s2">&quot;ssid&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="s2">&quot; &quot;</span> <span class="o">+</span> <span class="n">ap</span><span class="p">[</span><span class="s2">&quot;bssid&quot;</span><span class="p">]</span> <span class="o">+</span> <span class="s2">&quot; &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">ap</span><span class="p">[</span><span class="s2">&quot;signal&quot;</span><span class="p">])</span>
+			<span class="k">if</span><span class="p">(</span><span class="n">ap</span><span class="p">[</span><span class="s2">&quot;signal&quot;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">strongestSignal</span><span class="p">):</span>
+				<span class="k">print</span> <span class="s2">&quot;Es millor!&quot;</span>
+				<span class="n">handOver</span> <span class="o">=</span> <span class="bp">True</span>
+				<span class="n">newAPbssid</span> <span class="o">=</span> <span class="n">ap</span><span class="p">[</span><span class="s2">&quot;bssid&quot;</span><span class="p">]</span>
+				<span class="n">strongestSignal</span> <span class="o">=</span> <span class="n">ap</span><span class="p">[</span><span class="s2">&quot;signal&quot;</span><span class="p">]</span>
+		<span class="k">return</span> <span class="n">handOver</span><span class="p">,</span><span class="n">newAPbssid</span></div>
+		
+
+	<span class="sd">&#39;&#39;&#39;	Takes the report JSON and checks if there is a strongest access </span>
+<span class="sd">		point to connect. </span>
+<span class="sd">		Also forms the response JSON to send to the client. </span>
+<span class="sd">		If the force flag is enabled, it forces the hand over to the </span>
+<span class="sd">		next secured AP available</span>
+<span class="sd">	&#39;&#39;&#39;</span>
+
+<div class="viewcode-block" id="mobReport.processReport"><a class="viewcode-back" href="../mobReport.html#mobReport.mobReport.processReport">[docs]</a>	<span class="k">def</span> <span class="nf">processReport</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">req</span><span class="p">):</span>
+		<span class="k">global</span> <span class="n">force</span>
+		<span class="n">error</span> <span class="o">=</span> <span class="bp">False</span>
+		<span class="n">errorMessage</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+		<span class="k">try</span><span class="p">:</span>
+			<span class="n">report</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">req</span><span class="o">.</span><span class="n">stream</span><span class="o">.</span><span class="n">read</span><span class="p">())</span>
+		<span class="k">except</span><span class="p">:</span>
+			<span class="n">error</span> <span class="o">=</span> <span class="bp">True</span>
+			<span class="n">errorMessage</span> <span class="o">=</span> <span class="s2">&quot;Report JSON Malformed&quot;</span>		
+		
+		<span class="n">currentConnection</span> <span class="o">=</span> <span class="n">report</span><span class="p">[</span><span class="s2">&quot;currentConnection&quot;</span><span class="p">]</span>
+		<span class="n">aps</span> <span class="o">=</span> <span class="n">report</span><span class="p">[</span><span class="s2">&quot;ap-list&quot;</span><span class="p">]</span>
+		<span class="k">if</span><span class="p">(</span><span class="n">aps</span><span class="p">):</span>
+			<span class="k">if</span><span class="p">(</span><span class="n">currentConnection</span><span class="p">):</span>
+				<span class="k">print</span> <span class="s2">&quot;Connected to &quot;</span> <span class="o">+</span> <span class="n">currentConnection</span><span class="p">[</span><span class="s2">&quot;bssid&quot;</span><span class="p">]</span>
+				<span class="n">currentAP</span> <span class="o">=</span> <span class="p">[</span><span class="n">ap</span> <span class="k">for</span> <span class="n">ap</span> <span class="ow">in</span> <span class="n">aps</span> <span class="k">if</span> <span class="n">ap</span><span class="p">[</span><span class="s2">&quot;bssid&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="n">currentConnection</span><span class="p">[</span><span class="s2">&quot;bssid&quot;</span><span class="p">]]</span>
+				<span class="k">if</span><span class="p">(</span><span class="n">force</span><span class="p">):</span>
+					<span class="k">print</span> <span class="s2">&quot;Hand Over was forced. Searching the next secured access point...&quot;</span>
+					<span class="n">handOver</span> <span class="o">=</span> <span class="bp">True</span>
+					<span class="k">if</span><span class="p">(</span><span class="n">currentAP</span><span class="p">):</span>
+						<span class="n">newIndex</span> <span class="o">=</span> <span class="p">(</span><span class="n">aps</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">currentAP</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="n">aps</span><span class="p">)</span>
+						<span class="n">newAPbssid</span> <span class="o">=</span> <span class="n">aps</span><span class="p">[</span><span class="n">newIndex</span><span class="p">][</span><span class="s2">&quot;bssid&quot;</span><span class="p">]</span>	
+					<span class="k">else</span><span class="p">:</span>
+						<span class="n">newAPbssid</span> <span class="o">=</span> <span class="n">aps</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s2">&quot;bssid&quot;</span><span class="p">]</span>
+					<span class="n">force</span> <span class="o">=</span> <span class="bp">False</span>
+				<span class="k">else</span><span class="p">:</span>
+					<span class="n">strongestSignal</span> <span class="o">=</span> <span class="mi">0</span>
+					<span class="n">handOver</span> <span class="o">=</span> <span class="bp">False</span>
+					<span class="n">newAPbssid</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+					<span class="k">if</span><span class="p">(</span><span class="n">currentAP</span><span class="p">):</span>
+						<span class="n">currentAP</span> <span class="o">=</span> <span class="n">currentAP</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+						<span class="n">strongestSignal</span> <span class="o">=</span> <span class="n">currentAP</span><span class="p">[</span><span class="s2">&quot;signal&quot;</span><span class="p">]</span>				
+					<span class="k">else</span><span class="p">:</span>
+						<span class="n">handOver</span> <span class="o">=</span> <span class="bp">True</span>
+						<span class="n">strongestSignal</span> <span class="o">=</span> <span class="n">aps</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s2">&quot;signal&quot;</span><span class="p">]</span>			
+						<span class="n">newAPbssid</span> <span class="o">=</span> <span class="n">aps</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s2">&quot;bssid&quot;</span><span class="p">]</span>
+					<span class="k">print</span> <span class="s2">&quot;HandOver abans de mirar: &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">handOver</span><span class="p">)</span>
+					<span class="n">handOver</span><span class="p">,</span> <span class="n">newAPbssid</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">getStrongestAP</span><span class="p">(</span><span class="n">aps</span><span class="p">,</span><span class="n">strongestSignal</span><span class="p">,</span> <span class="n">handOver</span><span class="p">,</span><span class="n">newAPbssid</span><span class="p">)</span>		
+					
+			<span class="k">else</span><span class="p">:</span>
+				<span class="n">handOver</span> <span class="o">=</span> <span class="bp">True</span>
+				<span class="n">strongestSignal</span> <span class="o">=</span> <span class="n">aps</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s2">&quot;signal&quot;</span><span class="p">]</span>
+				<span class="n">newAPbssid</span> <span class="o">=</span> <span class="n">aps</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s2">&quot;bssid&quot;</span><span class="p">]</span>
+				<span class="n">handOver</span><span class="p">,</span> <span class="n">newAPbssid</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">getStrongestAP</span><span class="p">(</span><span class="n">aps</span><span class="p">,</span><span class="n">strongestSignal</span><span class="p">,</span> <span class="n">handOver</span><span class="p">,</span> <span class="n">newAPbssid</span><span class="p">)</span>	
+
+		<span class="k">else</span><span class="p">:</span>
+			<span class="n">error</span> <span class="o">=</span> <span class="bp">True</span>
+			<span class="n">errorMessage</span> <span class="o">=</span> <span class="s2">&quot;Secured access points list is empty&quot;</span>
+
+		<span class="n">responsejson</span> <span class="o">=</span> <span class="p">{}</span>
+		<span class="k">if</span><span class="p">(</span><span class="ow">not</span> <span class="n">error</span><span class="p">):</span>
+			<span class="k">if</span><span class="p">(</span><span class="n">handOver</span><span class="p">):</span>
+				<span class="k">print</span> <span class="s2">&quot;Hand Over needed. The best signal access point bssid is: &quot;</span> <span class="o">+</span> <span class="n">ap</span><span class="p">[</span><span class="s2">&quot;bssid&quot;</span><span class="p">]</span>
+				<span class="n">responsejson</span><span class="p">[</span><span class="s2">&quot;action&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+				<span class="n">responsejson</span><span class="p">[</span><span class="s2">&quot;bssid&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">newAPbssid</span>            
+			<span class="k">else</span><span class="p">:</span>
+				<span class="k">print</span> <span class="s2">&quot;Hand Over not needed.&quot;</span>
+				<span class="n">responsejson</span><span class="p">[</span><span class="s2">&quot;action&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+		<span class="k">else</span><span class="p">:</span>
+			<span class="k">print</span> <span class="s2">&quot;ERROR: &quot;</span> <span class="o">+</span> <span class="n">errorMessage</span>
+			<span class="n">responsejson</span><span class="p">[</span><span class="s2">&quot;action&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">2</span>
+			<span class="n">responsejson</span><span class="p">[</span><span class="s2">&quot;error&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">errorMessage</span>
+		<span class="k">return</span> <span class="n">responsejson</span></div>
+
+<div class="viewcode-block" id="mobReport.on_put"><a class="viewcode-back" href="../mobReport.html#mobReport.mobReport.on_put">[docs]</a>	<span class="k">def</span> <span class="nf">on_put</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">req</span><span class="p">,</span> <span class="n">resp</span><span class="p">):</span>
+		
+		<span class="n">responsejson</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">processReport</span><span class="p">(</span><span class="n">req</span><span class="p">)</span>	
+		<span class="n">resp</span><span class="o">.</span><span class="n">body</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">responsejson</span><span class="p">)</span></div></div>
+ 
+<div class="viewcode-block" id="forceHandOver"><a class="viewcode-back" href="../mobReport.html#mobReport.forceHandOver">[docs]</a><span class="k">class</span> <span class="nc">forceHandOver</span><span class="p">:</span>
+
+	<span class="sd">&#39;&#39;&#39;	Handles the force hand over petition&#39;&#39;&#39;</span>
+
+<div class="viewcode-block" id="forceHandOver.on_get"><a class="viewcode-back" href="../mobReport.html#mobReport.forceHandOver.on_get">[docs]</a>	<span class="k">def</span> <span class="nf">on_get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">req</span><span class="p">,</span> <span class="n">resp</span><span class="p">):</span>
+
+		<span class="k">global</span> <span class="n">force</span>
+		<span class="n">force</span> <span class="o">=</span> <span class="bp">True</span>
+		<span class="n">resp</span><span class="o">.</span><span class="n">body</span> <span class="o">=</span> <span class="s2">&quot;Hand Over Forced.&quot;</span></div></div>
+
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../index.html">
+              <img class="logo" src="../_static/secured.png" alt="Logo"/>
+            </a></p><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, SECURED.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

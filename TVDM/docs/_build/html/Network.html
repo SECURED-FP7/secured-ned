@@ -1,0 +1,168 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Network module &mdash; TVDM  documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="TVDM  documentation" href="index.html" />
+    <link rel="next" title="Orchestrator module" href="Orchestrator.html" />
+    <link rel="prev" title="GraphInstatiator module" href="GraphInstatiator.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-Network">
+<span id="network-module"></span><h1>Network module<a class="headerlink" href="#module-Network" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="Network.Network">
+<em class="property">class </em><code class="descclassname">Network.</code><code class="descname">Network</code><span class="sig-paren">(</span><em>configure</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Network.html#Network"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Network.Network" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">object</span></code></p>
+<dl class="method">
+<dt id="Network.Network.configureNewIPOnDHCP">
+<code class="descname">configureNewIPOnDHCP</code><span class="sig-paren">(</span><em>mac</em>, <em>token</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Network.html#Network.configureNewIPOnDHCP"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Network.Network.configureNewIPOnDHCP" title="Permalink to this definition">¶</a></dt>
+<dd><p>Configure a new IP on the DHCP</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="Network.Network.deleteFlow">
+<code class="descname">deleteFlow</code><span class="sig-paren">(</span><em>bridgeName</em>, <em>flow</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Network.html#Network.deleteFlow"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Network.Network.deleteFlow" title="Permalink to this definition">¶</a></dt>
+<dd><p>Delete a flow on the bridge</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="Network.Network.deletePort">
+<code class="descname">deletePort</code><span class="sig-paren">(</span><em>bridgeName</em>, <em>portName</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Network.html#Network.deletePort"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Network.Network.deletePort" title="Permalink to this definition">¶</a></dt>
+<dd><p>Delete a port from a bridge</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="Network.Network.generateFlow">
+<code class="descname">generateFlow</code><span class="sig-paren">(</span><em>bridgeName</em>, <em>flow</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Network.html#Network.generateFlow"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Network.Network.generateFlow" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate a flow on the bridge</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="Network.Network.generateMACaddress">
+<code class="descname">generateMACaddress</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/Network.html#Network.generateMACaddress"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Network.Network.generateMACaddress" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate a MAC address</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="Network.Network.generatePort">
+<code class="descname">generatePort</code><span class="sig-paren">(</span><em>bridgeName</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Network.html#Network.generatePort"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Network.Network.generatePort" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate a port on a bridge</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="Network.Network.generateRoutingTable">
+<code class="descname">generateRoutingTable</code><span class="sig-paren">(</span><em>netInterface</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/Network.html#Network.generateRoutingTable"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Network.Network.generateRoutingTable" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate a new routing table</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="Network.Network.generateVMPort">
+<code class="descname">generateVMPort</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/Network.html#Network.generateVMPort"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Network.Network.generateVMPort" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate a port name for a VM</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="Network.Network.getNewVLANID">
+<code class="descname">getNewVLANID</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/Network.html#Network.getNewVLANID"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Network.Network.getNewVLANID" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a new VLAN ID to use</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="Network.Network.getPSAnewAddress">
+<code class="descname">getPSAnewAddress</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/Network.html#Network.getPSAnewAddress"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#Network.Network.getPSAnewAddress" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a new IP address for a PSA</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="index.html">
+              <img class="logo" src="_static/secured.png" alt="Logo"/>
+            </a></p><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="GraphInstatiator.html" title="previous chapter">GraphInstatiator module</a></li>
+      <li>Next: <a href="Orchestrator.html" title="next chapter">Orchestrator module</a></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/Network.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, SECURity at the network EDge.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      
+      |
+      <a href="_sources/Network.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

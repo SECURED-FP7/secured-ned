@@ -1,0 +1,150 @@
+/*
+ *
+ *	Author: 	Francesco Ciaccia
+ * 	Date: 		07/08/2014
+ *	Project: 	SECURED
+ *	Name: 		PROFILE_TYPE JSON Schema
+ *
+ *	Description:
+ *		JSON schema describing the PROFILE_TYPE resource, retrieved from the NED Orchestration system
+ *		after user authentication. 
+ *		The structure of the PROFILE_TYPE file for a policy-driven profile is different.
+ *		The PROFILE_TYPE includes informations regarding the user identity and the set of 
+ *		applications enforcing the security controls required by the user. 
+ *		The interconnections beetween different security controls enforcing a given PSA 
+ *		are given. For each security control an URI to its configuration file resource is linked.
+ * 		The PROFILE_TYPE does not include any infrastructural information; the PSC is in charge of 
+ *		processing the file and produce the SERVICE_GRAPH to be passed to the Orchestrator so it 
+ *		can perform the TVD expansion.
+ *		This specific profile type is for an app-driven profile; this means
+ *		that the file is final and does not need any policy transformation to allow the PSC to 
+ *		compute the correct TVD topology.
+ *		This PROFILE_TYPE has been built with a complex-PSA deployment scenario in mind where PSAs 
+ *		are actually bundles of multiple application each of them enforcing a security control.
+ *
+ */
+
+
+{
+	
+	"title": "user_profile_type",
+	"type": "object",
+	
+	"properties": {
+		
+		"name": {
+			"type": "string",
+			"description": "Document name, same as title"
+		},
+
+		"user_id": {
+			"type": "string"
+		},
+
+		"user_token": {
+			"type": "string",
+			"description": "Authentication token"
+		},
+
+		"profile_type": {
+			"type": "string",
+			"description": "Field to indicate the profile_type, app-driven (AD) or policy-driven (PD)"
+		},
+
+		"PSASet": {
+			
+			"type": "array",
+			"description": "Array of objects; each item represents a PSA",
+			"items": {
+
+				"type": "object",
+				"description": "This object is an array including all the security service enforced by the PSA",
+				"properties": {
+
+					"id": {
+						"type": "string",
+						"description": "Id of the PSA"
+					},
+
+					"security_controls": {
+						"type": "array",
+						"description": "This array includes all the security services which the PSA enforces; it is a vertex list for the complex PSA internal graph",
+						"items": {
+
+							"type": "object",
+							"description": "Each object is a simple PSA (a security control), including its configuration URI specific for the user",
+							"properties": {
+								
+								"imgName": {
+									"type": "string",
+									"description": "PSA repo name"
+								},
+
+								"conf": {
+									"type": "string",
+									"description": "URI to user's PSA configuration file in the repo"
+								}
+
+							},
+							"required": ["imgName", "conf"]
+
+						}
+					},
+										
+					"set_ingress_flow": {
+						"type": "array",
+						"description": "Adjancency list of interconnected security controls enforced by the PSA; ingress traffic flow",
+						"items": {
+
+							"type": "integer",
+							"description": "Edge's list for the PSA's security controls graph"
+
+						}
+					},
+
+					"set_egress_flow": {
+						"type": "array",
+						"description": "Adjancency list of interconnected security controls enforced by the PSA; egress traffic flow",
+						"items": {
+
+							"type": "integer",
+							"description": "Edge's list for the PSA's security controls graph"
+
+						}
+					}
+
+				},
+
+				"required": ["name", "security_controls"] 
+
+			}
+
+		}, // end PSAset
+
+		"ingress_flow": {
+			"type": "array",
+			"description": "Adjancency list of interconnected PSAs; ingress traffic flow",
+			"items": {
+
+				"type": "string",
+				"description": "Edge's list for the PSA's service graph"
+
+			}
+		},
+
+		"egress_flow": {
+			"type": "array",
+			"description": "Adjancency list of interconnected PSAs; egress traffic flow",
+			"items": {
+
+				"type": "string",
+				"description": "Id's list for the PSA's service graph"
+
+			}
+		}
+
+	}, // end user_profile_type
+
+	"required": ["name", "user_id", "user_token", "profile_type", "PSASet"]
+
+} //EOF

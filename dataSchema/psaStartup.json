@@ -1,0 +1,9 @@
+{
+	
+	"name": "psa_startup_file",
+	"user_token": "topolino",
+	"psaID": "12345",
+	"pscAddr": "http://127.0.0.1:8080",
+	"confURI": "12345"
+
+}

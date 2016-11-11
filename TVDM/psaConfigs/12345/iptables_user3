@@ -1,0 +1,9 @@
+# iptables
+# DROP www.vtt.fi
+*filter
+:INPUT ACCEPT [0:0]
+:FORWARD ACCEPT [0:0]
+:OUTPUT ACCEPT [0:0]
+-A FORWARD -d 91.197.85.151 -m physdev --physdev-in eth0 --physdev-out eth1 -j DROP
+COMMIT
+

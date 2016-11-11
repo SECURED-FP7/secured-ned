@@ -1,0 +1,15 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<tns:Mapping xmlns:tns='http://www.example.org/Refinement_Schema' xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance' xsi:schemaLocation='http://www.example.org/Refinement_Schema Refinement_Schema.xsd '>
+  <tns:hspl_list>
+    
+    <tns:hspl subject='father' id='HSPL0_Father_Father'>
+      <tns:action>remove</tns:action>
+      <tns:objectH>advertisement</tns:objectH>
+      <tns:fields>
+      </tns:fields>
+    </tns:hspl>
+    
+    
+    
+  </tns:hspl_list>
+</tns:Mapping>

@@ -1,0 +1,18 @@
+{
+	
+	"name": "user_service_graph",
+	"token": "pippo",
+	"TVDid": "123456ABCDEF789",
+	"PSAs": [
+		
+		{ 
+			"id":"12345",
+			"conf":"pippo"
+		}
+
+	],
+
+	"ingress_flow": ["12345"],
+	"egress_flow": ["12345"]
+
+}

@@ -1,0 +1,29 @@
+{
+	"name": "user_profile_type",
+	"user_token": "token1",
+	"profile_type": "AD",			
+
+	"PSASet": [
+		
+		{
+			"id": "12345",
+			"security_controls": [
+				
+				{
+					"imgName": "ipTraf.img",
+					"conf_id":"ipTraf_token1"
+				}
+				
+			],
+
+			"set_ingress_flow": [1],
+			"set_egress_flow": [1]
+			
+		}
+
+	], 
+	
+	"ingress_flow": ["12345"],
+	"egress_flow": ["12345"]
+
+} 

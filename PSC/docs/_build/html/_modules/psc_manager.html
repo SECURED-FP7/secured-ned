@@ -1,0 +1,425 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>psc_manager &mdash; PSC  documentation</title>
+    
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="PSC  documentation" href="../index.html" />
+    <link rel="up" title="Module code" href="index.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for psc_manager</h1><div class="highlight"><pre>
+<span></span><span class="c1">#</span>
+<span class="c1">#   File:       psc_manager.py</span>
+<span class="c1">#   Created:    18/04/2015</span>
+<span class="c1">#   Author:     Jarkko K</span>
+<span class="c1">#</span>
+<span class="c1">#   Description:</span>
+<span class="c1">#       REST interface to PSC manager</span>
+<span class="c1">#</span>
+<span class="kn">import</span> <span class="nn">falcon</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">requests</span>
+<span class="kn">import</span> <span class="nn">urllib2</span>
+<span class="kn">import</span> <span class="nn">subprocess</span>
+<span class="kn">from</span> <span class="nn">subprocess</span> <span class="kn">import</span> <span class="n">check_output</span>
+<span class="kn">from</span> <span class="nn">psa_helper</span> <span class="kn">import</span> <span class="n">PsaHelper</span>
+
+<span class="c1"># For PSA status monitoring</span>
+<span class="kn">from</span> <span class="nn">time</span> <span class="kn">import</span> <span class="n">sleep</span>
+<span class="kn">import</span> <span class="nn">threading</span>
+
+<div class="viewcode-block" id="PSCInfo"><a class="viewcode-back" href="../psc_manager.html#psc_manager.PSCInfo">[docs]</a><span class="k">class</span> <span class="nc">PSCInfo</span><span class="p">():</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">psc_log_path</span><span class="p">,</span> <span class="n">psa_list_path</span><span class="p">,</span> <span class="n">psa_list_online_path</span><span class="p">,</span> <span class="n">confsPath</span><span class="p">,</span> <span class="n">psa_api_version</span><span class="p">,</span> <span class="n">psa_status_req_delay</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">psc_log_path</span> <span class="o">=</span> <span class="n">psc_log_path</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">confsPath</span> <span class="o">=</span> <span class="n">confsPath</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">PSA_API_VERSION</span> <span class="o">=</span> <span class="n">psa_api_version</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">PSA_LIST_PATH</span> <span class="o">=</span> <span class="n">psa_list_path</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">PSA_LIST_ONLINE_PATH</span> <span class="o">=</span> <span class="n">psa_list_online_path</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">psaStatus</span> <span class="o">=</span> <span class="n">PSAStatus</span><span class="p">(</span><span class="n">psa_api_version</span><span class="p">,</span> <span class="n">psa_list_online_path</span><span class="p">,</span> <span class="n">psa_status_req_delay</span><span class="p">)</span>
+    
+<div class="viewcode-block" id="PSCInfo.on_get"><a class="viewcode-back" href="../psc_manager.html#psc_manager.PSCInfo.on_get">[docs]</a>    <span class="k">def</span> <span class="nf">on_get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">response</span><span class="p">,</span> <span class="n">command</span><span class="p">):</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;GET: &quot;</span> <span class="o">+</span> <span class="n">command</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">res</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">if</span> <span class="n">command</span> <span class="o">==</span> <span class="s2">&quot;status&quot;</span><span class="p">:</span>
+                <span class="n">response</span><span class="o">.</span><span class="n">body</span> <span class="o">=</span> <span class="s1">&#39;{&quot;status&quot;:&quot;ok&quot;}&#39;</span>
+                <span class="n">response</span><span class="o">.</span><span class="n">set_header</span><span class="p">(</span><span class="s2">&quot;Access-Control-Allow-Origin&quot;</span><span class="p">,</span> <span class="s2">&quot;*&quot;</span><span class="p">)</span>
+                <span class="n">response</span><span class="o">.</span><span class="n">set_header</span><span class="p">(</span><span class="s2">&quot;Access-Control-Allow-Methods&quot;</span><span class="p">,</span> <span class="s2">&quot;*&quot;</span><span class="p">)</span>
+                <span class="n">response</span><span class="o">.</span><span class="n">set_header</span><span class="p">(</span><span class="s2">&quot;Access-Control-Allow-Headers&quot;</span><span class="p">,</span> <span class="s2">&quot;*&quot;</span><span class="p">)</span>
+                <span class="n">response</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="n">falcon</span><span class="o">.</span><span class="n">HTTP_200</span>
+                <span class="k">return</span>
+            <span class="k">elif</span> <span class="n">command</span> <span class="o">==</span> <span class="s2">&quot;get-psa-statuses&quot;</span><span class="p">:</span>
+                <span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">psaStatus</span><span class="o">.</span><span class="n">get_psa_statuses</span><span class="p">()</span>
+            <span class="k">elif</span> <span class="n">command</span> <span class="o">==</span> <span class="s2">&quot;get-user-ip&quot;</span><span class="p">:</span>
+                <span class="n">res</span><span class="p">[</span><span class="s2">&quot;client_address&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_client_address</span><span class="p">(</span><span class="n">request</span><span class="o">.</span><span class="n">env</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">command</span> <span class="o">==</span> <span class="s2">&quot;get-psa-list&quot;</span><span class="p">:</span>
+                <span class="n">res</span><span class="p">[</span><span class="s2">&quot;psa_response&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_psas</span><span class="p">()</span>
+            <span class="k">elif</span> <span class="n">command</span> <span class="o">==</span> <span class="s2">&quot;get-psa-list-online&quot;</span><span class="p">:</span>
+                <span class="n">res</span><span class="p">[</span><span class="s2">&quot;psa_response&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_psas_online</span><span class="p">()</span>
+            <span class="k">elif</span> <span class="n">command</span> <span class="o">==</span> <span class="s2">&quot;dump-log-psc&quot;</span><span class="p">:</span>
+                <span class="n">response</span><span class="o">.</span><span class="n">body</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_psc_log</span><span class="p">()</span>
+                <span class="n">response</span><span class="o">.</span><span class="n">set_header</span><span class="p">(</span><span class="s2">&quot;Content-Type&quot;</span><span class="p">,</span> <span class="s2">&quot;text/plain; charset=UTF-8&quot;</span><span class="p">)</span>
+                <span class="n">response</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="n">falcon</span><span class="o">.</span><span class="n">HTTP_200</span>
+                <span class="k">return</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;GET: unknown command: &quot;</span> <span class="o">+</span> <span class="n">command</span><span class="p">)</span>
+                <span class="n">response</span><span class="o">.</span><span class="n">set_header</span><span class="p">(</span><span class="s2">&quot;Content-Type&quot;</span><span class="p">,</span> <span class="s2">&quot;text/plain; charset=UTF-8&quot;</span><span class="p">)</span>
+                <span class="n">response</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="n">falcon</span><span class="o">.</span><span class="n">HTTP_404</span>
+                <span class="k">return</span>
+            
+            <span class="n">response</span><span class="o">.</span><span class="n">body</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">res</span><span class="p">)</span>
+            <span class="c1">#response.set_header(&quot;Accept&quot;, &quot;application/json&quot;)</span>
+            <span class="n">response</span><span class="o">.</span><span class="n">set_header</span><span class="p">(</span><span class="s2">&quot;Content-Type&quot;</span><span class="p">,</span> <span class="s2">&quot;application/json&quot;</span><span class="p">)</span>
+            <span class="n">response</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="n">falcon</span><span class="o">.</span><span class="n">HTTP_200</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">exc_info</span><span class="p">()[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="n">response</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="n">falcon</span><span class="o">.</span><span class="n">HTTP_501</span></div>
+    
+    <span class="c1"># Returns PSC&#39;s log</span>
+<div class="viewcode-block" id="PSCInfo.get_psc_log"><a class="viewcode-back" href="../psc_manager.html#psc_manager.PSCInfo.get_psc_log">[docs]</a>    <span class="k">def</span> <span class="nf">get_psc_log</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;get psc log&quot;</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">in_file</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">psc_log_path</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span>
+            <span class="n">log</span> <span class="o">=</span> <span class="n">in_file</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+            <span class="n">in_file</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+            <span class="k">return</span> <span class="n">log</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">exc_info</span><span class="p">()[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="k">return</span> <span class="bp">None</span></div>
+    
+    <span class="c1"># Get the list of PSAs received, i.e., user graph</span>
+<div class="viewcode-block" id="PSCInfo.get_psas"><a class="viewcode-back" href="../psc_manager.html#psc_manager.PSCInfo.get_psas">[docs]</a>    <span class="k">def</span> <span class="nf">get_psas</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;get psas&quot;</span><span class="p">)</span> 
+        <span class="n">ret</span> <span class="o">=</span> <span class="s2">&quot;None&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">PSA_LIST_PATH</span><span class="p">,</span> <span class="s1">&#39;rb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                <span class="n">psas</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+                <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;psas:&quot;</span><span class="o">+</span><span class="n">psas</span><span class="p">)</span> 
+                <span class="n">ret</span> <span class="o">=</span> <span class="n">psas</span>    
+        <span class="k">except</span> <span class="ne">IOError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Unable to read file &quot;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">PSA_LIST_PATH</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">exc</span>
+        <span class="k">return</span> <span class="n">ret</span></div>
+
+    <span class="c1"># Get currently online PSA&#39;s, i.e., what are up</span>
+<div class="viewcode-block" id="PSCInfo.get_psas_online"><a class="viewcode-back" href="../psc_manager.html#psc_manager.PSCInfo.get_psas_online">[docs]</a>    <span class="k">def</span> <span class="nf">get_psas_online</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;get psas online&quot;</span><span class="p">)</span> 
+        <span class="n">ret</span> <span class="o">=</span> <span class="s2">&quot;None&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">PSA_LIST_ONLINE_PATH</span><span class="p">,</span> <span class="s1">&#39;rb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                <span class="n">psas</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+                <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;psas:&quot;</span><span class="o">+</span><span class="n">psas</span><span class="p">)</span> 
+                <span class="n">ret</span> <span class="o">=</span> <span class="n">psas</span>    
+        <span class="k">except</span> <span class="ne">IOError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Unable to read file &quot;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">PSA_LIST_ONLINE_PATH</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">exc</span>
+        <span class="k">return</span> <span class="n">ret</span></div>
+
+<div class="viewcode-block" id="PSCInfo.get_client_address"><a class="viewcode-back" href="../psc_manager.html#psc_manager.PSCInfo.get_client_address">[docs]</a>    <span class="k">def</span> <span class="nf">get_client_address</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">environ</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">environ</span><span class="p">[</span><span class="s1">&#39;HTTP_X_FORWARDED_FOR&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">environ</span><span class="p">[</span><span class="s1">&#39;REMOTE_ADDR&#39;</span><span class="p">]</span></div></div>
+
+<div class="viewcode-block" id="PSAInfo"><a class="viewcode-back" href="../psc_manager.html#psc_manager.PSAInfo">[docs]</a><span class="k">class</span> <span class="nc">PSAInfo</span><span class="p">():</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">confsPath</span><span class="p">,</span> <span class="n">psa_list_online_path</span><span class="p">,</span> <span class="n">psa_api_version</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">confsPath</span> <span class="o">=</span> <span class="n">confsPath</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">PSA_API_VERSION</span> <span class="o">=</span> <span class="n">psa_api_version</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">psaHelper</span> <span class="o">=</span> <span class="n">PsaHelper</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">PSA_API_VERSION</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">PSA_LIST_ONLINE_PATH</span> <span class="o">=</span> <span class="n">psa_list_online_path</span>
+    
+<div class="viewcode-block" id="PSAInfo.on_get"><a class="viewcode-back" href="../psc_manager.html#psc_manager.PSAInfo.on_get">[docs]</a>    <span class="k">def</span> <span class="nf">on_get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">response</span><span class="p">,</span> <span class="n">command</span><span class="p">,</span> <span class="n">psa_id</span><span class="p">):</span>
+        
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;GET: &quot;</span> <span class="o">+</span> <span class="n">command</span> <span class="o">+</span> <span class="s2">&quot;/&quot;</span> <span class="o">+</span> <span class="n">command</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">res</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">if</span> <span class="n">command</span> <span class="o">==</span> <span class="s2">&quot;init&quot;</span><span class="p">:</span>
+                <span class="n">res</span><span class="p">[</span><span class="s2">&quot;psa_response&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">post_psa_file</span><span class="p">(</span><span class="s2">&quot;init&quot;</span><span class="p">,</span> <span class="n">psa_id</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">command</span> <span class="o">==</span> <span class="s2">&quot;start&quot;</span><span class="p">:</span>
+                <span class="n">res</span><span class="p">[</span><span class="s2">&quot;psa_response&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">post_psa</span><span class="p">(</span><span class="s2">&quot;start&quot;</span><span class="p">,</span> <span class="n">psa_id</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">command</span> <span class="o">==</span> <span class="s2">&quot;stop&quot;</span><span class="p">:</span>
+                <span class="n">res</span><span class="p">[</span><span class="s2">&quot;psa_response&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">post_psa</span><span class="p">(</span><span class="s2">&quot;stop&quot;</span><span class="p">,</span> <span class="n">psa_id</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">command</span> <span class="o">==</span> <span class="s2">&quot;status&quot;</span><span class="p">:</span>
+                <span class="n">res</span><span class="p">[</span><span class="s2">&quot;psa_response&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">try_psa</span><span class="p">(</span><span class="s2">&quot;status&quot;</span><span class="p">,</span> <span class="n">psa_id</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">command</span> <span class="o">==</span> <span class="s2">&quot;configuration&quot;</span><span class="p">:</span>
+                <span class="n">res</span><span class="p">[</span><span class="s2">&quot;psa_response&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">try_psa</span><span class="p">(</span><span class="s2">&quot;configuration&quot;</span><span class="p">,</span> <span class="n">psa_id</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">command</span> <span class="o">==</span> <span class="s2">&quot;internet&quot;</span><span class="p">:</span>
+                <span class="n">res</span><span class="p">[</span><span class="s2">&quot;psa_response&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">try_psa</span><span class="p">(</span><span class="s2">&quot;internet&quot;</span><span class="p">,</span> <span class="n">psa_id</span><span class="p">)</span>
+            <span class="c1"># For getting logs from PSA</span>
+            <span class="k">elif</span> <span class="n">command</span> <span class="o">==</span> <span class="s2">&quot;dump-log-psa-ctrl&quot;</span><span class="p">:</span>
+                <span class="n">response</span><span class="o">.</span><span class="n">body</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_psa_ctrl_log</span><span class="p">(</span><span class="n">psa_id</span><span class="p">)</span>
+                <span class="n">response</span><span class="o">.</span><span class="n">set_header</span><span class="p">(</span><span class="s2">&quot;Content-Type&quot;</span><span class="p">,</span> <span class="s2">&quot;text/plain; charset=UTF-8&quot;</span><span class="p">)</span>
+                <span class="n">response</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="n">falcon</span><span class="o">.</span><span class="n">HTTP_200</span>
+                <span class="k">return</span>
+            <span class="k">elif</span> <span class="n">command</span> <span class="o">==</span> <span class="s2">&quot;get-log-psa&quot;</span><span class="p">:</span>
+                <span class="n">log</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_psa_log</span><span class="p">(</span><span class="n">psa_id</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">log</span> <span class="o">!=</span> <span class="bp">None</span><span class="p">:</span>
+                    <span class="n">response</span><span class="o">.</span><span class="n">body</span> <span class="o">=</span> <span class="n">log</span>
+                    <span class="n">response</span><span class="o">.</span><span class="n">set_header</span><span class="p">(</span><span class="s2">&quot;Content-Type&quot;</span><span class="p">,</span> <span class="s2">&quot;text/plain; charset=UTF-8&quot;</span><span class="p">)</span>
+                    <span class="n">response</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="n">falcon</span><span class="o">.</span><span class="n">HTTP_200</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">response</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="n">falcong</span><span class="o">.</span><span class="n">HTTP_501</span>
+                <span class="k">return</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;GET: unknown command: &quot;</span> <span class="o">+</span> <span class="n">command</span><span class="p">)</span>
+                <span class="n">response</span><span class="o">.</span><span class="n">set_header</span><span class="p">(</span><span class="s2">&quot;Content-Type&quot;</span><span class="p">,</span> <span class="s2">&quot;text/plain; charset=UTF-8&quot;</span><span class="p">)</span>
+                <span class="n">response</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="n">falcon</span><span class="o">.</span><span class="n">HTTP_404</span>
+                <span class="k">return</span>
+            
+            <span class="n">response</span><span class="o">.</span><span class="n">body</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">res</span><span class="p">)</span>
+            <span class="c1">#response.set_header(&quot;Accept&quot;, &quot;application/json&quot;)</span>
+            <span class="n">response</span><span class="o">.</span><span class="n">set_header</span><span class="p">(</span><span class="s2">&quot;Content-Type&quot;</span><span class="p">,</span> <span class="s2">&quot;application/json&quot;</span><span class="p">)</span>
+            <span class="n">response</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="n">falcon</span><span class="o">.</span><span class="n">HTTP_200</span>
+            
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">exc_info</span><span class="p">()[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="n">response</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="n">falcon</span><span class="o">.</span><span class="n">HTTP_501</span></div>
+
+<div class="viewcode-block" id="PSAInfo.get_psa_log"><a class="viewcode-back" href="../psc_manager.html#psc_manager.PSAInfo.get_psa_log">[docs]</a>    <span class="k">def</span> <span class="nf">get_psa_log</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">psa_id</span><span class="p">):</span>
+        <span class="k">print</span> <span class="s2">&quot;get_psa_log&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">psaHelper</span><span class="o">.</span><span class="n">try_load</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">psa_get_ip</span><span class="p">(</span><span class="n">psa_id</span><span class="p">),</span> <span class="s2">&quot;log&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">res</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+            <span class="k">print</span> <span class="n">exc</span></div>
+
+<div class="viewcode-block" id="PSAInfo.get_psa_ctrl_log"><a class="viewcode-back" href="../psc_manager.html#psc_manager.PSAInfo.get_psa_ctrl_log">[docs]</a>    <span class="k">def</span> <span class="nf">get_psa_ctrl_log</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">psa_id</span><span class="p">):</span>
+        <span class="k">print</span> <span class="s2">&quot;get_psa_ctrl_log&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">psaHelper</span><span class="o">.</span><span class="n">try_load</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">psa_get_ip</span><span class="p">(</span><span class="n">psa_id</span><span class="p">),</span> <span class="s2">&quot;dump-log-ctrl&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">res</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span> 
+            <span class="k">print</span> <span class="n">exc</span></div>
+
+<div class="viewcode-block" id="PSAInfo.put_psa"><a class="viewcode-back" href="../psc_manager.html#psc_manager.PSAInfo.put_psa">[docs]</a>    <span class="k">def</span> <span class="nf">put_psa</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">command</span><span class="p">,</span> <span class="n">psa_id</span><span class="p">):</span>
+        <span class="k">print</span> <span class="s2">&quot;put_psa, command:&quot;</span> <span class="o">+</span> <span class="n">command</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">psaHelper</span><span class="o">.</span><span class="n">try_put</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">psa_get_ip</span><span class="p">(</span><span class="n">psa_id</span><span class="p">),</span> <span class="n">command</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">confsPath</span> <span class="o">+</span> <span class="s2">&quot;/&quot;</span> <span class="o">+</span> <span class="n">psa_id</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">res</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span> 
+            <span class="k">print</span> <span class="n">exc</span></div>
+    
+<div class="viewcode-block" id="PSAInfo.post_psa_file"><a class="viewcode-back" href="../psc_manager.html#psc_manager.PSAInfo.post_psa_file">[docs]</a>    <span class="k">def</span> <span class="nf">post_psa_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">command</span><span class="p">,</span> <span class="n">psa_id</span><span class="p">):</span>
+        <span class="k">print</span> <span class="s2">&quot;post_psa_file, command:&quot;</span> <span class="o">+</span> <span class="n">command</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">psaHelper</span><span class="o">.</span><span class="n">try_post_file</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">psa_get_ip</span><span class="p">(</span><span class="n">psa_id</span><span class="p">),</span> <span class="n">command</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">confsPath</span> <span class="o">+</span> <span class="s2">&quot;/&quot;</span> <span class="o">+</span> <span class="n">psa_id</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">res</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span> 
+            <span class="k">print</span> <span class="n">exc</span>
+        <span class="k">print</span> <span class="s2">&quot;post_psa_file done&quot;</span></div>
+    
+<div class="viewcode-block" id="PSAInfo.post_psa"><a class="viewcode-back" href="../psc_manager.html#psc_manager.PSAInfo.post_psa">[docs]</a>    <span class="k">def</span> <span class="nf">post_psa</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">command</span><span class="p">,</span> <span class="n">psa_id</span><span class="p">):</span>
+        <span class="k">print</span> <span class="s2">&quot;post_psa, command:&quot;</span> <span class="o">+</span> <span class="n">command</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">psaHelper</span><span class="o">.</span><span class="n">try_post</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">psa_get_ip</span><span class="p">(</span><span class="n">psa_id</span><span class="p">),</span> <span class="n">command</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">confsPath</span> <span class="o">+</span> <span class="s2">&quot;/&quot;</span> <span class="o">+</span> <span class="n">psa_id</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">res</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span> 
+            <span class="k">print</span> <span class="n">exc</span>
+        <span class="k">print</span> <span class="s2">&quot;post_psa done&quot;</span></div>
+    
+    
+<div class="viewcode-block" id="PSAInfo.try_psa"><a class="viewcode-back" href="../psc_manager.html#psc_manager.PSAInfo.try_psa">[docs]</a>    <span class="k">def</span> <span class="nf">try_psa</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">command</span><span class="p">,</span> <span class="n">psa_id</span><span class="p">):</span>
+        <span class="k">print</span> <span class="s2">&quot;try_psa, command:&quot;</span> <span class="o">+</span> <span class="n">command</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">psaHelper</span><span class="o">.</span><span class="n">try_load</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">psa_get_ip</span><span class="p">(</span><span class="n">psa_id</span><span class="p">),</span> <span class="n">command</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">res</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span> 
+            <span class="k">print</span> <span class="n">exc</span></div>
+
+<div class="viewcode-block" id="PSAInfo.psa_get_ip"><a class="viewcode-back" href="../psc_manager.html#psc_manager.PSAInfo.psa_get_ip">[docs]</a>    <span class="k">def</span> <span class="nf">psa_get_ip</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">psa_id</span><span class="p">):</span>
+        <span class="n">ret</span> <span class="o">=</span> <span class="n">psa_id</span>
+        <span class="n">conf_str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1">#TODO: We don&#39;t have to read every time</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">PSA_LIST_ONLINE_PATH</span><span class="p">,</span> <span class="s1">&#39;rb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                <span class="n">conf_str</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+            
+            <span class="n">psa</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">conf_str</span><span class="p">)</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">psa</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">temp</span> <span class="ow">in</span> <span class="n">psa</span><span class="p">:</span>
+                <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">temp</span><span class="p">)</span>
+                <span class="c1"># TODO: Takes last PSA now..</span>
+                <span class="k">if</span> <span class="n">temp</span><span class="p">[</span><span class="s2">&quot;psa_id&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="n">psa_id</span><span class="p">:</span>
+                    <span class="n">ret</span> <span class="o">=</span> <span class="n">temp</span><span class="p">[</span><span class="s2">&quot;ip&quot;</span><span class="p">]</span>
+        <span class="k">except</span> <span class="ne">IOError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Unable to read file &quot;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">PSA_LIST_ONLINE_PATH</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">exc</span>
+        
+        <span class="k">return</span> <span class="n">ret</span></div>
+
+<div class="viewcode-block" id="PSAInfo.get_client_address"><a class="viewcode-back" href="../psc_manager.html#psc_manager.PSAInfo.get_client_address">[docs]</a>    <span class="k">def</span> <span class="nf">get_client_address</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">environ</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">environ</span><span class="p">[</span><span class="s1">&#39;HTTP_X_FORWARDED_FOR&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">environ</span><span class="p">[</span><span class="s1">&#39;REMOTE_ADDR&#39;</span><span class="p">]</span></div></div>
+
+<span class="c1"># Just for serving the web page, should refactor to another file</span>
+<div class="viewcode-block" id="psaManager"><a class="viewcode-back" href="../psc_manager.html#psc_manager.psaManager">[docs]</a><span class="k">class</span> <span class="nc">psaManager</span><span class="p">():</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">confsPath</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">confsPath</span> <span class="o">=</span> <span class="n">confsPath</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">loginPageLocation</span> <span class="o">=</span> <span class="s2">&quot;manager.html&quot;</span>
+
+<div class="viewcode-block" id="psaManager.on_get"><a class="viewcode-back" href="../psc_manager.html#psc_manager.psaManager.on_get">[docs]</a>    <span class="k">def</span> <span class="nf">on_get</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">request</span><span class="p">,</span> <span class="n">response</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">fp</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">loginPageLocation</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span>
+            <span class="n">page</span> <span class="o">=</span> <span class="n">fp</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+            <span class="n">fp</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+            <span class="n">response</span><span class="o">.</span><span class="n">set_header</span><span class="p">(</span><span class="s2">&quot;Content-Type&quot;</span><span class="p">,</span> <span class="s2">&quot;text/html&quot;</span><span class="p">)</span>
+            <span class="n">response</span><span class="o">.</span><span class="n">body</span> <span class="o">=</span> <span class="n">page</span>
+            <span class="n">response</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="n">falcon</span><span class="o">.</span><span class="n">HTTP_200</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="n">sys</span><span class="o">.</span><span class="n">exc_info</span><span class="p">()[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="n">response</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="n">falcon</span><span class="o">.</span><span class="n">HTTP_501</span></div>
+
+<div class="viewcode-block" id="psaManager.get_client_address"><a class="viewcode-back" href="../psc_manager.html#psc_manager.psaManager.get_client_address">[docs]</a>    <span class="k">def</span> <span class="nf">get_client_address</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">environ</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">environ</span><span class="p">[</span><span class="s1">&#39;HTTP_X_FORWARDED_FOR&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;,&#39;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">environ</span><span class="p">[</span><span class="s1">&#39;REMOTE_ADDR&#39;</span><span class="p">]</span></div></div>
+
+<span class="c1"># For simple PSA status monitoring</span>
+<div class="viewcode-block" id="PSAStatus"><a class="viewcode-back" href="../psc_manager.html#psc_manager.PSAStatus">[docs]</a><span class="k">class</span> <span class="nc">PSAStatus</span><span class="p">():</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">psa_api_version</span><span class="p">,</span> <span class="n">psa_list_loc</span><span class="p">,</span> <span class="n">psa_status_req_delay</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">psaHelper</span> <span class="o">=</span> <span class="n">PsaHelper</span><span class="p">(</span><span class="n">psa_api_version</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">PSA_LIST_LOC</span> <span class="o">=</span> <span class="n">psa_list_loc</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">psa_status_req_delay</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">psa_status_req_delay</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">psa_list</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">psa_status_list</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">__start_status_monitor</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">__start_status_monitor</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">event</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Event</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">th</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Thread</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">__check_psa_statuses</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">psa_status_req_delay</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">event</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">th</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">__load_psa_online_list</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">psas</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">PSA_LIST_LOC</span><span class="p">,</span> <span class="s1">&#39;rb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                <span class="n">psas</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+                <span class="c1">#logging.info(&quot;psas:&quot;+psas) </span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">psa_list</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">psas</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">IOError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+            <span class="k">pass</span>
+
+    <span class="k">def</span> <span class="nf">__check_psa_statuses</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">delay</span><span class="p">,</span> <span class="n">event</span><span class="p">):</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;check_psa_statuses()&quot;</span><span class="p">)</span>
+        <span class="k">while</span> <span class="ow">not</span> <span class="n">event</span><span class="o">.</span><span class="n">isSet</span><span class="p">():</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="c1">#logging.info(&quot;checking statuses&quot;)</span>
+                <span class="c1"># Just load everytime, if there&#39;s new PSAs</span>
+                <span class="c1">#if len(self.psa_list) == 0:</span>
+                <span class="c1">#TODO: could be modified, not efficient.</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">__load_psa_online_list</span><span class="p">()</span>
+                <span class="n">temp_psa_status_list</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="k">for</span> <span class="n">psa</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">psa_list</span><span class="p">:</span>
+                    <span class="c1">#logging.info(&quot;checking &quot; + str(psa[&quot;psa_id&quot;]))</span>
+                    <span class="n">psa_status</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">__try_psa</span><span class="p">(</span><span class="s2">&quot;status&quot;</span><span class="p">,</span> <span class="n">psa</span><span class="p">[</span><span class="s2">&quot;ip&quot;</span><span class="p">])</span>
+                    <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">psa</span><span class="p">[</span><span class="s2">&quot;psa_id&quot;</span><span class="p">])</span> <span class="o">+</span> <span class="s2">&quot; status: &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">psa_status</span><span class="p">))</span>
+                    <span class="c1"># None == no reply, otherwise normal PSA reply is everything OK by PSA</span>
+                    <span class="k">if</span> <span class="n">psa_status</span> <span class="o">!=</span> <span class="bp">None</span><span class="p">:</span>
+                        <span class="n">psa_status</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">psa_status</span><span class="p">)[</span><span class="s2">&quot;ret_code&quot;</span><span class="p">]</span>
+                    <span class="n">temp_psa_status_list</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="s2">&quot;psa_id&quot;</span><span class="p">:</span><span class="n">psa</span><span class="p">[</span><span class="s2">&quot;psa_id&quot;</span><span class="p">],</span> <span class="s2">&quot;status&quot;</span><span class="p">:</span> <span class="n">psa_status</span><span class="p">})</span>
+                    <span class="c1">#logging.info(&quot;------------&quot;)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">psa_status_list</span> <span class="o">=</span> <span class="n">temp_psa_status_list</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+                <span class="c1"># In case of error, report everything bad</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">psa_status_list</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="k">pass</span>
+            <span class="n">sleep</span><span class="p">(</span><span class="n">delay</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__try_psa</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">command</span><span class="p">,</span> <span class="n">psa_ip</span><span class="p">):</span>
+        <span class="c1">#print &quot;try_psa, command:&quot; + command</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">res</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">psaHelper</span><span class="o">.</span><span class="n">try_load</span><span class="p">(</span><span class="n">psa_ip</span><span class="p">,</span> <span class="n">command</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">res</span> <span class="o">==</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Error trying status of: &quot;</span> <span class="o">+</span> <span class="n">psa_ip</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">res</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span> 
+            <span class="k">print</span> <span class="n">exc</span>
+    
+    <span class="c1"># Public method called by PSC GUI</span>
+<div class="viewcode-block" id="PSAStatus.get_psa_statuses"><a class="viewcode-back" href="../psc_manager.html#psc_manager.PSAStatus.get_psa_statuses">[docs]</a>    <span class="k">def</span> <span class="nf">get_psa_statuses</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1">#print &quot;get_psa_statuses&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">psa_status_list</span></div></div>
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../index.html">
+              <img class="logo" src="../_static/secured.png" alt="Logo"/>
+            </a></p><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, SECURED.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

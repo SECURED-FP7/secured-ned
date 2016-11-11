@@ -1,0 +1,99 @@
+ {
+
+ 	"title":"user_service_graph",
+ 	"type": "object",
+ 	
+ 	"properties": {
+		
+		"name": {
+			"type": "string",
+			"description": "Document name"		
+		},
+
+		"token": {
+			"type": "string",
+			"description": "Authentication token"
+		},	
+		
+		"TVDid": {
+			"type": "string",
+			"description": "Unique TVD identifier for the user's TVD"
+		},
+
+		"PSAs": {
+			
+			"type": "array",
+			"description": "List of VMs to be deployed",
+			"items": {
+		
+				"type": "object",
+				"properties": {
+					
+					"id":{
+						"type": "string",
+						"description": "PSA id"
+					},
+
+					"img":{
+						"type": "object",
+						"description": "VMs image to be deployed and associated metadata",
+
+						"properties": {
+							
+							"imgName": {
+								"type": "string",
+								"description": "Image repo name/URI"
+							},
+
+							"disk": {
+								"type": "integer",
+								"description": "Deployed image size in MB"
+							}
+						}
+					},
+					
+					"cpu":{
+						"type": "integer",
+						"description": "Integer expressing in # of cores the vcpu to be allocated to the VM"
+					},
+
+					"mem":{
+						"type": "integer",
+						"description": "Integer expressing in MB the RAM to be allocated to the VM"
+					},	
+					
+					"conf":{
+						"type": "string",
+						"description": "URI to the user specific configuration to be sent to the PSC"
+					},
+
+					"required":["id","conf"]
+
+				}
+			}
+			
+		},
+		
+		"ingress_flow": {
+			
+			"type": "array",
+			"description": "PSAs sequence for ingress flow",
+			"items": {
+				"type": "string"
+			}
+
+		},
+		
+		"egress_flow": {
+			
+			"type": "array",
+			"description": "PSAs sequence for egress flow",
+			"items": {
+				"type": "string"
+			}
+
+		}	
+
+ 	}
+
+ }

@@ -1,0 +1,360 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>upr_client module &mdash; TVDM  documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="TVDM  documentation" href="index.html" />
+    <link rel="next" title="userTVD module" href="userTVD.html" />
+    <link rel="prev" title="psarClient module" href="psarClient.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-upr_client">
+<span id="upr-client-module"></span><h1>upr_client module<a class="headerlink" href="#module-upr_client" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="upr_client.UPRClient">
+<em class="property">class </em><code class="descclassname">upr_client.</code><code class="descname">UPRClient</code><span class="sig-paren">(</span><em>base_URL</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/upr_client.html#UPRClient"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#upr_client.UPRClient" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="method">
+<dt id="upr_client.UPRClient.associate_user_group">
+<code class="descname">associate_user_group</code><span class="sig-paren">(</span><em>group</em>, <em>user_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/upr_client.html#UPRClient.associate_user_group"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#upr_client.UPRClient.associate_user_group" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="upr_client.UPRClient.auth_user">
+<code class="descname">auth_user</code><span class="sig-paren">(</span><em>user</em>, <em>password</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/upr_client.html#UPRClient.auth_user"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#upr_client.UPRClient.auth_user" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="upr_client.UPRClient.create_group">
+<code class="descname">create_group</code><span class="sig-paren">(</span><em>name</em>, <em>description</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/upr_client.html#UPRClient.create_group"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#upr_client.UPRClient.create_group" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="upr_client.UPRClient.create_mspl">
+<code class="descname">create_mspl</code><span class="sig-paren">(</span><em>target</em>, <em>editor</em>, <em>capability</em>, <em>is_reconciled</em>, <em>mspl</em>, <em>internalID=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/upr_client.html#UPRClient.create_mspl"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#upr_client.UPRClient.create_mspl" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="upr_client.UPRClient.create_user">
+<code class="descname">create_user</code><span class="sig-paren">(</span><em>user_id</em>, <em>password</em>, <em>integrityLevel</em>, <em>type</em>, <em>is_cooperative</em>, <em>is_infrastructure</em>, <em>is_admin</em>, <em>creator=None</em>, <em>optimization_profile=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/upr_client.html#UPRClient.create_user"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#upr_client.UPRClient.create_user" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="upr_client.UPRClient.delete_executed_psa">
+<code class="descname">delete_executed_psa</code><span class="sig-paren">(</span><em>user_id</em>, <em>psa_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/upr_client.html#UPRClient.delete_executed_psa"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#upr_client.UPRClient.delete_executed_psa" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="upr_client.UPRClient.delete_group">
+<code class="descname">delete_group</code><span class="sig-paren">(</span><em>group_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/upr_client.html#UPRClient.delete_group"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#upr_client.UPRClient.delete_group" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="upr_client.UPRClient.delete_group_psa">
+<code class="descname">delete_group_psa</code><span class="sig-paren">(</span><em>group</em>, <em>psa_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/upr_client.html#UPRClient.delete_group_psa"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#upr_client.UPRClient.delete_group_psa" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="upr_client.UPRClient.delete_hspl">
+<code class="descname">delete_hspl</code><span class="sig-paren">(</span><em>user_id</em>, <em>hspl_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/upr_client.html#UPRClient.delete_hspl"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#upr_client.UPRClient.delete_hspl" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="upr_client.UPRClient.delete_mspl">
+<code class="descname">delete_mspl</code><span class="sig-paren">(</span><em>mspl_id=None</em>, <em>target=None</em>, <em>editor=None</em>, <em>capability=None</em>, <em>is_reconciled=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/upr_client.html#UPRClient.delete_mspl"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#upr_client.UPRClient.delete_mspl" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="upr_client.UPRClient.delete_reconciliation_report">
+<code class="descname">delete_reconciliation_report</code><span class="sig-paren">(</span><em>user_id</em>, <em>ned_info=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/upr_client.html#UPRClient.delete_reconciliation_report"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#upr_client.UPRClient.delete_reconciliation_report" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="upr_client.UPRClient.delete_user">
+<code class="descname">delete_user</code><span class="sig-paren">(</span><em>user_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/upr_client.html#UPRClient.delete_user"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#upr_client.UPRClient.delete_user" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="upr_client.UPRClient.delete_user_ag">
+<code class="descname">delete_user_ag</code><span class="sig-paren">(</span><em>target</em>, <em>editor</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/upr_client.html#UPRClient.delete_user_ag"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#upr_client.UPRClient.delete_user_ag" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="upr_client.UPRClient.delete_user_group">
+<code class="descname">delete_user_group</code><span class="sig-paren">(</span><em>user</em>, <em>group</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/upr_client.html#UPRClient.delete_user_group"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#upr_client.UPRClient.delete_user_group" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="upr_client.UPRClient.delete_user_psa">
+<code class="descname">delete_user_psa</code><span class="sig-paren">(</span><em>user_id</em>, <em>psa_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/upr_client.html#UPRClient.delete_user_psa"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#upr_client.UPRClient.delete_user_psa" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="upr_client.UPRClient.delete_user_psaconf">
+<code class="descname">delete_user_psaconf</code><span class="sig-paren">(</span><em>user_id</em>, <em>psa_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/upr_client.html#UPRClient.delete_user_psaconf"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#upr_client.UPRClient.delete_user_psaconf" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="upr_client.UPRClient.delete_user_rag">
+<code class="descname">delete_user_rag</code><span class="sig-paren">(</span><em>user_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/upr_client.html#UPRClient.delete_user_rag"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#upr_client.UPRClient.delete_user_rag" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="upr_client.UPRClient.get_created_users">
+<code class="descname">get_created_users</code><span class="sig-paren">(</span><em>user_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/upr_client.html#UPRClient.get_created_users"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#upr_client.UPRClient.get_created_users" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="upr_client.UPRClient.get_executed_psa">
+<code class="descname">get_executed_psa</code><span class="sig-paren">(</span><em>user_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/upr_client.html#UPRClient.get_executed_psa"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#upr_client.UPRClient.get_executed_psa" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="upr_client.UPRClient.get_group_psa">
+<code class="descname">get_group_psa</code><span class="sig-paren">(</span><em>group</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/upr_client.html#UPRClient.get_group_psa"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#upr_client.UPRClient.get_group_psa" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="upr_client.UPRClient.get_hspl">
+<code class="descname">get_hspl</code><span class="sig-paren">(</span><em>target=None</em>, <em>editor=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/upr_client.html#UPRClient.get_hspl"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#upr_client.UPRClient.get_hspl" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="upr_client.UPRClient.get_mspl">
+<code class="descname">get_mspl</code><span class="sig-paren">(</span><em>internalID=None</em>, <em>target=None</em>, <em>editor=None</em>, <em>is_reconciled=False</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/upr_client.html#UPRClient.get_mspl"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#upr_client.UPRClient.get_mspl" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="upr_client.UPRClient.get_reconciliation_report">
+<code class="descname">get_reconciliation_report</code><span class="sig-paren">(</span><em>user_id</em>, <em>ned_info=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/upr_client.html#UPRClient.get_reconciliation_report"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#upr_client.UPRClient.get_reconciliation_report" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="upr_client.UPRClient.get_user_ag">
+<code class="descname">get_user_ag</code><span class="sig-paren">(</span><em>target</em>, <em>editor=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/upr_client.html#UPRClient.get_user_ag"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#upr_client.UPRClient.get_user_ag" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="upr_client.UPRClient.get_user_creator">
+<code class="descname">get_user_creator</code><span class="sig-paren">(</span><em>user_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/upr_client.html#UPRClient.get_user_creator"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#upr_client.UPRClient.get_user_creator" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="upr_client.UPRClient.get_user_groups">
+<code class="descname">get_user_groups</code><span class="sig-paren">(</span><em>user_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/upr_client.html#UPRClient.get_user_groups"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#upr_client.UPRClient.get_user_groups" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="upr_client.UPRClient.get_user_list">
+<code class="descname">get_user_list</code><span class="sig-paren">(</span><em>user_id=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/upr_client.html#UPRClient.get_user_list"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#upr_client.UPRClient.get_user_list" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="upr_client.UPRClient.get_user_mspl_psa">
+<code class="descname">get_user_mspl_psa</code><span class="sig-paren">(</span><em>user_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/upr_client.html#UPRClient.get_user_mspl_psa"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#upr_client.UPRClient.get_user_mspl_psa" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="upr_client.UPRClient.get_user_opt_profile">
+<code class="descname">get_user_opt_profile</code><span class="sig-paren">(</span><em>user_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/upr_client.html#UPRClient.get_user_opt_profile"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#upr_client.UPRClient.get_user_opt_profile" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="upr_client.UPRClient.get_user_psa">
+<code class="descname">get_user_psa</code><span class="sig-paren">(</span><em>user_id</em>, <em>is_active=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/upr_client.html#UPRClient.get_user_psa"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#upr_client.UPRClient.get_user_psa" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="upr_client.UPRClient.get_user_psaconf">
+<code class="descname">get_user_psaconf</code><span class="sig-paren">(</span><em>user_id</em>, <em>psa_id=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/upr_client.html#UPRClient.get_user_psaconf"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#upr_client.UPRClient.get_user_psaconf" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="upr_client.UPRClient.get_user_rag">
+<code class="descname">get_user_rag</code><span class="sig-paren">(</span><em>user_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/upr_client.html#UPRClient.get_user_rag"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#upr_client.UPRClient.get_user_rag" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="upr_client.UPRClient.get_user_type">
+<code class="descname">get_user_type</code><span class="sig-paren">(</span><em>user_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/upr_client.html#UPRClient.get_user_type"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#upr_client.UPRClient.get_user_type" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="upr_client.UPRClient.list_group">
+<code class="descname">list_group</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="_modules/upr_client.html#UPRClient.list_group"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#upr_client.UPRClient.list_group" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="upr_client.UPRClient.list_user_group">
+<code class="descname">list_user_group</code><span class="sig-paren">(</span><em>group</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/upr_client.html#UPRClient.list_user_group"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#upr_client.UPRClient.list_user_group" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="upr_client.UPRClient.post_ag">
+<code class="descname">post_ag</code><span class="sig-paren">(</span><em>target_id</em>, <em>editor_id</em>, <em>ag</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/upr_client.html#UPRClient.post_ag"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#upr_client.UPRClient.post_ag" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="upr_client.UPRClient.post_psaconf">
+<code class="descname">post_psaconf</code><span class="sig-paren">(</span><em>user_id</em>, <em>psa_id</em>, <em>configuration</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/upr_client.html#UPRClient.post_psaconf"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#upr_client.UPRClient.post_psaconf" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="upr_client.UPRClient.post_rag">
+<code class="descname">post_rag</code><span class="sig-paren">(</span><em>target_id</em>, <em>ned_info</em>, <em>rag</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/upr_client.html#UPRClient.post_rag"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#upr_client.UPRClient.post_rag" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="upr_client.UPRClient.post_reconciliation_report">
+<code class="descname">post_reconciliation_report</code><span class="sig-paren">(</span><em>user_id</em>, <em>ned_info</em>, <em>reconciliation_report</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/upr_client.html#UPRClient.post_reconciliation_report"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#upr_client.UPRClient.post_reconciliation_report" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="upr_client.UPRClient.put_executed_psa">
+<code class="descname">put_executed_psa</code><span class="sig-paren">(</span><em>user_id</em>, <em>psa_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/upr_client.html#UPRClient.put_executed_psa"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#upr_client.UPRClient.put_executed_psa" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="upr_client.UPRClient.put_group_psa">
+<code class="descname">put_group_psa</code><span class="sig-paren">(</span><em>group</em>, <em>psa_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/upr_client.html#UPRClient.put_group_psa"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#upr_client.UPRClient.put_group_psa" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="upr_client.UPRClient.put_user_hspl">
+<code class="descname">put_user_hspl</code><span class="sig-paren">(</span><em>user_id</em>, <em>hspl</em>, <em>target</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/upr_client.html#UPRClient.put_user_hspl"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#upr_client.UPRClient.put_user_hspl" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="upr_client.UPRClient.put_user_mspl_psa">
+<code class="descname">put_user_mspl_psa</code><span class="sig-paren">(</span><em>user_id</em>, <em>psa_id</em>, <em>mspl_id</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/upr_client.html#UPRClient.put_user_mspl_psa"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#upr_client.UPRClient.put_user_mspl_psa" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="upr_client.UPRClient.put_user_psa">
+<code class="descname">put_user_psa</code><span class="sig-paren">(</span><em>user_id</em>, <em>data=None</em>, <em>psa_id=None</em>, <em>active=None</em>, <em>running_order=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/upr_client.html#UPRClient.put_user_psa"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#upr_client.UPRClient.put_user_psa" title="Permalink to this definition">¶</a></dt>
+<dd><p>Data must be in the form accepted by the UPR
+{&#8216;PSAList&#8217;:[</p>
+<blockquote>
+<div><blockquote>
+<div><blockquote>
+<div><dl class="docutils">
+<dt>{</dt>
+<dd>&#8216;psa_id&#8217;:&#8216;12345&#8217;,
+&#8216;active&#8217;:true,
+&#8216;running_order&#8217;:2</dd>
+</dl>
+<p>},
+{</p>
+<blockquote>
+<div>&#8216;psa_id&#8217;:&#8216;54321&#8217;,
+&#8216;active&#8217;:false,
+&#8216;running_order&#8217;:1</div></blockquote>
+<p>}</p>
+</div></blockquote>
+<p>]</p>
+</div></blockquote>
+<p>}</p>
+</div></blockquote>
+</dd></dl>
+
+<dl class="method">
+<dt id="upr_client.UPRClient.update_group">
+<code class="descname">update_group</code><span class="sig-paren">(</span><em>group</em>, <em>description=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/upr_client.html#UPRClient.update_group"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#upr_client.UPRClient.update_group" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+<dl class="method">
+<dt id="upr_client.UPRClient.update_user">
+<code class="descname">update_user</code><span class="sig-paren">(</span><em>user_id</em>, <em>name=None</em>, <em>password=None</em>, <em>integrityLevel=None</em>, <em>type=None</em>, <em>is_cooperative=None</em>, <em>is_infrastructure=None</em>, <em>is_admin=None</em>, <em>creator=None</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/upr_client.html#UPRClient.update_user"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#upr_client.UPRClient.update_user" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="index.html">
+              <img class="logo" src="_static/secured.png" alt="Logo"/>
+            </a></p><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="psarClient.html" title="previous chapter">psarClient module</a></li>
+      <li>Next: <a href="userTVD.html" title="next chapter">userTVD module</a></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/upr_client.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, SECURity at the network EDge.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      
+      |
+      <a href="_sources/upr_client.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

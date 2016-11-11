@@ -1,0 +1,15 @@
+{
+	
+	"name":"PSA_conf_file",
+	"user_token": "topolino",
+	"configurations": [
+
+		{
+			"PSA_id": "12345",
+			"conf_id": "ipTraf_topolino",
+			"conf_script": "configuration script for ipTraf"
+		}
+
+	]
+
+}

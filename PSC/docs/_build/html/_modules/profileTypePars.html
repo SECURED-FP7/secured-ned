@@ -1,0 +1,227 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>profileTypePars &mdash; PSC  documentation</title>
+    
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="PSC  documentation" href="../index.html" />
+    <link rel="up" title="Module code" href="index.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for profileTypePars</h1><div class="highlight"><pre>
+<span></span><span class="sd">&#39;&#39;&#39;   </span>
+
+<span class="sd">    File:       profileTypePars.py</span>
+<span class="sd">    Created:    23/08/2014</span>
+<span class="sd">  </span>
+<span class="sd">    @author:    Francesco Ciaccia</span>
+<span class="sd">  </span>
+<span class="sd">    Description:</span>
+<span class="sd">        This script take as input the profyleType json file and computes the TVD topology to be sent back </span>
+<span class="sd">        to the Orchestror</span>
+
+<span class="sd">&#39;&#39;&#39;</span>
+
+<span class="kn">import</span> <span class="nn">requests</span>
+<span class="kn">import</span> <span class="nn">json</span> 
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">from</span> <span class="nn">pscExceptions</span> <span class="kn">import</span> <span class="n">pscExceptions</span>
+<span class="kn">from</span> <span class="nn">tvdTop</span> <span class="kn">import</span> <span class="n">tvdTop</span>
+<span class="kn">import</span> <span class="nn">utils</span>
+
+<div class="viewcode-block" id="profileTypePars"><a class="viewcode-back" href="../profileTypePars.html#profileTypePars.profileTypePars">[docs]</a><span class="k">class</span> <span class="nc">profileTypePars</span><span class="p">():</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">orchAddr</span><span class="p">,</span> <span class="n">configsPath</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">orchAddr</span> <span class="o">=</span> <span class="n">orchAddr</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">conf_URIs_list</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">conf_list</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sg_dict</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">configsPath</span> <span class="o">=</span> <span class="n">configsPath</span>
+
+
+<div class="viewcode-block" id="profileTypePars.requestProfileType"><a class="viewcode-back" href="../profileTypePars.html#profileTypePars.profileTypePars.requestProfileType">[docs]</a>    <span class="k">def</span> <span class="nf">requestProfileType</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Sending profile type request to Orchestrator...&quot;</span><span class="p">)</span>
+        
+        <span class="c1"># We don&#39;t need to send the token, actually we need to get it from the TVDM</span>
+        <span class="c1">#body = {&quot;token&quot;:self.token}</span>
+        <span class="n">header</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;Accept&#39;</span><span class="p">:</span> <span class="s1">&#39;application/json&#39;</span><span class="p">,</span> <span class="s1">&#39;Content-Type&#39;</span><span class="p">:</span><span class="s1">&#39;application/json&#39;</span><span class="p">}</span>
+        <span class="c1"># check: body of GET should not contain anything influencing the decision of the server</span>
+        <span class="c1"># use post for that</span>
+        <span class="c1">#resp = requests.get(self.orchAddr+&quot;/getGraph&quot;, data=json.dumps(body), headers=header)</span>
+        <span class="n">resp</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">orchAddr</span><span class="o">+</span><span class="s2">&quot;/getGraph&quot;</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="n">header</span><span class="p">)</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Orchestrator replied: &quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">resp</span><span class="o">.</span><span class="n">status_code</span><span class="p">)</span><span class="o">+</span><span class="s2">&quot; &quot;</span><span class="o">+</span><span class="n">resp</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">resp</span></div>
+
+
+<div class="viewcode-block" id="profileTypePars.parsProfile"><a class="viewcode-back" href="../profileTypePars.html#profileTypePars.profileTypePars.parsProfile">[docs]</a>    <span class="k">def</span> <span class="nf">parsProfile</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">resp</span><span class="p">):</span>
+        <span class="c1"># convert resp body to JSON-like string</span>
+        <span class="n">proType</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">resp</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+
+        <span class="c1"># Receives the profileType json object to be processed</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">proType</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;user_profile_type&quot;</span><span class="p">):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="c1"># resolveTVDtop generates the service graph structure in form of a dictionary </span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">TVDman</span> <span class="o">=</span> <span class="n">tvdTop</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sg_dict</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">sg_dict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">TVDman</span><span class="o">.</span><span class="n">resolveTVDtop</span><span class="p">(</span><span class="n">proType</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+                <span class="c1">#logging.error(&quot;Unable to write to file &quot;+path+&quot;/&quot;+v_conf)</span>
+                <span class="n">logging</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;TVDman error:&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">exc</span><span class="o">.</span><span class="n">message</span><span class="p">))</span>
+                <span class="k">raise</span> <span class="n">exc</span>
+
+            <span class="c1"># the service graph dictionary is encoded in json format according to the </span>
+            <span class="c1"># serviceGraph schema and sent to the Orchestrator </span>
+            <span class="n">body</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sg_dict</span><span class="p">)</span>
+            <span class="n">header</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;Accept&#39;</span><span class="p">:</span> <span class="s1">&#39;application/json&#39;</span><span class="p">,</span> <span class="s1">&#39;Content-Type&#39;</span><span class="p">:</span><span class="s1">&#39;application/json&#39;</span><span class="p">}</span>	    
+
+            <span class="c1"># sends the service graph to the Orchestrator</span>
+            <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Sending PSA service graph instantiation request to Orchestrator...&quot;</span><span class="p">)</span>
+            <span class="n">resp</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">put</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">orchAddr</span><span class="o">+</span><span class="s2">&quot;/createPSA&quot;</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">body</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="n">header</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="p">(</span><span class="n">resp</span><span class="o">.</span><span class="n">status_code</span> <span class="o">!=</span> <span class="mi">200</span><span class="p">):</span>
+                <span class="n">logging</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Orchestrator failed to instatiate TVD error: &quot;</span><span class="o">+</span><span class="n">resp</span><span class="o">.</span><span class="n">status_code</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="n">pscExceptions</span><span class="o">.</span><span class="n">TVDnotInstantiated</span><span class="p">(</span><span class="s2">&quot;Orchestator response failure&quot;</span><span class="p">)</span>
+            
+            <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Orchestrator replied: &quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">resp</span><span class="o">.</span><span class="n">status_code</span><span class="p">)</span><span class="o">+</span><span class="s2">&quot; &quot;</span><span class="o">+</span><span class="n">resp</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+
+            <span class="c1"># scan PSAs list and retrieve configuration files URIs</span>
+            <span class="n">PSAList</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sg_dict</span><span class="p">[</span><span class="s1">&#39;PSAs&#39;</span><span class="p">]</span>
+            
+            <span class="c1"># Create path if not existing</span>
+            <span class="n">utils</span><span class="o">.</span><span class="n">mkdir_p</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">configsPath</span><span class="p">)</span>
+            <span class="c1"># Save the list of PSA&#39;s, i.e., the user graph</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">configsPath</span> <span class="o">+</span> <span class="s2">&quot;/psa_list&quot;</span><span class="p">,</span> <span class="s1">&#39;wb&#39;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>            
+                <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">PSAList</span><span class="p">))</span>
+
+            <span class="k">for</span> <span class="n">psa</span> <span class="ow">in</span> <span class="n">PSAList</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">conf_URIs_list</span><span class="p">[</span><span class="n">psa</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">]]</span> <span class="o">=</span> <span class="n">psa</span><span class="p">[</span><span class="s1">&#39;conf&#39;</span><span class="p">]</span>
+
+            <span class="c1"># petition for PSA configuration file</span>
+            <span class="c1"># TODO adapt TVDM to reply to configuration file request (aka register every conf file as a resource on the TVDM interface)</span>
+            <span class="k">for</span> <span class="n">k_id</span><span class="p">,</span> <span class="n">v_conf</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">conf_URIs_list</span><span class="o">.</span><span class="n">iteritems</span><span class="p">():</span>
+                <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Sending request of conf file for PSA &quot;</span><span class="o">+</span><span class="n">k_id</span><span class="p">)</span>
+                <span class="n">header</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;Content-Type&#39;</span><span class="p">:</span><span class="s1">&#39;application/octet-stream&#39;</span><span class="p">}</span>
+                <span class="n">resp</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">orchAddr</span><span class="o">+</span><span class="s2">&quot;/getConf/&quot;</span><span class="o">+</span><span class="n">k_id</span><span class="o">+</span><span class="s2">&quot;/&quot;</span><span class="o">+</span><span class="n">v_conf</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="n">header</span><span class="p">)</span>
+                <span class="c1">#resp = requests.get(self.orchAddr+&quot;/getConf/&quot;+k_id+&quot;_&quot;+v_conf, headers=header)</span>
+                <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Orchestrator replied: &quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">resp</span><span class="o">.</span><span class="n">status_code</span><span class="p">))</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">resp</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="n">requests</span><span class="o">.</span><span class="n">codes</span><span class="o">.</span><span class="n">ok</span><span class="p">):</span>
+                    <span class="c1">#path=self.configsPath+&quot;/&quot;+k_id</span>
+                    <span class="c1">#utils.mkdir_p(self.configsPath)</span>
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="c1">#fp=open(path+&quot;/&quot;+v_conf,&#39;wb&#39;)</span>
+                        <span class="n">fp</span><span class="o">=</span><span class="nb">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">configsPath</span><span class="o">+</span><span class="s2">&quot;/&quot;</span><span class="o">+</span><span class="n">k_id</span><span class="p">,</span><span class="s1">&#39;wb&#39;</span><span class="p">)</span>
+                        <span class="n">fp</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">resp</span><span class="o">.</span><span class="n">content</span><span class="p">)</span>
+                        <span class="n">fp</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+                        <span class="n">logging</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;PSA &quot;</span><span class="o">+</span><span class="n">k_id</span><span class="o">+</span><span class="s2">&quot; configuration &quot;</span><span class="o">+</span><span class="n">v_conf</span><span class="o">+</span><span class="s2">&quot; registered&quot;</span><span class="p">)</span>
+                    <span class="k">except</span> <span class="ne">IOError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+                        <span class="c1">#logging.error(&quot;Unable to write to file &quot;+path+&quot;/&quot;+v_conf)</span>
+                        <span class="n">logging</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Unable to write to file &quot;</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">configsPath</span><span class="o">+</span><span class="s2">&quot;/&quot;</span><span class="o">+</span><span class="n">k_id</span><span class="p">)</span>
+                        <span class="k">raise</span> <span class="n">exc</span>
+
+                <span class="k">else</span><span class="p">:</span> 
+                    <span class="n">logging</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Bad configuration request for PSA &quot;</span><span class="o">+</span><span class="n">k_id</span><span class="p">)</span>
+                    <span class="k">raise</span> <span class="n">pscExceptions</span><span class="o">.</span><span class="n">PSAconfNotFound</span><span class="p">(</span><span class="s2">&quot;Orchestator response failure&quot;</span><span class="p">)</span>
+
+
+
+            <span class="c1"># # send requests for the PSAs configuration files to the Orchestator</span>
+            <span class="c1"># logging.info(&quot;Sending PSA configuration files request to Orchestrator...&quot;)</span>
+            <span class="c1"># body = json.dumps(self.conf_URIs_list)</span>
+            <span class="c1"># header = {&#39;Accept&#39;: &#39;application/json&#39;, &#39;Content-Type&#39;:&#39;application/json&#39;}   </span>
+            <span class="c1"># resp = requests.post(self.orchAddr+&quot;/getConf&quot;, data=body, headers=header)           </span>
+            <span class="c1"># logging.info(&quot;Orchestrator replied: &quot;+resp.status_code+&quot; &quot;+resp.text)</span>
+
+            <span class="c1"># # receives PSAs configuration files</span>
+            <span class="c1"># sjson = json.loads(resp.text)</span>
+            <span class="c1"># #rjson = json.loads(sjson)</span>
+            <span class="c1"># self.conf_list = sjson[&#39;configurations&#39;]            </span>
+            
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">pscExceptions</span><span class="o">.</span><span class="n">pscscWrongProfileType</span><span class="p">(</span><span class="s2">&quot;Wrong profile type file: [name] field is not as expected&quot;</span><span class="p">)</span></div></div>
+    
+
+    <span class="c1"># def getPSAconf(self, psaID):</span>
+        
+    <span class="c1">#     for psa in self.conf_list:</span>
+    <span class="c1">#         if (psa[&#39;PSA_id&#39;] == psaID):</span>
+    <span class="c1">#             return psa[&#39;conf_script&#39;]</span>
+        
+    <span class="c1">#     raise pscExceptions.PSAconfNotFound(&quot;Configuration file for the requested PSA has not been found or does not exist&quot;)</span>
+
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../index.html">
+              <img class="logo" src="../_static/secured.png" alt="Logo"/>
+            </a></p><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, SECURED.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

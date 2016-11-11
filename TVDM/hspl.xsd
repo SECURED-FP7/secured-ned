@@ -1,0 +1,489 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schema xmlns="http://www.w3.org/2001/XMLSchema" targetNamespace="http://www.example.org/Refinement_Schema" xmlns:tns="http://www.example.org/Refinement_Schema" elementFormDefault="qualified">
+
+
+    <simpleType name="action">
+    	<restriction base="string">
+    		<enumeration value="authorise_access"></enumeration>
+    		<enumeration value="no_authorise_access"></enumeration>
+    		<enumeration value="enable"></enumeration>
+    		<enumeration value="remove"></enumeration>
+    		<enumeration value="reduce"></enumeration>
+    		<enumeration value="check_over"></enumeration>
+    		<enumeration value="count"></enumeration>
+    		<enumeration value="prot_conf"></enumeration>
+    		<enumeration value="prot_integr"></enumeration>
+    		<enumeration value="prot_conf_integr"></enumeration>
+    		<enumeration value="compress"></enumeration>
+    	</restriction>
+    </simpleType>
+
+    <simpleType name="objectH">
+    	<restriction base="string">
+    		<enumeration value="VoIP_traffic"></enumeration>
+    		<enumeration value="P2P_traffic"></enumeration>
+    		<enumeration value="T3G4G_traffic"></enumeration>
+    		<enumeration value="Internet_traffic"></enumeration>
+    		<enumeration value="Intranet_traffic"></enumeration>
+    		<enumeration value="DNS_traffic"></enumeration>
+    		<enumeration value="resource"></enumeration>
+    		<enumeration value="file_scanning"></enumeration>
+    		<enumeration value="email_scanning"></enumeration>
+    		<enumeration value="antivirus"></enumeration>
+    		<enumeration value="basic_prarental_control"></enumeration>
+    		<enumeration value="advance_parental_control"></enumeration>
+    		<enumeration value="lawful_interception"></enumeration>
+    		<enumeration value="IDS_IPS"></enumeration>
+    		<enumeration value="DDos_attack_protection"></enumeration>
+    		<enumeration value="tacking_techniques"></enumeration>
+    		<enumeration value="advertisement"></enumeration>
+    		<enumeration value="bandwidth"></enumeration>
+    		<enumeration value="security_status"></enumeration>
+    		<enumeration value="connection"></enumeration>
+    		<enumeration value="AllTraffic"></enumeration>
+    		<enumeration value="logging"></enumeration>
+    	</restriction>
+    </simpleType>
+
+
+    <complexType name="purpose">
+    	<sequence maxOccurs="unbounded" minOccurs="1">
+    		<element name="purpose_name" type="string" maxOccurs="unbounded" minOccurs="1"></element>
+    	</sequence>
+    </complexType>
+
+    <complexType name="time_period">
+    	<sequence maxOccurs="unbounded" minOccurs="1">
+    		<element name="interval_time" type="tns:time_interval" minOccurs="0" maxOccurs="unbounded"></element>
+    	</sequence>
+    	<attribute name="time-zone" type="string"></attribute>
+    </complexType>
+    
+    <complexType name="time_interval">
+    	<sequence>
+    		<element name="week_day" type="tns:week_day" minOccurs="0"
+    			maxOccurs="unbounded">
+    		</element>
+    		<element name="time_hours" type="tns:time_hour" minOccurs="0" maxOccurs="unbounded"></element>
+    	</sequence>
+    </complexType>
+
+    <complexType name="traffic_target">
+    	<sequence maxOccurs="unbounded" minOccurs="1">
+    		<element name="target_name" type="string" maxOccurs="unbounded" minOccurs="1"></element>
+    	</sequence>
+    </complexType>
+    
+
+
+    <complexType name="specific_URL">
+    	<sequence maxOccurs="unbounded" minOccurs="1">
+    		<element name="URL" type="string" maxOccurs="unbounded" minOccurs="1"></element>
+    	</sequence>
+    </complexType>
+
+    <complexType name="type_Content">
+    	<sequence maxOccurs="unbounded" minOccurs="1">
+    		<element name="content_name" type="string" maxOccurs="unbounded" minOccurs="1"></element>
+    	</sequence>
+    </complexType>
+
+
+    <complexType name="resource_values">
+    	<sequence maxOccurs="unbounded" minOccurs="1">
+    		<element name="name_resurces" type="string" maxOccurs="unbounded" minOccurs="1"></element>
+    	</sequence>
+    </complexType>
+
+    <complexType name="fields">
+    	<sequence>
+    		<element name="time_period" type="tns:time_period"
+    			minOccurs="0" maxOccurs="1">
+    		</element>
+    		<element name="traffic_target" type="tns:traffic_target"
+    			minOccurs="0" maxOccurs="1">
+    		</element>
+    		<element name="specific_URL" type="tns:specific_URL"
+    			minOccurs="0" maxOccurs="1">
+    		</element>
+    		<element name="type_content" type="tns:type_Content"
+    			minOccurs="0" maxOccurs="1">
+    		</element>
+    		<element name="purpose" type="tns:purpose" minOccurs="0"
+    			maxOccurs="1">
+    		</element>
+    		<element name="resource_values" type="tns:resource_values"
+    			minOccurs="0" maxOccurs="1">
+    		</element>
+    	</sequence>
+    	<attribute name="bandwidth" type="double"></attribute>
+    </complexType>
+
+    
+    <complexType name="hspl">
+    	<sequence>
+    		<element name="action" type="tns:action" minOccurs="1"
+    			maxOccurs="1">
+    		</element>
+    		<element name="objectH" type="tns:objectH" minOccurs="1"
+    			maxOccurs="1">
+    		</element>
+    		<element name="fields" type="tns:fields" minOccurs="0"
+    			maxOccurs="1">
+    		</element>
+    		<element name="capabilities" type="tns:capability_list"
+    			minOccurs="0" maxOccurs="1">
+    		</element>
+    		<element name="candidates" type="tns:Candidates"
+    			maxOccurs="1" minOccurs="0">
+    		</element>
+    		<element name="suitableImplementation"
+    			type="tns:suitableImplementation_list" minOccurs="0" maxOccurs="1">
+    		</element>
+    		<element name="non-enforzable-Capability"
+    			type="tns:capability_list" minOccurs="0" maxOccurs="1">
+    		</element>
+    		<element name="implementation" type="tns:PSA_list" minOccurs="0" maxOccurs="1"></element>
+    	</sequence>
+    	<attribute name="subject" type="string" use="optional"></attribute>
+    	<attribute name="enforzability" type="boolean" default="true"></attribute>
+    	<attribute name="id" type="ID" use="required"></attribute>
+    </complexType>
+
+
+
+
+    <complexType name="PSA">
+    	<sequence>
+    		<element name="PSA_info" type="tns:PSA_info" minOccurs="0"
+    			maxOccurs="1">
+    		</element>
+    		<element name="PSA_characteristic"
+    			type="tns:PSA_characteristic" minOccurs="1" maxOccurs="1">
+    		</element>
+    		<element name="capability" type="tns:capability_list"></element>
+    		<element name="MSPL_list" type="tns:MSPL_list" maxOccurs="1" minOccurs="0"></element>
+    	</sequence>
+    	<attribute name="name" type="string"></attribute>
+    </complexType>
+
+    <complexType name="PSA_info">
+    </complexType>
+
+    <complexType name="PSA_characteristic">
+    	<attribute name="cost" type="double" use="required"></attribute>
+    	<attribute name="latency" type="double" use="required"></attribute>
+    	<attribute name="rating" type="double" use="required"></attribute>
+    </complexType>
+
+
+
+
+    <complexType name="HSPL_list">
+    	<sequence>
+    		<element name="hspl" type="tns:hspl" maxOccurs="unbounded" minOccurs="1"></element>
+    	</sequence>
+    </complexType>
+
+
+
+
+
+
+    <complexType name="capability_list">
+    	<sequence>
+    		<element name="capability_list" type="tns:capability" maxOccurs="unbounded" minOccurs="0"></element>
+    	</sequence>
+    </complexType>
+
+
+
+<!--     <complexType name="Capability">
+    	<sequence>
+    		<element name="L4_filtering" type="boolean" maxOccurs="1"
+    			minOccurs="1">
+    		</element>
+    		<element name="L7_filtering" type="boolean" maxOccurs="1"
+    			minOccurs="1">
+    		</element>
+    		<element name="timing" type="boolean" maxOccurs="1"
+    			minOccurs="1">
+    		</element>
+    		<element name="L7_traffic_inspection" type="boolean"
+    			maxOccurs="1" minOccurs="1">
+    		</element>
+    		<element name="T3G4G_filtering" type="boolean" maxOccurs="1"
+    			minOccurs="1">
+    		</element>
+    		<element name="DNS_filtering" type="boolean" maxOccurs="1"
+    			minOccurs="1">
+    		</element>
+    		<element name="offline_malware_analysis" type="boolean"
+    			maxOccurs="1" minOccurs="1">
+    		</element>
+    		<element name="online_SPAM_analysis" type="boolean"
+    			maxOccurs="1" minOccurs="1">
+    		</element>
+    		<element name="online_antivirus_analysis" type="boolean"
+    			maxOccurs="1" minOccurs="1">
+    		</element>
+    		<element name="network_traffic_analysis" type="boolean"
+    			maxOccurs="1" minOccurs="1">
+    		</element>
+    		<element name="DDos_attack_protection" type="boolean"
+    			maxOccurs="1" minOccurs="1">
+    		</element>
+    		<element name="lawful_interception" type="boolean"
+    			maxOccurs="1" minOccurs="1">
+    		</element>
+    		<element name="L4_count_connection" type="boolean"
+    			maxOccurs="1" minOccurs="1">
+    		</element>
+    		<element name="DNS_traffic_count" type="boolean"
+    			maxOccurs="1" minOccurs="1">
+    		</element>
+    		<element name="confidentiality_protection" type="boolean"
+    			maxOccurs="1" minOccurs="1">
+    		</element>
+    		<element name="integrity_protection" type="boolean"
+    			maxOccurs="1" minOccurs="1">
+    		</element>
+    		<element name="compress" type="boolean" maxOccurs="1"
+    			minOccurs="1">
+    		</element>
+    		<element name="logging" type="boolean" maxOccurs="1"
+    			minOccurs="1">
+    		</element>
+    		<element name="resource_authorise_access" type="boolean"
+    			maxOccurs="1" minOccurs="1">
+    		</element>
+    		<element name="reduce_bandwidth" type="boolean"
+    			maxOccurs="1" minOccurs="1">
+    		</element>
+    		<element name="online_security_analyzer" type="boolean"
+    			maxOccurs="1" minOccurs="1">
+    		</element>
+    		<element name="basic_parental_control" type="boolean"
+    			maxOccurs="1" minOccurs="1">
+    		</element>
+    		<element name="advanced_parental_control" type="boolean" maxOccurs="1" minOccurs="1"></element>
+    	</sequence>
+    </complexType> -->
+
+    <simpleType name="capability">
+    	<restriction base="string">
+    		<enumeration value="Filtering_L4"></enumeration>
+    		<enumeration value="Filtering_L7"></enumeration>
+    		<enumeration value="Timing"></enumeration>
+    		<enumeration value="TrafficInspection_L7"></enumeration>
+    		<enumeration value="Filtering_3G4G"></enumeration>
+    		<enumeration value="Filtering_DNS"></enumeration>
+    		<enumeration value="Offline_malware_analysis"></enumeration>
+    		<enumeration value="Online_SPAM_analysis"></enumeration>
+    		<enumeration value="Online_antivirus_analysis"></enumeration>
+    		<enumeration value="Network_traffic_analysis"></enumeration>
+    		<enumeration value="DDos_attack_protection"></enumeration>
+    		<enumeration value="lawful_interception"></enumeration>
+    		<enumeration value="Count_L4Connection"></enumeration>
+    		<enumeration value="Count_DNS"></enumeration>
+    		<enumeration value="Protection_confidentiality"></enumeration>
+    		<enumeration value="Protection_integrity"></enumeration>
+    		<enumeration value="Compress"></enumeration>
+    		<enumeration value="Logging"></enumeration>
+    		<enumeration value="AuthoriseAccess_resurce"></enumeration>
+    		<enumeration value="Reduce_bandwidth"></enumeration>
+    		<enumeration value="Online_security_analyzer"></enumeration>
+    		<enumeration value="Basic_parental_control"></enumeration>
+    		<enumeration value="Advanced_parental_control"></enumeration>
+    		<enumeration value="IPSec_protocol"></enumeration>
+    		<enumeration value="TLS_protocol"></enumeration>
+    	</restriction>
+    </simpleType>
+
+
+    <complexType name="PSA_list">
+    	<sequence>
+    		<element name="psa" type="tns:PSA" maxOccurs="unbounded" minOccurs="0"></element>
+    	</sequence>
+    </complexType>
+
+    <element name="Mapping">
+     <complexType>
+     	<sequence>
+     		<element name="hspl_list" type="tns:HSPL_list"
+     			minOccurs="0" maxOccurs="1">
+     		</element>
+     		<element name="psa_list" type="tns:PSA_list" minOccurs="0"
+     			maxOccurs="1">
+     		</element>
+     		<element name="solution" type="tns:solutionList"
+     			minOccurs="0" maxOccurs="1">
+     		</element>
+     		<element name="service_graph" type="tns:ServiceGraph"
+     			minOccurs="0" maxOccurs="1">
+     		</element>
+     		<element name="mspl_list" type="tns:MSPL_list"
+     			maxOccurs="1" minOccurs="0">
+     		</element>
+     		<element name="remediation" type="tns:RemediationList"
+     			maxOccurs="1" minOccurs="0">
+     		</element>
+     		<element name="user_psa_list" type="tns:PSA_list"
+     			minOccurs="0" maxOccurs="1">
+     		</element>
+     		<element name="additional_psa_list" type="tns:PSA_list" maxOccurs="1" minOccurs="0"></element>
+     	</sequence>
+     	<attribute name="mix" type="boolean" default="false"></attribute>
+     	<attribute name="isEnforciability" type="boolean" default="true"></attribute>
+     </complexType>
+    </element>
+
+   
+
+    <complexType name="Candidates">
+    	<sequence>
+    		<element name="suitable_PSA_list" type="tns:suitablePSA" maxOccurs="unbounded" minOccurs="0"></element>
+    	</sequence>
+    </complexType>
+
+    <complexType name="suitablePSA">
+    	<sequence>
+    		<element name="capability" type="tns:capability"
+    			maxOccurs="1" minOccurs="1">
+    		</element>
+    		<element name="psa_list" type="tns:PSA_list"></element>
+    	</sequence>
+    </complexType>
+
+    <complexType name="suitableImplementation_list">
+    	<sequence>
+    		<element name="subitableImplementation" type="tns:PSA_list"
+    			maxOccurs="unbounded" minOccurs="0">
+    		</element>
+    	</sequence>
+    	<attribute name="name" type="string"></attribute>
+    </complexType>
+
+    <complexType name="solution">
+    	<sequence>
+    		<element name="psaList" type="tns:PSA_list"></element>
+    	</sequence>
+    	<attribute name="cost" type="double"></attribute>
+    	<attribute name="latency" type="double"></attribute>
+    	<attribute name="rating" type="double"></attribute>
+    </complexType>
+
+    <complexType name="solutionList">
+    	<sequence>
+    		<element name="solutions" type="tns:solution" minOccurs="0" maxOccurs="unbounded"></element>
+    	</sequence>
+    </complexType>
+
+    <complexType name="ServiceGraph">
+    	<sequence>
+    		<element name="service" type="tns:Service" minOccurs="0"
+    			maxOccurs="unbounded">
+    		</element>
+    		<element name="rootService" type="IDREF" minOccurs="1"
+    			maxOccurs="1">
+    		</element>
+    		<element name="endService" type="IDREF" minOccurs="1"
+    			maxOccurs="1">
+    		</element>
+    		<element name="edge" type="tns:edge" minOccurs="1" maxOccurs="unbounded"></element>
+    	</sequence>
+    </complexType>
+
+    <complexType name="Service">
+    	<sequence>
+    		<element name="PSA" type="tns:PSA" minOccurs="0"
+    			maxOccurs="1">
+    		</element>
+    		<element name="capability" type="tns:capability"
+    			minOccurs="0" maxOccurs="1">
+    		</element>
+    	</sequence>
+    	<attribute name="serviceID" type="ID"></attribute>
+    	<attribute name="MSPL_ID" type="string" use="optional"></attribute>
+    </complexType>
+
+
+
+
+    <complexType name="edge">
+    	<sequence>
+    		<element name="src_Service" type="IDREF" minOccurs="1" maxOccurs="1"></element>
+    		<element name="dst_Service" type="IDREF" minOccurs="1" maxOccurs="1"></element>
+    		<element name="networkFields" type="tns:networkFields" minOccurs="0" maxOccurs="1"></element>
+    	</sequence>
+    </complexType>
+
+    <complexType name="time_hour">
+    <attribute name="start-time" type="time"></attribute>
+    	<attribute name="end-time" type="time"></attribute>
+    
+    </complexType>
+
+     <simpleType name="week_day">
+    			<restriction base="string">
+    				<enumeration value="Mon"></enumeration>
+    				<enumeration value="Tue"></enumeration>
+    				<enumeration value="Wed"></enumeration>
+    				<enumeration value="Thu"></enumeration>
+    				<enumeration value="Fri"></enumeration>
+    				<enumeration value="Sat"></enumeration>
+    				<enumeration value="Sun"></enumeration>
+    			</restriction>
+    </simpleType> 
+
+    
+    <complexType name="networkFields"></complexType>
+
+    <complexType name="MSPL">
+    	<sequence>
+    		<element name="capabilities" type="tns:capability_list"
+    			minOccurs="0" maxOccurs="1">
+    		</element>
+    		<element name="candidates" type="tns:Candidates"
+    			maxOccurs="1" minOccurs="0">
+    		</element>
+    		<element name="suitableImplementation"
+    			type="tns:suitableImplementation_list" minOccurs="0" maxOccurs="1">
+    		</element>
+    		<element name="non-enforzable-Capability"
+    			type="tns:capability_list" minOccurs="0" maxOccurs="1">
+    		</element>
+    		<element name="implementation" type="tns:PSA_list" minOccurs="0" maxOccurs="1"></element>
+    	</sequence>
+    	<attribute name="id" type="ID" use="required"></attribute>
+    	<attribute name="enforzability" type="boolean" default="true"></attribute>
+    	
+    </complexType>
+
+    <complexType name="MSPL_list">
+    	<sequence>
+    		<element name="mspl_list" type="tns:MSPL" maxOccurs="unbounded" minOccurs="1"></element>
+    	</sequence>
+    </complexType>
+
+    <complexType name="RemediationList">
+    <sequence>
+    		<element name="solution_repository" type="tns:Remediationt" maxOccurs="unbounded" minOccurs="0"></element>
+    		<element name="solution_market" type="tns:Remediationt" maxOccurs="unbounded" minOccurs="0"></element>
+    	</sequence>
+    </complexType>
+
+    <complexType name="Remediationt">
+
+    	<sequence>
+    		<element name="hspl" type="tns:hspl" maxOccurs="1"
+    			minOccurs="0">
+    		</element>
+    		<element name="mspl" type="tns:MSPL" maxOccurs="1"
+    			minOccurs="0">
+    		</element>
+    		<element name="suitablePSA" type="tns:suitablePSA"></element>
+    	</sequence>
+    </complexType>
+    
+</schema>

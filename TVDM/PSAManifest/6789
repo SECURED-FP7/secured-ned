@@ -1,0 +1,21 @@
+{
+	"PSA_id":"6789",
+	"disk": "ipTraf2.img",
+	"interface": [
+			{
+			"network":"data", 
+			"type":"data_in"
+			},
+			{
+			"network":"data", 
+			"type":"data_out"
+			},
+			{
+			"network":"control", 
+			"type":"manage"
+			}
+		],
+	"memory": "1024",
+	"os-architecture": "x86_64",
+	"vcpu": "1"
+}

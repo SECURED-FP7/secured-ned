@@ -1,0 +1,24 @@
+{
+	
+	"name": "user_service_graph",
+	"token": "topolino",
+	"TVDid": "123456ABCDEF789",
+	"PSAs": [
+		
+		{ 
+			"id":"12345",
+			"img": {
+				"imgName":"ipTraf.img",
+				"disk": 4294
+			},
+			"cpu": 1,
+			"mem": 1024,			
+			"conf":"ipTraf_topolino" 
+		}
+
+	],
+
+	"ingress_flow": ["12345"],
+	"egress_flow": ["12345"]
+
+}

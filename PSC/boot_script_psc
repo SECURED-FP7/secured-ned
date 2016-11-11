@@ -1,0 +1,44 @@
+#!/bin/sh
+
+# Place this in /etc/network/if-up.d/
+# For some reason the control for $IFACE as eth1 placed before starting gunicorn 
+# makes gunicorn not to start even when eth1 is the interface being processed. 
+# On the other side making the gunicorn invocation for each interface that comes up (as it happens without the control)
+# does not affect the correct behavior (the new invocation to bind gunicorn to the ip-port fails).
+
+# A quick solution to check that we have both our interfaces up
+check_needed_interfaces (){
+    	local retval=0
+	local test=$(ifconfig | grep -o eth0)$(ifconfig | grep -o eth1)
+	if [ "$test" = "eth0eth1" ]
+	then
+		retval=1
+	fi
+	echo "$retval"
+}
+	
+#commented below line
+#[ "$IFACE" = 'eth1' ] || [ "$IFACE" = 'eth2' ] || exit 0
+
+# For both eth0 and eth1 check if gunicorn can be started
+# eth1 is the interface where PSC serves requests to the user's PSAs
+# being VLAN isolated a reduced MTU is used to send packets 
+if [ "$IFACE" = "eth0" ] || [ "$IFACE" = 'eth1' ]
+	then
+	result=$(check_needed_interfaces)
+	if [ "$result" = 1 ]
+		then
+		cd /home/nedpsc/pythonScript
+		gunicorn -b 192.168.2.1:8080 --access-logfile - psc:app &
+		ifconfig eth1 mtu 1496
+		killall -s SIGKILL dnsmasq 
+		/usr/sbin/dnsmasq --conf-file=dhcp_psc.conf
+	fi
+fi
+
+if [ "$IFACE" = "eth2" ] || [ "$IFACE" = 'eth2' ]
+	then
+	ifconfig eth2 mtu 1496
+	cd /home/nedpsc/pythonScript/manager
+	gunicorn -b 10.2.2.251:8080 --log-file /home/nedpsc/GUNICORN2.log --log-level debug psc_user_monitor:app &
+fi

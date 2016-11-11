@@ -1,0 +1,134 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>commands module &mdash; TVDM  documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="TVDM  documentation" href="index.html" />
+    <link rel="next" title="diskManager module" href="diskManager.html" />
+    <link rel="prev" title="PSAcreation module" href="PSAcreation.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-commands">
+<span id="commands-module"></span><h1>commands module<a class="headerlink" href="#module-commands" title="Permalink to this headline">¶</a></h1>
+<p>Execute shell commands via os.popen() and return status, output.</p>
+<p>Interface summary:</p>
+<blockquote>
+<div><p>import commands</p>
+<p>outtext = commands.getoutput(cmd)
+(exitstatus, outtext) = commands.getstatusoutput(cmd)
+outtext = commands.getstatus(file)  # returns output of &#8220;ls -ld file&#8221;</p>
+</div></blockquote>
+<p>A trailing newline is removed from the output string.</p>
+<p>Encapsulates the basic operation:</p>
+<blockquote>
+<div><blockquote>
+<div>pipe = os.popen(&#8216;{ &#8216; + cmd + &#8216;; } 2&gt;&amp;1&#8217;, &#8216;r&#8217;)
+text = pipe.read()
+sts = pipe.close()</div></blockquote>
+<p>[Note:  it would be nice to add functions to interpret the exit status.]</p>
+</div></blockquote>
+<dl class="function">
+<dt id="commands.getstatusoutput">
+<code class="descclassname">commands.</code><code class="descname">getstatusoutput</code><span class="sig-paren">(</span><em>cmd</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/commands.html#getstatusoutput"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#commands.getstatusoutput" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return (status, output) of executing cmd in a shell.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="commands.getoutput">
+<code class="descclassname">commands.</code><code class="descname">getoutput</code><span class="sig-paren">(</span><em>cmd</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/commands.html#getoutput"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#commands.getoutput" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return output (stdout or stderr) of executing cmd in a shell.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="commands.getstatus">
+<code class="descclassname">commands.</code><code class="descname">getstatus</code><span class="sig-paren">(</span><em>file</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/commands.html#getstatus"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#commands.getstatus" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return output of &#8220;ls -ld &lt;file&gt;&#8221; in a string.</p>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper"><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="PSAcreation.html" title="previous chapter">PSAcreation module</a></li>
+      <li>Next: <a href="diskManager.html" title="next chapter">diskManager module</a></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/commands.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Author.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      
+      |
+      <a href="_sources/commands.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

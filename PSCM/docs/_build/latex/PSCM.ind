@@ -1,0 +1,129 @@
+\begin{theindex}
+\def\bigletter#1{{\Large\sffamily#1}\nopagebreak\vspace{1mm}}
+
+  \bigletter A
+  \item associate\_user\_group() (client.UPRClient method), \hyperpage{4}
+  \item associate\_user\_group() (upr\_client.UPRClient method), \hyperpage{7}
+  \item auth\_user() (client.UPRClient method), \hyperpage{4}
+  \item auth\_user() (upr\_client.UPRClient method), \hyperpage{7}
+  \item Authenticate (class in AuthUser), \hyperpage{2}
+  \item AuthUser (module), \hyperpage{2}
+
+  \indexspace
+  \bigletter C
+  \item client (module), \hyperpage{4}
+  \item Config (module), \hyperpage{3}
+  \item Configuration (class in Config), \hyperpage{3}
+  \item create\_group() (client.UPRClient method), \hyperpage{4}
+  \item create\_group() (upr\_client.UPRClient method), \hyperpage{7}
+  \item create\_mspl() (client.UPRClient method), \hyperpage{4}
+  \item create\_mspl() (upr\_client.UPRClient method), \hyperpage{7}
+  \item create\_user() (client.UPRClient method), \hyperpage{4}
+  \item create\_user() (upr\_client.UPRClient method), \hyperpage{7}
+
+  \indexspace
+  \bigletter D
+  \item delete\_executed\_psa() (client.UPRClient method), \hyperpage{4}
+  \item delete\_executed\_psa() (upr\_client.UPRClient method), \hyperpage{7}
+  \item delete\_group() (client.UPRClient method), \hyperpage{4}
+  \item delete\_group() (upr\_client.UPRClient method), \hyperpage{7}
+  \item delete\_group\_psa() (client.UPRClient method), \hyperpage{4}
+  \item delete\_group\_psa() (upr\_client.UPRClient method), \hyperpage{7}
+  \item delete\_hspl() (client.UPRClient method), \hyperpage{4}
+  \item delete\_hspl() (upr\_client.UPRClient method), \hyperpage{7}
+  \item delete\_mspl() (client.UPRClient method), \hyperpage{4}
+  \item delete\_mspl() (upr\_client.UPRClient method), \hyperpage{7}
+  \item delete\_user() (client.UPRClient method), \hyperpage{4}
+  \item delete\_user() (upr\_client.UPRClient method), \hyperpage{7}
+  \item delete\_user\_group() (client.UPRClient method), \hyperpage{4}
+  \item delete\_user\_group() (upr\_client.UPRClient method), \hyperpage{7}
+  \item delete\_user\_psa() (client.UPRClient method), \hyperpage{4}
+  \item delete\_user\_psa() (upr\_client.UPRClient method), \hyperpage{7}
+
+  \indexspace
+  \bigletter G
+  \item get\_client\_address() (AuthUser.Authenticate method), \hyperpage{2}
+  \item get\_created\_users() (client.UPRClient method), \hyperpage{4}
+  \item get\_created\_users() (upr\_client.UPRClient method), \hyperpage{7}
+  \item get\_executed\_psa() (client.UPRClient method), \hyperpage{4}
+  \item get\_executed\_psa() (upr\_client.UPRClient method), \hyperpage{7}
+  \item get\_group\_psa() (client.UPRClient method), \hyperpage{4}
+  \item get\_group\_psa() (upr\_client.UPRClient method), \hyperpage{7}
+  \item get\_hspl() (client.UPRClient method), \hyperpage{4}
+  \item get\_hspl() (upr\_client.UPRClient method), \hyperpage{7}
+  \item get\_mspl() (client.UPRClient method), \hyperpage{4}
+  \item get\_mspl() (upr\_client.UPRClient method), \hyperpage{7}
+  \item get\_user\_ag() (client.UPRClient method), \hyperpage{4}
+  \item get\_user\_ag() (upr\_client.UPRClient method), \hyperpage{7}
+  \item get\_user\_creator() (client.UPRClient method), \hyperpage{4}
+  \item get\_user\_creator() (upr\_client.UPRClient method), \hyperpage{7}
+  \item get\_user\_groups() (client.UPRClient method), \hyperpage{4}
+  \item get\_user\_groups() (upr\_client.UPRClient method), \hyperpage{7}
+  \item get\_user\_list() (client.UPRClient method), \hyperpage{4}
+  \item get\_user\_list() (upr\_client.UPRClient method), \hyperpage{8}
+  \item get\_user\_mspl\_psa() (client.UPRClient method), \hyperpage{4}
+  \item get\_user\_mspl\_psa() (upr\_client.UPRClient method), \hyperpage{8}
+  \item get\_user\_opt\_profile() (client.UPRClient method), \hyperpage{4}
+  \item get\_user\_opt\_profile() (upr\_client.UPRClient method), \hyperpage{8}
+  \item get\_user\_psa() (client.UPRClient method), \hyperpage{4}
+  \item get\_user\_psa() (upr\_client.UPRClient method), \hyperpage{8}
+  \item get\_user\_psaconf() (client.UPRClient method), \hyperpage{5}
+  \item get\_user\_psaconf() (upr\_client.UPRClient method), \hyperpage{8}
+  \item get\_user\_rag() (client.UPRClient method), \hyperpage{5}
+  \item get\_user\_rag() (upr\_client.UPRClient method), \hyperpage{8}
+  \item get\_user\_type() (client.UPRClient method), \hyperpage{5}
+  \item get\_user\_type() (upr\_client.UPRClient method), \hyperpage{8}
+
+  \indexspace
+  \bigletter I
+  \item inizialize() (Config.Configuration method), \hyperpage{3}
+
+  \indexspace
+  \bigletter L
+  \item list\_group() (client.UPRClient method), \hyperpage{5}
+  \item list\_group() (upr\_client.UPRClient method), \hyperpage{8}
+  \item list\_user\_group() (client.UPRClient method), \hyperpage{5}
+  \item list\_user\_group() (upr\_client.UPRClient method), \hyperpage{8}
+  \item LOGIN\_PAGE\_LOCATION (Config.Configuration attribute), \hyperpage{3}
+
+  \indexspace
+  \bigletter O
+  \item on\_delete() (AuthUser.Authenticate method), \hyperpage{2}
+  \item on\_get() (AuthUser.Authenticate method), \hyperpage{2}
+  \item on\_post() (AuthUser.Authenticate method), \hyperpage{2}
+  \item ORCHESTRATOR\_LOCATION (Config.Configuration attribute), \hyperpage{3}
+
+  \indexspace
+  \bigletter P
+  \item post\_ag() (client.UPRClient method), \hyperpage{5}
+  \item post\_ag() (upr\_client.UPRClient method), \hyperpage{8}
+  \item post\_psaconf() (client.UPRClient method), \hyperpage{5}
+  \item post\_psaconf() (upr\_client.UPRClient method), \hyperpage{8}
+  \item post\_rag() (client.UPRClient method), \hyperpage{5}
+  \item post\_rag() (upr\_client.UPRClient method), \hyperpage{8}
+  \item PSCM\_VERSION (Config.Configuration attribute), \hyperpage{3}
+  \item put\_executed\_psa() (client.UPRClient method), \hyperpage{5}
+  \item put\_executed\_psa() (upr\_client.UPRClient method), \hyperpage{8}
+  \item put\_group\_psa() (client.UPRClient method), \hyperpage{5}
+  \item put\_group\_psa() (upr\_client.UPRClient method), \hyperpage{8}
+  \item put\_user\_hspl() (client.UPRClient method), \hyperpage{5}
+  \item put\_user\_hspl() (upr\_client.UPRClient method), \hyperpage{8}
+  \item put\_user\_mspl\_psa() (client.UPRClient method), \hyperpage{5}
+  \item put\_user\_mspl\_psa() (upr\_client.UPRClient method), \hyperpage{8}
+  \item put\_user\_psa() (client.UPRClient method), \hyperpage{5}
+  \item put\_user\_psa() (upr\_client.UPRClient method), \hyperpage{8}
+
+  \indexspace
+  \bigletter U
+  \item update\_group() (client.UPRClient method), \hyperpage{5}
+  \item update\_group() (upr\_client.UPRClient method), \hyperpage{8}
+  \item update\_user() (client.UPRClient method), \hyperpage{5}
+  \item update\_user() (upr\_client.UPRClient method), \hyperpage{8}
+  \item upr\_client (module), \hyperpage{7}
+  \item UPR\_LOCATION (Config.Configuration attribute), \hyperpage{3}
+  \item UPRClient (class in client), \hyperpage{4}
+  \item UPRClient (class in upr\_client), \hyperpage{7}
+  \item USE\_LOCAL\_FILE (Config.Configuration attribute), \hyperpage{3}
+  \item USER\_DATA\_LOCATION (Config.Configuration attribute), \hyperpage{3}
+
+\end{theindex}

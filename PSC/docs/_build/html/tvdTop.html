@@ -1,0 +1,124 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>tvdTop module &mdash; PSC  documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="PSC  documentation" href="index.html" />
+    <link rel="next" title="utils module" href="utils.html" />
+    <link rel="prev" title="psc_user_monitor module" href="psc_user_monitor.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-tvdTop">
+<span id="tvdtop-module"></span><h1>tvdTop module<a class="headerlink" href="#module-tvdTop" title="Permalink to this headline">¶</a></h1>
+<p>File:       tvdTop.py
+Created:    26/08/2014</p>
+<p>&#64;author:    Francesco Ciaccia, Jarkko K</p>
+<dl class="docutils">
+<dt>Description:</dt>
+<dd>Service class used to compute the service graph to be passed to the Orchestrator, 
+starting from the profileType json file received.
+It includes also methods used by the internal logic of the PSC to store and retrieve info about
+the TVD topology.</dd>
+</dl>
+<dl class="class">
+<dt id="tvdTop.tvdTop">
+<em class="property">class </em><code class="descclassname">tvdTop.</code><code class="descname">tvdTop</code><span class="sig-paren">(</span><em>sg_dict</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tvdTop.html#tvdTop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvdTop.tvdTop" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="method">
+<dt id="tvdTop.tvdTop.resolveTVDtop">
+<code class="descname">resolveTVDtop</code><span class="sig-paren">(</span><em>proType</em><span class="sig-paren">)</span><a class="reference internal" href="_modules/tvdTop.html#tvdTop.resolveTVDtop"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#tvdTop.tvdTop.resolveTVDtop" title="Permalink to this definition">¶</a></dt>
+<dd><p>Right now the TVD resolution logic is a dumb reformatting of the profileType file
+The only valid modification is the added unique TVDid</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="index.html">
+              <img class="logo" src="_static/secured.png" alt="Logo"/>
+            </a></p><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="psc_user_monitor.html" title="previous chapter">psc_user_monitor module</a></li>
+      <li>Next: <a href="utils.html" title="next chapter">utils module</a></li>
+  </ul></li>
+</ul>
+</div>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/tvdTop.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, SECURED.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      
+      |
+      <a href="_sources/tvdTop.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

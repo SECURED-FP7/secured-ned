@@ -1,0 +1,635 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>workflow_manager &mdash; TVDM  documentation</title>
+    
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <link rel="top" title="TVDM  documentation" href="../index.html" />
+    <link rel="up" title="Module code" href="index.html" />
+   
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <h1>Source code for workflow_manager</h1><div class="highlight"><pre>
+<span></span><span class="ch">#! /usr/bin/python</span>
+<span class="c1">#</span>
+<span class="c1"># NED Policy Manager (a.k.a the online workflow manager)</span>
+<span class="c1"># </span>
+<span class="c1"># Dependencies: pip install json2xml dicttoxml termcolor</span>
+<span class="c1">#</span>
+<span class="c1"># Example usage: ./workflow_manager.py adrian badpassword 195.235.93.146 130.192.1.102</span>
+
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">base64</span>
+<span class="kn">import</span> <span class="nn">inspect</span>
+<span class="kn">import</span> <span class="nn">requests</span>
+<span class="kn">import</span> <span class="nn">dicttoxml</span>
+<span class="kn">import</span> <span class="nn">upr_client</span>
+<span class="kn">from</span> <span class="nn">xml.dom</span> <span class="kn">import</span> <span class="n">minidom</span>
+<span class="kn">from</span> <span class="nn">time</span> <span class="kn">import</span> <span class="n">sleep</span>
+<span class="kn">from</span> <span class="nn">termcolor</span> <span class="kn">import</span> <span class="n">colored</span>
+<span class="kn">from</span> <span class="nn">sys</span> <span class="kn">import</span> <span class="n">argv</span>
+<span class="kn">from</span> <span class="nn">requests.auth</span> <span class="kn">import</span> <span class="n">HTTPBasicAuth</span>
+<span class="kn">from</span> <span class="nn">lxml</span> <span class="kn">import</span> <span class="n">etree</span><span class="p">,</span> <span class="n">objectify</span>
+<span class="kn">from</span> <span class="nn">lxml.etree</span> <span class="kn">import</span> <span class="n">XMLSyntaxError</span>
+
+<span class="n">DEBUG</span> <span class="o">=</span> <span class="bp">False</span>
+
+<div class="viewcode-block" id="dbprint"><a class="viewcode-back" href="../workflow_manager.html#workflow_manager.dbprint">[docs]</a><span class="k">def</span> <span class="nf">dbprint</span><span class="p">(</span><span class="n">string</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">DEBUG</span> <span class="o">==</span> <span class="bp">True</span><span class="p">:</span>
+        <span class="k">print</span> <span class="n">string</span></div>
+
+<span class="c1"># Should collect slightly different input depending on if HSPL is given or an SG</span>
+<div class="viewcode-block" id="collectInput"><a class="viewcode-back" href="../workflow_manager.html#workflow_manager.collectInput">[docs]</a><span class="k">def</span> <span class="nf">collectInput</span><span class="p">(</span><span class="n">refinement_type</span><span class="p">,</span> <span class="n">hspl_xml</span><span class="p">,</span> <span class="n">user_sg</span><span class="p">,</span> <span class="n">user_psa_xml</span><span class="p">,</span> <span class="n">psa_market_xml</span><span class="p">,</span>
+        <span class="n">subject_xml</span><span class="p">,</span> <span class="n">content_xml</span><span class="p">,</span> <span class="n">target_xml</span><span class="p">,</span> <span class="n">opt_profile_string</span><span class="p">,</span> <span class="n">max_evals</span><span class="p">):</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">data</span><span class="p">[</span><span class="s1">&#39;refinement_type&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">refinement_type</span><span class="p">)</span>
+    <span class="n">data</span><span class="p">[</span><span class="s1">&#39;hspl_mspl&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">hspl_xml</span><span class="p">)</span>
+    <span class="n">data</span><span class="p">[</span><span class="s1">&#39;sPSA_SG&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">user_sg</span><span class="p">)</span>
+    <span class="n">data</span><span class="p">[</span><span class="s1">&#39;user_PSA&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">user_psa_xml</span><span class="p">)</span>
+    <span class="n">data</span><span class="p">[</span><span class="s1">&#39;market_PSA&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">psa_market_xml</span><span class="p">)</span>
+    <span class="n">data</span><span class="p">[</span><span class="s1">&#39;subject_string&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">subject_xml</span><span class="p">)</span>
+    <span class="n">data</span><span class="p">[</span><span class="s1">&#39;content_string&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">content_xml</span><span class="p">)</span>
+    <span class="n">data</span><span class="p">[</span><span class="s1">&#39;target_string&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">target_xml</span><span class="p">)</span>
+    <span class="n">data</span><span class="p">[</span><span class="s1">&#39;optimizationType_string&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">opt_profile_string</span><span class="p">)</span>
+    <span class="n">data</span><span class="p">[</span><span class="s1">&#39;maxEvaluationsNo_string&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">max_evals</span><span class="p">)</span>
+    <span class="n">parent_json</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">parent_json</span><span class="p">[</span><span class="s1">&#39;input&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span>
+    <span class="n">json_data</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">parent_json</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">json_data</span></div>
+
+<div class="viewcode-block" id="convertToXML"><a class="viewcode-back" href="../workflow_manager.html#workflow_manager.convertToXML">[docs]</a><span class="k">def</span> <span class="nf">convertToXML</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+    <span class="n">obj</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+    <span class="n">xml</span> <span class="o">=</span> <span class="n">dicttoxml</span><span class="o">.</span><span class="n">dicttoxml</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">xml</span></div>
+
+<span class="c1"># Convert to XML...</span>
+<div class="viewcode-block" id="convertPSAlist"><a class="viewcode-back" href="../workflow_manager.html#workflow_manager.convertPSAlist">[docs]</a><span class="k">def</span> <span class="nf">convertPSAlist</span><span class="p">(</span><span class="n">psa_list_json</span><span class="p">,</span> <span class="n">mspl_psa_assoc</span><span class="p">):</span>
+    <span class="n">output</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;&lt;?xml version=</span><span class="se">\&quot;</span><span class="s2">1.0</span><span class="se">\&quot;</span><span class="s2"> encoding=</span><span class="se">\&quot;</span><span class="s2">UTF-8</span><span class="se">\&quot;</span><span class="s2">?&gt;</span>
+<span class="s2">                &lt;tns:Mapping xmlns:tns=</span><span class="se">\&quot;</span><span class="s2">http://www.example.org/Refinement_Schema</span><span class="se">\&quot;</span><span class="s2"> </span>
+<span class="s2">                             xmlns:xsi=</span><span class="se">\&quot;</span><span class="s2">http://www.w3.org/2001/XMLSchema-instance</span><span class="se">\&quot;</span><span class="s2"> </span>
+<span class="s2">                             xsi:schemaLocation=</span><span class="se">\&quot;</span><span class="s2">http://www.example.org/Refinement_Schema</span><span class="se">\&quot;</span><span class="s2">&gt;</span>
+<span class="s2">                             &lt;tns:service_graph&gt;&quot;&quot;&quot;</span>
+    <span class="n">max_number</span> <span class="o">=</span> <span class="n">psa_list_json</span><span class="p">[</span><span class="s1">&#39;length&#39;</span><span class="p">]</span>
+    <span class="c1">#v_psa=[]</span>
+    <span class="c1">#for p in psa_list_json:</span>
+    <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">psa</span> <span class="ow">in</span> <span class="n">psa_list_json</span><span class="p">:</span>
+        <span class="n">mspl_id</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="n">psa</span><span class="p">[</span><span class="s1">&#39;isGeneric&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;true&quot;</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">assoc</span> <span class="ow">in</span> <span class="n">mspl_psa_assoc</span><span class="p">:</span>
+                <span class="n">dbprint</span><span class="p">(</span> <span class="s2">&quot;get ID of mspl&quot;</span><span class="p">)</span>
+                <span class="c1"># mspl_id[:</span>
+                <span class="c1"># #TODO: Lots of magic needed in here</span>
+        <span class="k">else</span><span class="p">:</span>
+
+            <span class="n">output</span><span class="o">+=</span><span class="s2">&quot;&lt;tns:service serviceID=</span><span class="se">\&quot;</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="n">idvalue</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\&quot;</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="n">i</span> <span class="o">+</span> <span class="s2">&quot; </span><span class="se">\&quot;</span><span class="s2">&gt; &quot;</span>
+            <span class="n">output</span><span class="o">+=</span><span class="s2">&quot;&lt;tns:PSA name=</span><span class="se">\&quot;</span><span class="s2"> &quot;</span> <span class="o">+</span> <span class="n">v_psa</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">psaID</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\&quot;</span><span class="s2">&gt;&quot;</span>
+            <span class="n">output</span><span class="o">+=</span> <span class="s2">&quot;&lt;tns:PSA_info /&gt;&quot;</span>
+            <span class="n">output</span><span class="o">+=</span> <span class="s2">&quot;&lt;tns:PSA_characteristic cost=</span><span class="se">\&quot;</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="n">v_psa</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">cost</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\&quot;</span><span class="s2"> latency=</span><span class="se">\&quot;</span><span class="s2"> &quot;</span>\
+                    <span class="o">+</span> <span class="n">v_psa</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">latency</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\&quot;</span><span class="s2"> rating=</span><span class="se">\&quot;</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="n">v_psa</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">rating</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\&quot;</span><span class="s2">/&gt;&quot;</span><span class="p">;</span>
+
+            <span class="c1"># Build the capability tags</span>
+            <span class="n">output</span><span class="o">+=</span> <span class="s2">&quot;&lt;tns:capability&gt;&quot;</span>
+            <span class="n">capability_list</span> <span class="o">=</span> <span class="n">getCapability</span><span class="p">(</span><span class="n">psa</span><span class="o">.</span><span class="n">psaID</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">capability_list</span><span class="p">:</span>
+                <span class="n">output</span><span class="o">+=</span> <span class="s2">&quot;&lt;tns:capability_list&gt;&quot;</span> <span class="o">+</span> <span class="n">c</span> <span class="o">+</span> <span class="s2">&quot;&lt;/tns:capability_list&gt;&quot;</span>
+            <span class="n">output</span><span class="o">+=</span> <span class="s2">&quot;&lt;/tns:capability&gt;&quot;</span><span class="p">;</span>
+
+            <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">mspl_psa_assoc</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">a</span><span class="o">.</span><span class="n">psaID</span> <span class="o">==</span> <span class="n">psa</span><span class="o">.</span><span class="n">id</span><span class="p">:</span>
+                    <span class="n">mspl_id</span><span class="p">[:</span><span class="n">a</span><span class="o">.</span><span class="n">mspl</span><span class="o">.</span><span class="n">id</span><span class="p">]</span>
+
+            <span class="k">if</span> <span class="n">mspl_id</span><span class="o">.</span><span class="n">length</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">output</span><span class="o">+=</span><span class="s2">&quot;&lt;tns:MSPL_list&gt;&quot;</span>
+                <span class="k">for</span> <span class="n">mspl_id</span> <span class="ow">in</span> <span class="n">mspl_id_list</span><span class="p">:</span>
+                    <span class="n">output</span><span class="o">+=</span><span class="s2">&quot; &lt;tns:mspl_list id=</span><span class="se">\&quot;</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="n">mspl_id</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\&quot;</span><span class="s2">/&gt;&quot;</span>
+
+                <span class="n">output</span><span class="o">+=</span><span class="s2">&quot;&lt;/tns:MSPL_list&gt;&quot;</span>
+            <span class="n">output</span><span class="o">+=</span><span class="s2">&quot;&lt;/tns:PSA&gt;&quot;</span><span class="p">;</span>
+        <span class="n">output</span><span class="o">+=</span> <span class="s2">&quot;&lt;/tns:service&gt;&quot;</span>
+        <span class="n">i</span> <span class="o">=</span> <span class="n">i</span><span class="o">+</span><span class="mi">1</span>
+
+    <span class="c1"># TODO: Finish conversion</span>
+
+    <span class="n">output</span><span class="o">+=</span> <span class="s2">&quot; &lt;tns:rootService&gt;idvalue0&lt;/tns:rootService&gt;&quot;</span>
+    <span class="n">output</span><span class="o">+=</span> <span class="s2">&quot; &lt;tns:endService&gt; &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">max_number</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;&lt;/tns:endService&gt;&quot;</span>
+
+    <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">psa</span> <span class="ow">in</span> <span class="n">psa_list_json</span><span class="p">:</span> <span class="c1">#FIXME: Should this be the length - 1?</span>
+        <span class="n">output</span><span class="o">+=</span> <span class="s2">&quot;&lt;tns:edge&gt;&quot;</span>
+        <span class="n">output</span><span class="o">+=</span> <span class="s2">&quot; &lt;tns:endService&gt;idvalue &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;&lt;/tns:endService&gt;&quot;</span><span class="p">;</span>
+        <span class="n">output</span><span class="o">+=</span> <span class="s2">&quot; &lt;tns:endService&gt;idvalue &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;&lt;/tns:endService&gt;&quot;</span><span class="p">;</span>
+        <span class="n">output</span><span class="o">+=</span> <span class="s2">&quot; &lt;tns:networkFields/&gt;&quot;</span>
+        <span class="n">output</span><span class="o">+=</span> <span class="s2">&quot;&lt;/tns:edge&gt;&quot;</span>
+        <span class="n">i</span><span class="o">=</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span>
+
+    <span class="n">ouput</span> <span class="o">=</span> <span class="n">output</span> <span class="o">+</span>  <span class="s2">&quot; &lt;/tns:service_graph&gt;&lt;/tns:Mapping&gt;&quot;</span>
+    <span class="k">return</span> <span class="n">output</span></div>
+
+<span class="c1"># TODO: Convert SG into XML</span>
+<div class="viewcode-block" id="convertSG"><a class="viewcode-back" href="../workflow_manager.html#workflow_manager.convertSG">[docs]</a><span class="k">def</span> <span class="nf">convertSG</span><span class="p">(</span><span class="n">psa_list_json</span><span class="p">,</span> <span class="n">mspl_psa_assoc</span><span class="p">):</span>
+	<span class="n">dbprint</span><span class="p">(</span><span class="s2">&quot;unimplemented&quot;</span><span class="p">)</span>
+	<span class="k">return</span> <span class="s2">&quot;&quot;</span></div>
+
+<div class="viewcode-block" id="translate"><a class="viewcode-back" href="../workflow_manager.html#workflow_manager.translate">[docs]</a><span class="k">def</span> <span class="nf">translate</span><span class="p">(</span><span class="n">spm_url</span><span class="p">,</span> <span class="n">mspl</span><span class="p">,</span> <span class="n">psaID</span><span class="p">):</span>  
+    <span class="n">data</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">data</span><span class="p">[</span><span class="s1">&#39;mspl&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">base64</span><span class="o">.</span><span class="n">b64encode</span><span class="p">(</span><span class="n">mspl</span><span class="p">)</span>
+    <span class="n">data</span><span class="p">[</span><span class="s1">&#39;securityControl&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">psaID</span>
+    <span class="n">m2l_input</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">m2l_input</span><span class="p">[</span><span class="s1">&#39;input&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span>
+    <span class="c1">#dbprint( &quot;INPUT IS: \n&quot; + str(m2l_input)</span>
+    <span class="n">headers</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;content-type&#39;</span><span class="p">:</span> <span class="s1">&#39;application/json&#39;</span><span class="p">}</span>
+    <span class="n">url</span> <span class="o">=</span> <span class="s2">&quot;http://&quot;</span> <span class="o">+</span> <span class="n">spm_url</span> <span class="o">+</span> <span class="s2">&quot;:8090/M2LServiceCoordinator/rest/translate/&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">psaID</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;/&quot;</span>
+    <span class="n">dbprint</span><span class="p">(</span><span class="n">url</span><span class="p">)</span>
+    <span class="n">r</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">url</span><span class="p">),</span> <span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;mspl&#39;</span><span class="p">])</span>
+    <span class="k">if</span> <span class="n">r</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">200</span><span class="p">:</span>
+        <span class="n">dbprint</span><span class="p">(</span> <span class="s2">&quot;SUCCESSFUL REPLY FROM THE M2L SERVICE&quot;</span><span class="p">)</span>
+        <span class="n">rawdata</span> <span class="o">=</span> <span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">text</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;This file contains specific configuration for the security control&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+        <span class="c1"># Marco!!! Don&#39;t mess with my data!</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">base64</span><span class="o">.</span><span class="n">b64decode</span><span class="p">(</span><span class="n">rawdata</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">data</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">dbprint</span><span class="p">(</span> <span class="p">(</span><span class="n">spm_url</span> <span class="o">+</span> <span class="s2">&quot;: &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">status_code</span><span class="p">)))</span>
+        <span class="k">return</span> <span class="bp">None</span></div>
+
+<span class="c1"># PSAR API call which is currently unavailable, for now hardcoded</span>
+<div class="viewcode-block" id="getCapabilities"><a class="viewcode-back" href="../workflow_manager.html#workflow_manager.getCapabilities">[docs]</a><span class="k">def</span> <span class="nf">getCapabilities</span><span class="p">(</span><span class="n">psaID</span><span class="p">):</span>
+    <span class="n">capability_list</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;parental control&quot;</span><span class="p">,</span> <span class="s2">&quot;traffic inspection&quot;</span><span class="p">]</span> <span class="c1"># need full list from Marco </span>
+    <span class="k">return</span> <span class="n">capability_list</span></div>
+
+
+<span class="c1"># Returns a string</span>
+<div class="viewcode-block" id="M2L"><a class="viewcode-back" href="../workflow_manager.html#workflow_manager.M2L">[docs]</a><span class="k">def</span> <span class="nf">M2L</span><span class="p">(</span><span class="n">upr_url</span><span class="p">,</span> <span class="n">spm_url</span><span class="p">,</span> <span class="n">service_graph_xml</span><span class="p">,</span> <span class="n">mspl_list_xml</span><span class="p">,</span> <span class="n">user</span><span class="p">,</span> <span class="n">password</span><span class="p">,</span> <span class="n">editor_id</span><span class="p">):</span>
+    <span class="n">j</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">return_code</span> <span class="o">=</span> <span class="s2">&quot;ERROR&quot;</span>
+
+
+    <span class="c1"># Get UPR connection</span>
+    <span class="n">upr</span> <span class="o">=</span> <span class="n">upr_client</span><span class="o">.</span><span class="n">UPRClient</span><span class="p">(</span><span class="s2">&quot;http://&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">upr_url</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;:8081&quot;</span><span class="p">)</span>
+
+    <span class="c1"># Extract data from the PSA list</span>
+    <span class="n">xmldoc</span> <span class="o">=</span> <span class="n">minidom</span><span class="o">.</span><span class="n">parseString</span><span class="p">(</span><span class="n">service_graph_xml</span><span class="p">)</span>
+    <span class="n">psa_list</span> <span class="o">=</span> <span class="n">xmldoc</span><span class="o">.</span><span class="n">getElementsByTagName</span><span class="p">(</span><span class="s1">&#39;PSA&#39;</span><span class="p">)</span>
+    <span class="n">dbprint</span><span class="p">(</span> <span class="s2">&quot;There are &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">psa_list</span><span class="p">))</span> <span class="o">+</span> <span class="s2">&quot; PSAs&quot;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">psa</span> <span class="ow">in</span> <span class="n">psa_list</span><span class="p">:</span>
+        <span class="n">psa_name</span> <span class="o">=</span> <span class="n">psa</span><span class="o">.</span><span class="n">attributes</span><span class="p">[</span><span class="s1">&#39;name&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">value</span>
+        <span class="n">dbprint</span><span class="p">(</span> <span class="s2">&quot;PSA name is &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">psa_name</span><span class="p">))</span>
+        <span class="n">mspl_ids</span> <span class="o">=</span> <span class="n">psa</span><span class="o">.</span><span class="n">getElementsByTagName</span><span class="p">(</span><span class="s1">&#39;mspl_list&#39;</span><span class="p">)</span>
+
+        <span class="c1"># ICT hack - for now just get the first MSPL ID</span>
+        <span class="c1"># TODO: need to support multiple MSPLs per PSA</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">mspl_ids</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">mspl_id</span> <span class="o">=</span> <span class="n">mspl_ids</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">attributes</span><span class="p">[</span><span class="s1">&#39;id&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">value</span>
+
+            <span class="c1"># For each MSPL, get the configuration</span>
+            <span class="k">for</span> <span class="n">mspl</span> <span class="ow">in</span> <span class="n">mspl_list_xml</span><span class="p">:</span>
+                <span class="n">xml</span> <span class="o">=</span> <span class="n">minidom</span><span class="o">.</span><span class="n">parseString</span><span class="p">(</span><span class="n">mspl</span><span class="p">)</span>
+                <span class="n">configuration</span> <span class="o">=</span> <span class="n">xml</span><span class="o">.</span><span class="n">getElementsByTagName</span><span class="p">(</span><span class="s1">&#39;configuration&#39;</span><span class="p">)</span>
+                <span class="n">name_tag</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+                <span class="c1">#dbprint( &quot;DEBUG: Found &quot; + str(len(configuration)) + &quot; tags&quot;</span>
+
+                <span class="c1"># For each configuration, find the corresponding application</span>
+                <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">configuration</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">childNodes</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">child</span><span class="o">.</span><span class="n">nodeName</span> <span class="o">==</span> <span class="s2">&quot;Name&quot;</span><span class="p">:</span>
+                        <span class="n">mspl_name</span> <span class="o">=</span> <span class="n">child</span><span class="o">.</span><span class="n">firstChild</span><span class="o">.</span><span class="n">nodeValue</span>
+                        <span class="c1">#dbprint( &quot;Comparing &quot; + str(mspl_name) + &quot; with &quot; + str(mspl_id)</span>
+
+                        <span class="c1"># If you find corresponding MSPL, get the translated LSPL from the SPM</span>
+                        <span class="k">if</span> <span class="n">mspl_id</span> <span class="o">==</span> <span class="n">mspl_name</span><span class="p">:</span>
+                            <span class="c1">#dbprint( &quot;Found corresponding MSPL, getting translated LSPL&quot;</span>
+                            <span class="n">lspl</span> <span class="o">=</span> <span class="n">translate</span><span class="p">(</span><span class="n">spm_url</span><span class="p">,</span> <span class="n">mspl</span><span class="p">,</span> <span class="n">psa_name</span><span class="p">)</span>
+                            <span class="n">lspl</span> <span class="o">=</span> <span class="n">base64</span><span class="o">.</span><span class="n">b64encode</span><span class="p">(</span><span class="n">lspl</span><span class="p">)</span>
+                            <span class="n">r</span> <span class="o">=</span> <span class="n">upr</span><span class="o">.</span><span class="n">post_psaconf</span><span class="p">(</span><span class="n">user</span><span class="p">,</span><span class="n">psa_name</span><span class="p">,</span><span class="n">lspl</span><span class="p">)</span>
+                            <span class="k">if</span> <span class="n">r</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">201</span><span class="p">:</span>
+                                <span class="n">dbprint</span><span class="p">(</span> <span class="n">colored</span><span class="p">(</span><span class="s2">&quot;yay, i has LSPL in the UPR. Use get_userpsa_conf to get them&quot;</span><span class="p">,</span> <span class="s1">&#39;green&#39;</span><span class="p">))</span>
+                            <span class="k">else</span><span class="p">:</span>
+                                <span class="n">dbprint</span><span class="p">(</span> <span class="n">colored</span><span class="p">(</span><span class="s2">&quot;Failed to get LSPL&quot;</span><span class="p">,</span> <span class="s1">&#39;red&#39;</span><span class="p">))</span>
+                                <span class="n">return_code</span> <span class="o">=</span> <span class="s2">&quot;ERROR &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">status_code</span><span class="p">)</span>
+                                <span class="k">return</span> <span class="n">return_code</span>
+                <span class="c1">#dbprint( &quot;Finished looking for MSPL&quot;</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">&quot;ERROR: Multiple MSPLs per PSA unsupported at the moment&quot;</span>
+
+    <span class="c1"># Throw application graph back into the UPR, and get ready to party</span>
+    <span class="n">ag</span> <span class="o">=</span> <span class="n">base64</span><span class="o">.</span><span class="n">b64encode</span><span class="p">(</span><span class="n">service_graph_xml</span><span class="p">)</span>
+    <span class="n">r</span> <span class="o">=</span> <span class="n">upr</span><span class="o">.</span><span class="n">post_ag</span><span class="p">(</span><span class="n">user</span><span class="p">,</span> <span class="n">editor_id</span><span class="p">,</span> <span class="n">ag</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">r</span><span class="o">.</span><span class="n">status_code</span> <span class="o">!=</span> <span class="mi">201</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;ERROR putting application graph into UPR? &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">status_code</span><span class="p">)</span>
+
+    <span class="n">return_code</span> <span class="o">=</span>  <span class="s2">&quot;Success&quot;</span>
+    <span class="k">return</span> <span class="n">return_code</span></div>
+
+
+
+<div class="viewcode-block" id="convert"><a class="viewcode-back" href="../workflow_manager.html#workflow_manager.convert">[docs]</a><span class="k">def</span> <span class="nf">convert</span><span class="p">(</span><span class="n">jsonfile</span><span class="p">):</span>
+	<span class="n">dic</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">jsonfile</span><span class="p">))</span>
+	<span class="n">dbprint</span><span class="p">(</span> <span class="s2">&quot;</span><span class="se">\n\n</span><span class="s2">&quot;</span><span class="p">)</span>
+	<span class="n">xml</span> <span class="o">=</span> <span class="n">dicttoxml</span><span class="o">.</span><span class="n">dicttoxml</span><span class="p">(</span><span class="n">dic</span><span class="p">)</span>
+	<span class="k">return</span> <span class="n">xml</span></div>
+
+<div class="viewcode-block" id="convertHSPL"><a class="viewcode-back" href="../workflow_manager.html#workflow_manager.convertHSPL">[docs]</a><span class="k">def</span> <span class="nf">convertHSPL</span><span class="p">(</span><span class="n">hspljson</span><span class="p">):</span>
+
+    <span class="n">output</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;&lt;?xml version=&#39;1.0&#39; encoding=&#39;UTF-8&#39;?&gt; </span>
+<span class="s2">                &lt;tns:Mapping xmlns:tns=&#39;http://www.example.org/Refinement_Schema&#39; </span>
+<span class="s2">                    xmlns:xsi=&#39;http://www.w3.org/2001/XMLSchema-instance&#39; </span>
+<span class="s2">                    xsi:schemaLocation=</span>
+<span class="s2">                    &#39;http://www.example.org/Refinement_Schema Refinement_Schema.xsd &#39;&gt;&quot;&quot;&quot;</span>
+    <span class="n">output</span> <span class="o">+=</span> <span class="s2">&quot;&lt;tns:hspl_list&gt;&quot;</span>
+    <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">while</span> <span class="p">(</span><span class="n">i</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">hspljson</span><span class="p">)):</span>
+        <span class="n">output</span> <span class="o">+=</span> <span class="s2">&quot;&lt;tns:hspl subject=&#39;&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">hspljson</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s1">&#39;target&#39;</span><span class="p">])</span> <span class="o">+</span> <span class="s2">&quot;&#39; id=&#39;hspl&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">hspljson</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s1">&#39;id&#39;</span><span class="p">])</span> <span class="o">+</span> <span class="s2">&quot;&#39;&gt;&quot;</span>
+        <span class="n">pieces</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">hspljson</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="s1">&#39;hspl&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;;&#39;</span><span class="p">)</span>
+        <span class="n">action</span> <span class="o">=</span> <span class="n">pieces</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">obj</span> <span class="o">=</span> <span class="n">pieces</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+
+        <span class="n">dbprint</span><span class="p">(</span> <span class="n">obj</span><span class="p">)</span>
+        
+        <span class="c1"># BEGIN HACKS</span>
+        <span class="n">obj</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;Internet traffic&quot;</span><span class="p">,</span> <span class="s2">&quot;Internet_traffic&quot;</span><span class="p">)</span>
+        <span class="n">obj</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;intranet traffic&quot;</span><span class="p">,</span> <span class="s2">&quot;Intranet_traffic&quot;</span><span class="p">)</span>
+        <span class="n">action</span> <span class="o">=</span> <span class="n">action</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;is/are authorized to access&quot;</span><span class="p">,</span> <span class="s2">&quot;authorise_access&quot;</span><span class="p">)</span>
+        <span class="n">action</span> <span class="o">=</span> <span class="n">action</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;is/are not authorized to access&quot;</span><span class="p">,</span> <span class="s2">&quot;no_authorise_access&quot;</span><span class="p">)</span>
+        <span class="n">action</span> <span class="o">=</span> <span class="n">action</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;reduce(s)&quot;</span><span class="p">,</span> <span class="s2">&quot;reduce&quot;</span><span class="p">)</span>
+        <span class="n">action</span> <span class="o">=</span> <span class="n">action</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;remove(s)&quot;</span><span class="p">,</span> <span class="s2">&quot;remove&quot;</span><span class="p">)</span>
+        <span class="n">action</span> <span class="o">=</span> <span class="n">action</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;protect(s) confidentiality&quot;</span><span class="p">,</span> <span class="s2">&quot;prot_conf&quot;</span><span class="p">)</span>
+        <span class="c1"># END HACKS</span>
+
+        <span class="n">output</span> <span class="o">+=</span> <span class="s2">&quot;&lt;tns:action&gt;&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">action</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;&lt;/tns:action&gt;&quot;</span>
+        <span class="n">output</span> <span class="o">+=</span> <span class="s2">&quot;&lt;tns:objectH&gt;&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;&lt;/tns:objectH&gt;&quot;</span>
+        <span class="n">output</span> <span class="o">+=</span> <span class="s2">&quot;&lt;tns:fields&gt;&quot;</span>
+        <span class="k">if</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">pieces</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">3</span><span class="p">):</span>
+            <span class="n">j</span><span class="o">=</span><span class="mi">3</span>
+            <span class="k">while</span> <span class="p">(</span><span class="n">j</span><span class="o">&lt;</span><span class="nb">len</span><span class="p">(</span><span class="n">pieces</span><span class="p">)):</span>
+		<span class="n">field</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">pieces</span><span class="p">[</span><span class="n">j</span><span class="p">])</span>
+		<span class="n">field</span> <span class="o">=</span> <span class="n">field</span><span class="o">.</span><span class="n">translate</span><span class="p">(</span><span class="bp">None</span><span class="p">,</span><span class="s2">&quot;()&quot;</span><span class="p">)</span>
+                <span class="c1">#dbprint( field</span>
+		<span class="n">data</span> <span class="o">=</span> <span class="n">field</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="p">)</span>
+		<span class="n">k</span><span class="o">=</span><span class="mi">0</span>
+		<span class="k">while</span> <span class="n">k</span><span class="o">&lt;</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+                        <span class="n">dbprint</span><span class="p">(</span> <span class="nb">str</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">k</span><span class="p">]))</span>
+                        <span class="k">if</span> <span class="n">data</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;time_period&quot;</span><span class="p">:</span>
+                            <span class="n">dbprint</span><span class="p">(</span> <span class="s2">&quot;KABOOM - you didn&#39;t follow the schema&quot;</span><span class="p">)</span>
+                            <span class="n">output</span> <span class="o">+=</span> <span class="s2">&quot;&lt;tns:time_period time-zone=&#39;UTC&#39;&gt;&quot;</span>
+                            <span class="n">output</span> <span class="o">+=</span> <span class="s2">&quot;&lt;tns:interval_time&gt;&lt;tns:time_hours start-time=&#39;&quot;</span>
+                            <span class="n">times</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;-&quot;</span><span class="p">)</span>
+                            <span class="n">firstTime</span> <span class="o">=</span> <span class="n">times</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                            <span class="n">secondTime</span> <span class="o">=</span> <span class="n">times</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+                            <span class="n">output</span> <span class="o">+=</span> <span class="nb">str</span><span class="p">(</span><span class="n">firstTime</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;:00&#39; end-time=&#39;&quot;</span>
+                            <span class="n">output</span> <span class="o">+=</span> <span class="nb">str</span><span class="p">(</span><span class="n">secondTime</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;:00&#39; /&gt;&quot;</span>
+                            <span class="n">output</span> <span class="o">+=</span> <span class="s2">&quot;&lt;/tns:interval_time&gt;&quot;</span>
+                            <span class="n">output</span> <span class="o">+=</span> <span class="s2">&quot;&lt;/tns:time_period&gt;&quot;</span>
+                        <span class="k">elif</span> <span class="n">data</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;specific_URL&quot;</span><span class="p">:</span>
+                            <span class="n">dbprint</span><span class="p">(</span> <span class="s2">&quot;&quot;&quot;KABOOM - you didn&#39;t follow the schema.</span>
+<span class="s2">                                    Specific URL should have a subelement called URL&quot;&quot;&quot;</span><span class="p">)</span>
+                            <span class="n">output</span> <span class="o">+=</span> <span class="s2">&quot;&lt;tns:specific_URL&gt;&lt;tns:URL&gt;&quot;</span>
+                            <span class="n">output</span> <span class="o">+=</span> <span class="nb">str</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">k</span><span class="o">+</span><span class="mi">1</span><span class="p">])</span>
+                            <span class="n">output</span> <span class="o">+=</span> <span class="s2">&quot;&lt;/tns:URL&gt;&lt;/tns:specific_URL&gt;&quot;</span>
+                        <span class="k">elif</span> <span class="n">data</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;traffic_target&quot;</span><span class="p">:</span>
+                            <span class="n">dbprint</span><span class="p">(</span> <span class="s2">&quot;KABOOM - you didn&#39;t follow the schema&quot;</span><span class="p">)</span>
+                            <span class="n">output</span> <span class="o">+=</span> <span class="s2">&quot;&lt;tns:traffic_target&gt;&lt;tns:target_name&gt;&quot;</span>
+                            <span class="n">output</span> <span class="o">+=</span> <span class="nb">str</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">k</span><span class="o">+</span><span class="mi">1</span><span class="p">])</span>
+                            <span class="n">output</span> <span class="o">+=</span> <span class="s2">&quot;&lt;/tns:target_name&gt;&lt;/tns:traffic_target&gt;&quot;</span>
+                        <span class="k">elif</span> <span class="n">data</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;type_Content&quot;</span><span class="p">:</span>
+                            <span class="n">dbprint</span><span class="p">(</span> <span class="s2">&quot;KABOOM - you didn&#39;t follow the schema&quot;</span><span class="p">)</span>
+                            <span class="n">output</span> <span class="o">+=</span> <span class="s2">&quot;&lt;tns:type_content&gt;&lt;tns:content_name&gt;&quot;</span>
+                            <span class="n">output</span> <span class="o">+=</span> <span class="nb">str</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">k</span><span class="o">+</span><span class="mi">1</span><span class="p">])</span>
+                            <span class="n">output</span> <span class="o">+=</span> <span class="s2">&quot;&lt;/tns:content_name&gt;&lt;/tns:type_content&gt;&quot;</span>
+			<span class="k">elif</span> <span class="n">data</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;purpose&quot;</span><span class="p">:</span>
+                            <span class="n">output</span> <span class="o">+=</span> <span class="s2">&quot;&lt;tns:purpose&gt;&lt;tns:purpose_name&gt;&quot;</span>
+                            <span class="n">output</span> <span class="o">+=</span> <span class="nb">str</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">k</span><span class="o">+</span><span class="mi">1</span><span class="p">])</span>
+                            <span class="n">output</span> <span class="o">+=</span> <span class="s2">&quot;&lt;/tns:purpose_name&gt;&lt;/tns:purpose&gt;&quot;</span>
+			<span class="k">elif</span> <span class="n">data</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;resource_values&quot;</span><span class="p">:</span>
+                            <span class="n">output</span> <span class="o">+=</span> <span class="s2">&quot;&lt;tns:resource_values&gt;&lt;tns:name_resurces&gt;&quot;</span>
+                            <span class="n">output</span> <span class="o">+=</span> <span class="nb">str</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">k</span><span class="o">+</span><span class="mi">1</span><span class="p">])</span>
+                            <span class="n">output</span> <span class="o">+=</span> <span class="s2">&quot;&lt;/tns:name_resurces&gt;&lt;/tns:resource_values&gt;&quot;</span> 
+
+                        <span class="k">else</span><span class="p">:</span>
+			    <span class="n">data</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">k</span><span class="p">]</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">,</span> <span class="s2">&quot;_&quot;</span><span class="p">)</span>
+			    <span class="n">tag</span> <span class="o">=</span> <span class="s2">&quot;&lt;tns:&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">k</span><span class="p">])</span> <span class="o">+</span> <span class="s2">&quot;&gt;&quot;</span>
+                            <span class="n">output</span> <span class="o">+=</span> <span class="n">tag</span>
+                            <span class="n">output</span> <span class="o">+=</span> <span class="nb">str</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">k</span><span class="o">+</span><span class="mi">1</span><span class="p">])</span>
+			    <span class="n">output</span> <span class="o">+=</span> <span class="s2">&quot;&lt;/tns:&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="n">k</span><span class="p">])</span> <span class="o">+</span> <span class="s2">&quot;&gt;&quot;</span>
+			<span class="n">k</span><span class="o">=</span><span class="n">k</span><span class="o">+</span><span class="mi">1</span>
+                <span class="n">j</span><span class="o">=</span><span class="n">j</span><span class="o">+</span><span class="mi">1</span>
+        <span class="n">output</span> <span class="o">+=</span> <span class="s2">&quot;&lt;/tns:fields&gt;&quot;</span>
+        <span class="n">output</span> <span class="o">+=</span> <span class="s2">&quot;&lt;/tns:hspl&gt;&quot;</span>
+
+        <span class="n">i</span><span class="o">=</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span>
+
+    <span class="n">output</span> <span class="o">+=</span> <span class="s2">&quot;&lt;/tns:hspl_list&gt; &lt;/tns:Mapping&gt;&quot;</span>
+
+
+    <span class="c1">#dbprint( str(output)</span>
+    <span class="n">f</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="s2">&quot;hspl.xml&quot;</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span>
+    <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">output</span><span class="p">)</span>
+    <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="n">f</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">output</span></div>
+
+<span class="c1"># On failure, returns None</span>
+<span class="c1"># On success, returns a tuple of the Application Graph in XML format + the list of MSPLs</span>
+<div class="viewcode-block" id="H2M"><a class="viewcode-back" href="../workflow_manager.html#workflow_manager.H2M">[docs]</a><span class="k">def</span> <span class="nf">H2M</span><span class="p">(</span><span class="n">user</span><span class="p">,</span> <span class="n">password</span><span class="p">,</span> <span class="n">upr_url</span><span class="p">,</span> <span class="n">spm_url</span><span class="p">):</span>
+    <span class="n">upr</span> <span class="o">=</span> <span class="n">upr_client</span><span class="o">.</span><span class="n">UPRClient</span><span class="p">(</span><span class="s2">&quot;http://&quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">upr_url</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;:8081&quot;</span><span class="p">)</span>
+    <span class="n">cred</span> <span class="o">=</span> <span class="n">upr</span><span class="o">.</span><span class="n">auth_user</span><span class="p">(</span><span class="n">user</span><span class="p">,</span> <span class="n">password</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">cred</span><span class="o">.</span><span class="n">status_code</span> <span class="o">!=</span> <span class="mi">200</span><span class="p">:</span>
+        <span class="n">dbprint</span><span class="p">(</span><span class="s2">&quot;unauthorised&quot;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">dbprint</span><span class="p">(</span><span class="s2">&quot;successful authentication&quot;</span><span class="p">)</span>
+
+    <span class="n">editor_id</span> <span class="o">=</span> <span class="bp">None</span>
+    <span class="n">r</span> <span class="o">=</span> <span class="n">upr</span><span class="o">.</span><span class="n">get_user_list</span><span class="p">(</span><span class="n">user_id</span><span class="o">=</span><span class="n">user</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">r</span><span class="o">.</span><span class="n">status_code</span> <span class="o">!=</span> <span class="mi">200</span><span class="p">:</span>
+        <span class="n">dbprint</span><span class="p">(</span><span class="s2">&quot;error getting user list&quot;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+	<span class="n">data</span> <span class="o">=</span> <span class="n">r</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+	<span class="k">if</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;creator&#39;</span><span class="p">]</span> <span class="o">!=</span> <span class="bp">None</span><span class="p">:</span>
+		<span class="n">dbprint</span><span class="p">(</span> <span class="s2">&quot;Creator is &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;creator&#39;</span><span class="p">]))</span>
+		<span class="n">editor_id</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;creator&#39;</span><span class="p">]</span>
+	<span class="k">else</span><span class="p">:</span>
+		<span class="n">dbprint</span><span class="p">(</span><span class="s2">&quot;User has no parent creator&quot;</span><span class="p">)</span>
+
+
+    <span class="n">r</span> <span class="o">=</span> <span class="n">upr</span><span class="o">.</span><span class="n">get_user_type</span><span class="p">(</span><span class="n">user_id</span><span class="o">=</span><span class="n">user</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">r</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">404</span><span class="p">:</span>
+        <span class="n">dbprint</span><span class="p">(</span> <span class="s2">&quot;error getting user type&quot;</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">dbprint</span><span class="p">(</span> <span class="s2">&quot;got user type&quot;</span><span class="p">)</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">r</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+        <span class="n">usertype</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;type&#39;</span><span class="p">]</span>
+        <span class="n">dbprint</span><span class="p">(</span><span class="n">usertype</span><span class="p">)</span>
+
+        <span class="n">r</span> <span class="o">=</span> <span class="n">upr</span><span class="o">.</span><span class="n">get_user_opt_profile</span><span class="p">(</span><span class="n">user</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">r</span><span class="o">.</span><span class="n">status_code</span> <span class="o">!=</span> <span class="mi">200</span><span class="p">:</span>
+            <span class="n">dbprint</span><span class="p">(</span> <span class="s2">&quot;error could not find optimisation profile&quot;</span><span class="p">)</span>
+
+        <span class="n">data</span> <span class="o">=</span> <span class="n">r</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+        <span class="n">opt_profile</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;optimization_profile&#39;</span><span class="p">]</span>
+        <span class="n">dbprint</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">opt_profile</span><span class="p">))</span>
+
+
+        <span class="k">if</span> <span class="n">usertype</span> <span class="o">==</span> <span class="s2">&quot;normal&quot;</span><span class="p">:</span>
+
+	    <span class="c1">#if (editor_id == None):</span>
+	    <span class="c1">#    r = upr.get_hspl(target=user, editor=None)</span>
+	    <span class="c1">#else:</span>
+            <span class="c1">#	r = upr.get_hspl(target=user, editor=editor_id)</span>
+            <span class="n">r</span> <span class="o">=</span> <span class="n">upr</span><span class="o">.</span><span class="n">get_hspl</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="n">user</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">r</span><span class="o">.</span><span class="n">status_code</span> <span class="o">!=</span> <span class="mi">200</span><span class="p">:</span>
+                <span class="n">dbprint</span><span class="p">(</span> <span class="s2">&quot;something went wrong &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">status_code</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                
+                <span class="n">new</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">json</span><span class="p">()))</span>
+                <span class="n">dbprint</span><span class="p">(</span> <span class="n">r</span><span class="o">.</span><span class="n">json</span><span class="p">())</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">new</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="k">print</span><span class="p">(</span> <span class="n">colored</span><span class="p">(</span><span class="s2">&quot;ERROR: No HSPLs found for this user&quot;</span><span class="p">,</span> <span class="s1">&#39;red&#39;</span><span class="p">))</span>
+                    <span class="k">return</span> <span class="bp">None</span>
+                <span class="n">hspl_list_xml</span> <span class="o">=</span> <span class="n">convertHSPL</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">json</span><span class="p">())</span>
+                <span class="n">dbprint</span><span class="p">(</span> <span class="n">hspl_list_xml</span><span class="p">)</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">xsd_file</span> <span class="o">=</span> <span class="s1">&#39;hspl.xsd&#39;</span>
+                    <span class="n">schema</span> <span class="o">=</span> <span class="n">etree</span><span class="o">.</span><span class="n">XMLSchema</span><span class="p">(</span><span class="nb">file</span><span class="o">=</span><span class="n">xsd_file</span><span class="p">)</span>
+                    <span class="n">parser</span> <span class="o">=</span> <span class="n">objectify</span><span class="o">.</span><span class="n">makeparser</span><span class="p">(</span><span class="n">schema</span><span class="o">=</span><span class="n">schema</span><span class="p">)</span>
+                    <span class="n">objectify</span><span class="o">.</span><span class="n">fromstring</span><span class="p">(</span><span class="n">hspl_list_xml</span><span class="p">,</span> <span class="n">parser</span><span class="p">)</span>
+                    <span class="n">dbprint</span><span class="p">(</span> <span class="n">colored</span><span class="p">(</span><span class="s2">&quot;YEAH!, my xml file has validated&quot;</span><span class="p">,</span> <span class="s1">&#39;green&#39;</span><span class="p">))</span>
+                <span class="k">except</span> <span class="n">XMLSyntaxError</span><span class="p">:</span>
+                    <span class="n">dbprint</span><span class="p">(</span> <span class="n">colored</span><span class="p">(</span><span class="s2">&quot;Oh NO!, the GUI HSPL does not validate&quot;</span><span class="p">,</span> <span class="s1">&#39;red&#39;</span><span class="p">))</span>
+                    <span class="n">dbprint</span><span class="p">(</span> <span class="n">colored</span><span class="p">(</span><span class="s2">&quot;&quot;&quot;To debug, use: xmllint --format --pretty 1 --load-trace --debug --schema hspl.xsd hspl.xml&quot;&quot;&quot;</span><span class="p">,</span> <span class="s1">&#39;red&#39;</span><span class="p">))</span>
+                    <span class="n">dbprint</span><span class="p">(</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">It might still work with the SPM. But beware, there be dragons. Bad things may happen!&quot;</span><span class="p">)</span>
+                    <span class="c1">#return None # Removed by request of Fulvio V</span>
+
+		<span class="n">active_psa_list_xml</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+		<span class="n">r</span> <span class="o">=</span> <span class="n">upr</span><span class="o">.</span><span class="n">get_user_psa</span><span class="p">(</span><span class="n">user</span><span class="p">,</span> <span class="n">is_active</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+		<span class="k">if</span> <span class="n">r</span><span class="o">.</span><span class="n">status_code</span> <span class="o">!=</span> <span class="mi">200</span><span class="p">:</span>
+			<span class="n">dbprint</span><span class="p">(</span> <span class="s2">&quot;error getting active PSA list from UPR: HTTP &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">status_code</span><span class="p">))</span>
+		<span class="k">else</span><span class="p">:</span>	
+			<span class="n">obj</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+			<span class="n">active_psa_list_xml</span> <span class="o">=</span> <span class="n">dicttoxml</span><span class="o">.</span><span class="n">dicttoxml</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+
+		<span class="n">r</span> <span class="o">=</span> <span class="n">upr</span><span class="o">.</span><span class="n">get_user_psa</span><span class="p">(</span><span class="n">user</span><span class="p">)</span>
+		<span class="k">if</span> <span class="n">r</span><span class="o">.</span><span class="n">status_code</span> <span class="o">!=</span> <span class="mi">200</span><span class="p">:</span>
+			<span class="n">dbprint</span><span class="p">(</span> <span class="s2">&quot;error getting market PSA list: &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">status_code</span><span class="p">))</span>
+			<span class="n">market_psa_list_xml</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+		<span class="n">obj</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">text</span><span class="p">)</span>
+		<span class="n">market_psa_list_xml</span> <span class="o">=</span> <span class="n">dicttoxml</span><span class="o">.</span><span class="n">dicttoxml</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+		<span class="n">h2m_input</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+
+		<span class="c1"># Hacks for ICT demo and WP6 validation </span>
+		<span class="n">f</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;PSA_Review.xml&#39;</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span>
+		<span class="n">psa_xml</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+		<span class="n">f</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+		<span class="n">f</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;Subject_Review.xml&#39;</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span>
+		<span class="n">subject_xml</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+		<span class="n">f</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+		<span class="n">f</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;Target_Review.xml&#39;</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span>
+		<span class="n">target_xml</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+		<span class="n">f</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+		<span class="n">f</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;Content_Review.xml&#39;</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">)</span>
+		<span class="n">content_xml</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+		<span class="n">f</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+                <span class="c1"># BEGIN ICT HACKS</span>
+		<span class="c1"># These two are the same thing for a &quot;normal&quot; user, different for freak users</span>
+                <span class="n">user_sg</span> <span class="o">=</span> <span class="s2">&quot;&lt;?xml version=&#39;1.0&#39; encoding=&#39;UTF-8&#39;?&gt;&lt;tns:Mapping xmlns:tns=&#39;http://www.example.org/Refinement_Schema&#39; xmlns:xsi=&#39;http://www.w3.org/2001/XMLSchema-instance&#39; xsi:schemaLocation=&#39;http://www.example.org/Refinement_Schema Refinement_Schema.xsd &#39;&gt;&lt;tns:psa_list&gt;&lt;tns:psa name=&#39;ipTablesPSA&#39;&gt;&lt;tns:PSA_info /&gt;&lt;tns:PSA_characteristic cost=&#39;1&#39; latency=&#39;0.3&#39; rating=&#39;2&#39; /&gt;&lt;tns:capability&gt;&lt;tns:capability_list&gt;Filtering_L4&lt;/tns:capability_list&gt;&lt;tns:capability_list&gt;Timing&lt;/tns:capability_list&gt;&lt;/tns:capability&gt;&lt;/tns:psa&gt;&lt;tns:psa name=&#39;squid&#39;&gt;&lt;tns:PSA_info /&gt;&lt;tns:PSA_characteristic cost=&#39;2&#39; latency=&#39;0.2&#39; rating=&#39;3&#39; /&gt;&lt;tns:capability&gt;&lt;tns:capability_list&gt;Filtering_L7&lt;/tns:capability_list&gt;&lt;tns:capability_list&gt;Timing&lt;/tns:capability_list&gt;&lt;/tns:capability&gt;&lt;/tns:psa&gt;&lt;tns:psa name=&#39;dansguardian&#39;&gt;&lt;tns:PSA_info /&gt;&lt;tns:PSA_characteristic cost=&#39;4&#39; latency=&#39;0.2&#39; rating=&#39;1&#39; /&gt;&lt;tns:capability&gt;&lt;tns:capability_list&gt;Filtering_L7&lt;/tns:capability_list&gt;&lt;tns:capability_list&gt;TrafficInspection_L7&lt;/tns:capability_list&gt;&lt;tns:capability_list&gt;Timing&lt;/tns:capability_list&gt;&lt;/tns:capability&gt;&lt;/tns:psa&gt;&lt;/tns:psa_list&gt;&lt;/tns:Mapping&gt;&quot;</span>
+
+                <span class="n">active_psa_list_xml</span> <span class="o">=</span> <span class="s2">&quot;&lt;?xml version=&#39;1.0&#39; encoding=&#39;UTF-8&#39;?&gt;&lt;tns:Mapping xmlns:tns=&#39;http://www.example.org/Refinement_Schema&#39; xmlns:xsi=&#39;http://www.w3.org/2001/XMLSchema-instance&#39; xsi:schemaLocation=&#39;http://www.example.org/Refinement_Schema Refinement_Schema.xsd &#39;&gt;&lt;tns:psa_list&gt;&lt;tns:psa  name=&#39;ipTablesPSA&#39;&gt;&lt;tns:PSA_info /&gt;&lt;tns:PSA_characteristic cost=&#39;1&#39; latency=&#39;0.3&#39; rating=&#39;2&#39; /&gt;&lt;tns:capability&gt;&lt;tns:capability_list&gt;Filtering_L4&lt;/tns:capability_list&gt;&lt;tns:capability_list&gt;Timing&lt;/tns:capability_list&gt;&lt;/tns:capability&gt;&lt;/tns:psa&gt;&lt;tns:psa  name=&#39;squid&#39;&gt;&lt;tns:PSA_info /&gt;&lt;tns:PSA_characteristic cost=&#39;2&#39; latency=&#39;0.2&#39; rating=&#39;3&#39;  /&gt;&lt;tns:capability&gt;&lt;tns:capability_list&gt;Filtering_L7&lt;/tns:capability_list&gt;&lt;tns:capability_list&gt;Timing&lt;/tns:capability_list&gt;&lt;/tns:capability&gt;&lt;/tns:psa&gt;&lt;tns:psa  name=&#39;dansguardian&#39;&gt;&lt;tns:PSA_info /&gt;&lt;tns:PSA_characteristic cost=&#39;4&#39; latency=&#39;0.2&#39; rating=&#39;1&#39; /&gt;&lt;tns:capability&gt;&lt;tns:capability_list&gt;Filtering_L7&lt;/tns:capability_list&gt;&lt;tns:capability_list&gt;TrafficInspection_L7&lt;/tns:capability_list&gt;&lt;tns:capability_list&gt;Timing&lt;/tns:capability_list&gt;&lt;/tns:capability&gt;&lt;/tns:psa&gt;&lt;/tns:psa_list&gt;&lt;/tns:Mapping&gt;&quot;</span>
+
+                <span class="n">market_psa_list_xml</span> <span class="o">=</span> <span class="s2">&quot;&lt;?xml version=&#39;1.0&#39; encoding=&#39;UTF-8&#39;?&gt;&lt;tns:Mapping xmlns:tns=&#39;http://www.example.org/Refinement_Schema&#39; xmlns:xsi=&#39;http://www.w3.org/2001/XMLSchema-instance&#39; xsi:schemaLocation=&#39;http://www.example.org/Refinement_Schema Refinement_Schema.xsd &#39;&gt;&lt;tns:psa_list&gt;&lt;tns:psa  name=&#39;ipTablesPSA&#39;&gt;&lt;tns:PSA_info /&gt;&lt;tns:PSA_characteristic cost=&#39;1&#39; latency=&#39;0.3&#39; rating=&#39;2&#39; /&gt;&lt;tns:capability&gt;&lt;tns:capability_list&gt;Filtering_L4&lt;/tns:capability_list&gt;&lt;tns:capability_list&gt;Timing&lt;/tns:capability_list&gt;&lt;/tns:capability&gt;&lt;/tns:psa&gt;&lt;tns:psa  name=&#39;squid&#39;&gt;&lt;tns:PSA_info /&gt;&lt;tns:PSA_characteristic cost=&#39;2&#39; latency=&#39;0.2&#39; rating=&#39;3&#39;  /&gt;&lt;tns:capability&gt;&lt;tns:capability_list&gt;Filtering_L7&lt;/tns:capability_list&gt;&lt;tns:capability_list&gt;Timing&lt;/tns:capability_list&gt;&lt;/tns:capability&gt;&lt;/tns:psa&gt;&lt;tns:psa  name=&#39;dansguardian&#39;&gt;&lt;tns:PSA_info /&gt;&lt;tns:PSA_characteristic cost=&#39;4&#39; latency=&#39;0.2&#39; rating=&#39;1&#39; /&gt;&lt;tns:capability&gt;&lt;tns:capability_list&gt;Filtering_L7&lt;/tns:capability_list&gt;&lt;tns:capability_list&gt;TrafficInspection_L7&lt;/tns:capability_list&gt;&lt;tns:capability_list&gt;Timing&lt;/tns:capability_list&gt;&lt;/tns:capability&gt;&lt;/tns:psa&gt;&lt;/tns:psa_list&gt;&lt;/tns:Mapping&gt;&quot;</span>
+                <span class="n">opt_profile</span> <span class="o">=</span> <span class="s2">&quot;MIN_BUY_COSTMAX_RATING&quot;</span>
+                <span class="c1"># END ICT HACKS</span>
+
+                <span class="c1"># Decoded version for debugging</span>
+                <span class="n">h2m_input</span> <span class="o">=</span> <span class="n">collectInput</span><span class="p">(</span><span class="s2">&quot;POLICY_HSPL&quot;</span><span class="p">,</span> <span class="n">hspl_list_xml</span><span class="p">,</span> <span class="n">user_sg</span><span class="p">,</span> <span class="n">active_psa_list_xml</span><span class="p">,</span> 
+                        <span class="n">market_psa_list_xml</span><span class="p">,</span> <span class="n">subject_xml</span><span class="p">,</span> <span class="n">content_xml</span><span class="p">,</span> <span class="n">target_xml</span><span class="p">,</span>
+                        <span class="n">opt_profile</span><span class="p">,</span> <span class="s2">&quot;0&quot;</span><span class="p">)</span>
+		<span class="n">f</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="s1">&#39;h2m_input_decoded.json&#39;</span><span class="p">,</span> <span class="s1">&#39;w&#39;</span><span class="p">)</span>
+		<span class="n">debug</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">h2m_input</span><span class="p">)</span>
+		<span class="n">f</span><span class="o">.</span><span class="n">close</span><span class="p">()</span> 
+
+                <span class="c1"># Base64 encoding # comment these to disable base64</span>
+                <span class="n">hspl_list_xml</span> <span class="o">=</span> <span class="n">base64</span><span class="o">.</span><span class="n">b64encode</span><span class="p">(</span><span class="n">hspl_list_xml</span><span class="p">)</span>
+                <span class="n">user_sg</span> <span class="o">=</span> <span class="n">base64</span><span class="o">.</span><span class="n">b64encode</span><span class="p">(</span><span class="n">user_sg</span><span class="p">)</span>
+                <span class="n">active_psa_list_xml</span> <span class="o">=</span> <span class="n">base64</span><span class="o">.</span><span class="n">b64encode</span><span class="p">(</span><span class="n">active_psa_list_xml</span><span class="p">)</span>
+                <span class="n">market_psa_list_xml</span> <span class="o">=</span> <span class="n">base64</span><span class="o">.</span><span class="n">b64encode</span><span class="p">(</span><span class="n">market_psa_list_xml</span><span class="p">)</span>
+                <span class="n">subject_xml</span> <span class="o">=</span> <span class="n">base64</span><span class="o">.</span><span class="n">b64encode</span><span class="p">(</span><span class="n">subject_xml</span><span class="p">)</span>
+                <span class="n">content_xml</span> <span class="o">=</span> <span class="n">base64</span><span class="o">.</span><span class="n">b64encode</span><span class="p">(</span><span class="n">content_xml</span><span class="p">)</span>
+                <span class="n">target_xml</span> <span class="o">=</span> <span class="n">base64</span><span class="o">.</span><span class="n">b64encode</span><span class="p">(</span><span class="n">target_xml</span><span class="p">)</span>
+                
+		<span class="c1">#psa_xml = convertPSAlist(market)</span>
+                <span class="n">h2m_input</span> <span class="o">=</span> <span class="n">collectInput</span><span class="p">(</span><span class="s2">&quot;POLICY_HSPL&quot;</span><span class="p">,</span> <span class="n">hspl_list_xml</span><span class="p">,</span> <span class="n">user_sg</span><span class="p">,</span> <span class="n">active_psa_list_xml</span><span class="p">,</span> 
+                        <span class="n">market_psa_list_xml</span><span class="p">,</span> <span class="n">subject_xml</span><span class="p">,</span> <span class="n">content_xml</span><span class="p">,</span> <span class="n">target_xml</span><span class="p">,</span>
+                        <span class="n">opt_profile</span><span class="p">,</span> <span class="s2">&quot;0&quot;</span><span class="p">)</span>
+
+		<span class="n">h2m_input</span> <span class="o">=</span> <span class="n">h2m_input</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\\</span><span class="s2">n&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+		<span class="n">h2m_input</span> <span class="o">=</span> <span class="n">h2m_input</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\\</span><span class="s2">r&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+		<span class="n">h2m_input</span> <span class="o">=</span> <span class="n">h2m_input</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\\</span><span class="s2">t&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+		<span class="n">h2m_input</span> <span class="o">=</span> <span class="n">h2m_input</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\\</span><span class="s2">/&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+
+		<span class="n">dbprint</span><span class="p">(</span> <span class="s2">&quot;</span><span class="se">\n\n</span><span class="s2">&quot;</span><span class="p">)</span>
+
+		<span class="n">dbprint</span><span class="p">(</span> <span class="s2">&quot;Contacting the SPM H2M service&quot;</span><span class="p">)</span>
+
+                <span class="n">f</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="s2">&quot;h2m_input.json&quot;</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span>
+                <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">h2m_input</span><span class="p">)</span>
+                <span class="n">f</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+                <span class="n">headers</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;content-type&#39;</span><span class="p">:</span> <span class="s1">&#39;application/json&#39;</span><span class="p">}</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">r</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">post</span><span class="p">(</span><span class="s2">&quot;http://&quot;</span> <span class="o">+</span> <span class="n">spm_url</span> <span class="o">+</span> <span class="s2">&quot;:8181/restconf/operations/h2mservice:h2mrefinement&quot;</span><span class="p">,</span> <span class="n">auth</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;admin&#39;</span><span class="p">,</span> <span class="s1">&#39;admin&#39;</span><span class="p">),</span> <span class="n">headers</span><span class="o">=</span><span class="n">headers</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">h2m_input</span><span class="p">)</span>
+                <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                    <span class="n">dbprint</span><span class="p">(</span> <span class="s2">&quot;Connection to server timed out&quot;</span><span class="p">)</span>
+                    <span class="k">return</span> <span class="bp">None</span>
+
+                <span class="n">dbprint</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">status_code</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">r</span><span class="o">.</span><span class="n">status_code</span> <span class="o">==</span> <span class="mi">200</span><span class="p">:</span>
+                    <span class="n">data</span> <span class="o">=</span> <span class="n">r</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
+                    <span class="n">application_graph</span> <span class="o">=</span> <span class="n">base64</span><span class="o">.</span><span class="n">b64decode</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="s1">&#39;output&#39;</span><span class="p">][</span><span class="s1">&#39;application_graph&#39;</span><span class="p">])</span>
+
+                    <span class="k">try</span><span class="p">:</span>
+                        <span class="n">problem</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;output&#39;</span><span class="p">][</span><span class="s1">&#39;remediation&#39;</span><span class="p">]</span>
+                        <span class="k">print</span><span class="p">(</span><span class="s2">&quot;ERROR: Policies need reconciliation&quot;</span><span class="p">)</span>
+                        <span class="k">print</span><span class="p">(</span><span class="s2">&quot;Currently do not support remediation&quot;</span><span class="p">)</span>
+                        <span class="k">return</span> <span class="bp">None</span>
+                    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                        <span class="k">pass</span>
+
+                    <span class="n">b64mspl_list</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="s1">&#39;output&#39;</span><span class="p">][</span><span class="s1">&#39;MSPL&#39;</span><span class="p">]</span>
+
+                    <span class="c1"># Store resulting MSPL in the UPR</span>
+                    <span class="k">if</span> <span class="n">editor_id</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+                        <span class="n">editor_id</span> <span class="o">=</span> <span class="n">user</span>
+
+                    <span class="n">dbprint</span><span class="p">(</span> <span class="s2">&quot;There are &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">b64mspl_list</span><span class="p">))</span> <span class="o">+</span> <span class="s2">&quot; MSPLs&quot;</span><span class="p">)</span>
+                    <span class="n">mspl_list</span> <span class="o">=</span> <span class="p">[]</span>
+                    <span class="k">for</span> <span class="n">mspl</span> <span class="ow">in</span> <span class="n">b64mspl_list</span><span class="p">:</span>
+                        <span class="n">raw_mspl</span> <span class="o">=</span> <span class="n">base64</span><span class="o">.</span><span class="n">b64decode</span><span class="p">(</span><span class="n">mspl</span><span class="p">)</span>
+                        <span class="n">mspl_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">raw_mspl</span><span class="p">)</span>
+
+                        <span class="c1"># Store MSPL in UPR.</span>
+                        <span class="c1"># TODO: store capability in capability field for expert users</span>
+                        <span class="n">is_reconciled</span> <span class="o">=</span> <span class="bp">False</span>
+                        <span class="n">r</span> <span class="o">=</span> <span class="n">upr</span><span class="o">.</span><span class="n">create_mspl</span><span class="p">(</span><span class="n">user</span><span class="p">,</span> <span class="n">editor_id</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">is_reconciled</span><span class="p">,</span> <span class="n">mspl</span><span class="p">)</span>
+                        <span class="k">if</span> <span class="n">r</span><span class="o">.</span><span class="n">status_code</span> <span class="o">!=</span> <span class="mi">201</span><span class="p">:</span>
+                            <span class="n">dbprint</span><span class="p">(</span> <span class="s2">&quot;     Error creating MSPL with code &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">status_code</span><span class="p">))</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="n">dbprint</span><span class="p">(</span> <span class="s2">&quot;     Successfully stored MSPL in UPR&quot;</span><span class="p">)</span>
+
+                    <span class="c1"># TODO: perhaps need to store each MSPL in the UPR</span>
+                    <span class="k">return</span> <span class="p">(</span><span class="n">application_graph</span><span class="p">,</span> <span class="n">mspl_list</span><span class="p">,</span> <span class="n">editor_id</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">dbprint</span><span class="p">(</span> <span class="s2">&quot;Error in H2M service response: &quot;</span> <span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">r</span><span class="o">.</span><span class="n">text</span><span class="p">))</span>
+                    <span class="n">dbprint</span><span class="p">(</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">If you see the above, copy and paste to Fulvio Valenza and Marco&quot;</span><span class="p">)</span>
+                    <span class="k">return</span> <span class="bp">None</span>
+        
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">print</span><span class="p">(</span><span class="s2">&quot;ERROR: unsupported user&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">None</span></div>
+<span class="n">args</span> <span class="o">=</span> <span class="n">argv</span>
+
+<span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">args</span><span class="p">:</span>
+	<span class="k">if</span> <span class="n">a</span> <span class="o">==</span> <span class="s2">&quot;--debug&quot;</span><span class="p">:</span>
+		<span class="n">DEBUG</span> <span class="o">=</span> <span class="mi">1</span>
+                <span class="n">args</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="s1">&#39;--debug&#39;</span><span class="p">)</span>
+
+<span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">5</span><span class="p">:</span>
+        <span class="k">print</span><span class="p">(</span><span class="s2">&quot;Usage: workflow-manager.py &lt;username&gt; &lt;password&gt; &lt;upr_address&gt; &lt;spm_address&gt;&quot;</span><span class="p">)</span>
+        <span class="k">print</span><span class="p">(</span><span class="s2">&quot;Optional flags:</span><span class="se">\n</span><span class="s2">    --debug : Shows more detailed output&quot;</span><span class="p">)</span>
+        <span class="k">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">My job is turn HSPL into LSPL, just like water into wine&quot;</span><span class="p">)</span>
+<span class="k">else</span><span class="p">:</span>
+	<span class="n">script</span><span class="p">,</span> <span class="n">user</span><span class="p">,</span> <span class="n">password</span><span class="p">,</span> <span class="n">upr_url</span><span class="p">,</span> <span class="n">spm_url</span> <span class="o">=</span> <span class="n">args</span>
+	<span class="n">mspl_list_xml</span> <span class="o">=</span> <span class="n">H2M</span><span class="p">(</span><span class="n">user</span><span class="p">,</span> <span class="n">password</span><span class="p">,</span> <span class="n">upr_url</span><span class="p">,</span> <span class="n">spm_url</span><span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">mspl_list_xml</span><span class="p">)</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">dbprint</span><span class="p">(</span> <span class="s2">&quot;This is the end. My only friend, the end.&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">mspl_list_xml</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">):</span>
+                <span class="n">app_graph_xml</span> <span class="o">=</span> <span class="n">mspl_list_xml</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="n">mlist</span> <span class="o">=</span> <span class="n">mspl_list_xml</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+                <span class="n">editor_id</span> <span class="o">=</span> <span class="n">mspl_list_xml</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+                <span class="n">error</span> <span class="o">=</span> <span class="n">M2L</span><span class="p">(</span><span class="n">upr_url</span><span class="p">,</span> <span class="n">spm_url</span><span class="p">,</span> <span class="n">app_graph_xml</span><span class="p">,</span> <span class="n">mlist</span><span class="p">,</span> <span class="n">user</span><span class="p">,</span> <span class="n">password</span><span class="p">,</span> <span class="n">editor_id</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">error</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;Success&quot;</span><span class="p">):</span>
+                    <span class="k">print</span><span class="p">(</span> <span class="s2">&quot;M2L workflow finished&quot;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">print</span><span class="p">(</span> <span class="s2">&quot;ERROR: No application graph?&quot;</span><span class="p">)</span>
+            
+        <span class="c1">#return None</span>
+
+</pre></div>
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+            <p class="logo"><a href="../index.html">
+              <img class="logo" src="../_static/secured.png" alt="Logo"/>
+            </a></p><div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, SECURity at the network EDge.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.3.6</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.7</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

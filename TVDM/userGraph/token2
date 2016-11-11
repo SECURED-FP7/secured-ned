@@ -1,0 +1,26 @@
+{
+	"name": "user_profile_type",
+	"user_token": "topolino",
+	"profile_type": "AD",			
+
+	"PSASet": [
+		
+		{
+			"id": "12345",
+			"security_controls": [
+				
+				{
+					"imgName": "ipTraf.img",
+					"conf_id":"ipTraf_topolino"
+				}
+				
+			] 
+			
+		}
+
+	], 
+	
+	"ingress_flow": ["12345"],
+	"egress_flow": ["12345"]
+
+}
