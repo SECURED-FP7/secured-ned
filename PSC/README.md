@@ -114,7 +114,7 @@ python scripts that have to be integrated to PSC, we execute the following
 command-lines:
 
 ```bash
-git clone  –b  mobility  git@gitlab.secured-fp7.eu:secured/ned.git
+git clone https://github.com/SECURED-FP7/secured-mobility-ned.git
 ```
 When this is done, python files which are in PSC directory will have to be
 copied into debianPSC.img.
@@ -127,7 +127,7 @@ virt-copy-in -a /var/lib/libvirt/images/debianPSC.img * /home/nedpsc/pythonScrip
 In the client we need to clone the master branch of the mobilityclient repository:
 
 ```bash
-git clone git@gitlab.secured-fp7.eu:secured/mobilityclient.git
+git clone https://github.com/SECURED-FP7/secured-app-linux.git
 ```
 
 Installing the dependencies to run the Client node
@@ -140,4 +140,4 @@ Finally, before starting the experiment we have to run the application by execut
 # ./list_signals.py
 ```
 Don't forget to run this as ```root```. For more information regarding
-MobileClient please refer to its [README.md](/secured/mobilityclient/blob/master/README.md)
+the mobile client please refer to its [README.md](https://github.com/SECURED-FP7/secured-app-linux.git)
